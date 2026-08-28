@@ -309,7 +309,7 @@ export const ImportBatchesView: React.FC = () => {
     setCostUpdateStrategy('weighted');
     setInputItems([]);
     setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
-    setIsAddingProduct(true);
+    setIsAddingProduct(false);
     setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);
     setShowConfirmModal(false);
@@ -948,15 +948,13 @@ export const ImportBatchesView: React.FC = () => {
 
                     {/* Confirmation Button */}
                     <div className="pt-2 flex justify-end space-x-2">
-                      {inputItems.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingProduct(false)}
-                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
-                        >
-                          Cancelar
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingProduct(false)}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+                      >
+                        Cancelar
+                      </button>
                       <button
                         type="button"
                         onClick={handleConfirmSingleProduct}
@@ -966,6 +964,21 @@ export const ImportBatchesView: React.FC = () => {
                         <span>{editingItemIndex !== null ? 'Guardar Cambios' : 'Confirmar e Incluir en el Lote'}</span>
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Empty state when no products added and form is closed */}
+                {inputItems.length === 0 && !isAddingProduct && (
+                  <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-slate-400 text-xs space-y-2">
+                    <p>Aún no has agregado productos a este lote.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSingleProductForm(null)}
+                      className="inline-flex items-center space-x-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Haz clic en "+ Agregar Producto" arriba a la derecha para ingresar un producto</span>
+                    </button>
                   </div>
                 )}
 
