@@ -696,26 +696,42 @@ export const ImportBatchesView: React.FC = () => {
                       const showSuggestions = openSkuDropdownIndex === index && matchingInventory.length > 0;
 
                       return (
-                        <div key={index} className={`space-y-2 bg-slate-900/90 p-3 rounded-lg border border-slate-700 relative ${showSuggestions ? 'z-50' : 'z-10'}`}>
-                          <div className="grid grid-cols-12 gap-2 items-center">
+                        <div key={index} className={`space-y-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-700/80 relative shadow-md ${showSuggestions ? 'z-50' : 'z-10'}`}>
+                          {/* Header bar of item card on mobile: Index badge + Delete Button */}
+                          <div className="flex items-center justify-between pb-1 sm:hidden border-b border-slate-800">
+                            <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                              Producto #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItemRow(index)}
+                              className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-lg transition flex items-center space-x-1 text-xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                              <span className="text-rose-400 text-xs">Eliminar Fila</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start sm:items-center">
                             
-                            {/* Strict Matching Filtered SKU Box */}
-                            <div className="col-span-4 relative">
+                            {/* 1. Strict Matching Filtered SKU Box */}
+                            <div className="sm:col-span-4 relative">
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Código SKU</label>
                               <input
                                 type="text"
                                 required
-                                placeholder="Escribe SKU (ej. PROD-001)..."
+                                placeholder="Código SKU (ej. PROD-001)..."
                                 value={item.sku}
                                 onFocus={() => {
                                   if (item.sku.trim().length >= 1) setOpenSkuDropdownIndex(index);
                                 }}
                                 onChange={(e) => handleItemChange(index, 'sku', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-blue-400 font-mono font-bold focus:outline-none focus:border-blue-500 uppercase"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-blue-400 font-mono font-bold focus:outline-none focus:border-blue-500 uppercase"
                               />
 
                               {/* Floating Suggestions Popup */}
                               {showSuggestions && (
-                                <div className="absolute left-0 w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800 ring-4 ring-blue-500/30">
+                                <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800 ring-4 ring-blue-500/30">
                                   <div className="p-2 text-[10px] font-bold text-blue-400 uppercase bg-slate-950 flex justify-between items-center sticky top-0 z-10 border-b border-slate-800">
                                     <span>Coincidencias Encontradas ({matchingInventory.length})</span>
                                     <button
@@ -751,77 +767,83 @@ export const ImportBatchesView: React.FC = () => {
                               )}
                             </div>
 
-                            <div className="col-span-4">
+                            {/* 2. Product Name */}
+                            <div className="sm:col-span-4">
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Nombre del Producto</label>
                               <input
                                 type="text"
                                 required
                                 placeholder="Nombre del Producto"
                                 value={item.productName}
                                 onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                               />
                             </div>
 
-                            <div className="col-span-2">
-                              <input
-                                type="number"
-                                min="1"
-                                required
-                                placeholder="Cant"
-                                value={item.quantity}
-                                onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs text-white font-semibold text-center focus:outline-none focus:border-blue-500"
-                              />
-                            </div>
+                            {/* 3. Quantity & Cost FOB (Side-by-side Grid on Mobile, Flex on Desktop) */}
+                            <div className="grid grid-cols-2 gap-2 sm:col-span-4 sm:flex sm:items-center">
+                              <div className="w-full">
+                                <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Cantidad</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  required
+                                  placeholder="Cant"
+                                  value={item.quantity}
+                                  onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white font-semibold text-center focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
 
-                            <div className="col-span-2 flex items-center space-x-1">
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                required
-                                placeholder="FOB $"
-                                value={item.unitCostFob}
-                                onChange={(e) => handleItemChange(index, 'unitCostFob', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs text-emerald-400 font-bold focus:outline-none focus:border-blue-500"
-                              />
+                              <div className="w-full">
+                                <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Costo FOB ($USD)</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  required
+                                  placeholder="FOB $"
+                                  value={item.unitCostFob}
+                                  onChange={(e) => handleItemChange(index, 'unitCostFob', e.target.value)}
+                                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-emerald-400 font-bold focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
+
                               <button
                                 type="button"
                                 onClick={() => handleRemoveItemRow(index)}
-                                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition"
+                                className="hidden sm:flex p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
                                 title="Eliminar Fila"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
 
+                          {/* Image Attachment preview/picker */}
                           {item.image ? (
-                            <div className="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-slate-800">
-                              <div className="flex items-center space-x-2">
-                                <img src={item.image} alt={item.productName} className="w-8 h-8 rounded object-cover border border-slate-700" />
+                            <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                              <div className="flex items-center space-x-2.5">
+                                <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700" />
                                 <div>
-                                  <span className="text-[11px] text-white font-semibold block">Imagen Seleccionada</span>
-                                  <span className="text-[10px] text-slate-400">Vinculada al SKU en SQLite</span>
+                                  <span className="text-xs text-white font-semibold block">Imagen Seleccionada</span>
+                                  <span className="text-[10px] text-slate-400">Vinculada al producto</span>
                                 </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleItemChange(index, 'image', '')}
-                                className="text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-900 hover:bg-slate-700 rounded-lg border border-slate-700 transition"
-                                title="Cambiar foto de este lote"
+                                className="text-xs text-rose-400 hover:underline px-2 py-1 font-semibold"
                               >
-                                Cambiar Foto
+                                Quitar Foto
                               </button>
                             </div>
                           ) : (
-                            <div className="pt-1 border-t border-slate-800">
-                              <ImagePicker
-                                value={item.image || ''}
-                                onChange={(val) => handleItemChange(index, 'image', val)}
-                                label="Foto del Producto (Opcional)"
-                              />
-                            </div>
+                            <ImagePicker
+                              value={item.image || ''}
+                              onChange={(img) => handleItemChange(index, 'image', img)}
+                              label="📷 Foto del Producto (Subir o Tomar Foto)"
+                            />
                           )}
                         </div>
                       );
