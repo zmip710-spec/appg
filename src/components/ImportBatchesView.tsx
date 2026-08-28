@@ -418,27 +418,53 @@ export const ImportBatchesView: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Matrix of 4 Prices */}
-                            <div className="grid grid-cols-2 gap-2 bg-slate-900/90 p-3 rounded-lg border border-slate-700/60 text-xs">
-                              <div>
-                                <span className="text-slate-400 block text-[10px]">1. FOB Sin Impuesto</span>
-                                <span className="font-bold text-white text-xs">${valFobNoTax.toFixed(2)} USD</span>
-                                <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
-                              </div>
-                              <div>
-                                <span className="text-amber-400 block text-[10px] font-bold">2. Con Impuesto Aduana</span>
-                                <span className="font-bold text-amber-400 text-xs">${valWithCustoms.toFixed(2)} USD</span>
-                                <span className="font-mono text-[10px] text-amber-300/80 block">Q {(valWithCustoms * rate).toFixed(2)} GTQ</span>
-                              </div>
-                              <div>
-                                <span className="text-indigo-400 block text-[10px] font-bold">3. Landed (+Flete Completo)</span>
-                                <span className="font-bold text-indigo-300 text-xs">${valLandedFull.toFixed(2)} USD</span>
-                                <span className="font-mono text-[10px] text-indigo-300/80 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
-                              </div>
-                              <div className="bg-emerald-950/40 p-1.5 rounded border border-emerald-500/30">
-                                <span className="text-emerald-400 block text-[10px] font-extrabold uppercase">4. 🏷️ Precio Final Venta</span>
-                                <span className="font-extrabold text-white text-xs block">${valFinalSellingUsd.toFixed(2)} USD</span>
-                                <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
+                            {/* Desglose Progresivo de Precios en 4 Etapas con divisiones claras */}
+                            <div className="space-y-2 pt-1">
+                              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                                📊 Desglose de Precios por Etapa
+                              </span>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                {/* Etapa 1: Base FOB */}
+                                <div className="bg-slate-950/90 border border-slate-700/80 p-2.5 rounded-xl space-y-1">
+                                  <span className="text-slate-400 text-[10px] font-semibold block uppercase">1. Base FOB (Sin Impuesto)</span>
+                                  <div className="flex items-baseline justify-between">
+                                    <span className="font-bold text-white text-sm">${valFobNoTax.toFixed(2)} USD</span>
+                                    <span className="font-mono text-xs font-bold text-slate-400">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
+
+                                {/* Etapa 2: Con Impuesto Aduana */}
+                                <div className="bg-amber-950/20 border border-amber-500/40 p-2.5 rounded-xl space-y-1">
+                                  <span className="text-amber-400 text-[10px] font-bold block uppercase">2. Con Impuesto Aduana</span>
+                                  <div className="flex items-baseline justify-between">
+                                    <span className="font-bold text-amber-300 text-sm">${valWithCustoms.toFixed(2)} USD</span>
+                                    <span className="font-mono text-xs font-bold text-amber-400">Q {(valWithCustoms * rate).toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
+
+                                {/* Etapa 3: Landed con Flete */}
+                                <div className="bg-indigo-950/20 border border-indigo-500/40 p-2.5 rounded-xl space-y-1">
+                                  <span className="text-indigo-400 text-[10px] font-bold block uppercase">3. Landed (+Flete Completo)</span>
+                                  <div className="flex items-baseline justify-between">
+                                    <span className="font-bold text-indigo-300 text-sm">${valLandedFull.toFixed(2)} USD</span>
+                                    <span className="font-mono text-xs font-bold text-indigo-400">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
+
+                                {/* Etapa 4: Precio Final Venta (+% Margen) */}
+                                <div className="bg-emerald-950/60 border-2 border-emerald-500/60 p-2.5 rounded-xl space-y-1 shadow-md shadow-emerald-500/10">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-emerald-400 text-[10px] font-extrabold uppercase">4. 🏷️ Precio Final Venta</span>
+                                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                      +{itemMargin}% Margen
+                                    </span>
+                                  </div>
+                                  <div className="flex items-baseline justify-between pt-0.5">
+                                    <span className="font-extrabold text-white text-base">${valFinalSellingUsd.toFixed(2)} USD</span>
+                                    <span className="font-mono font-extrabold text-emerald-400 text-sm">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
