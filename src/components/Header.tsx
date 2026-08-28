@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Download, LogOut } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { User } from '../services/api';
 
 interface HeaderProps {
@@ -12,15 +12,26 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  searchTerm,
-  setSearchTerm,
   onExport,
   currentUser,
   onLogout,
   activeTab = 'dashboard'
 }) => {
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Usuario';
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getExportLabel = () => {
     switch (activeTab) {
@@ -46,57 +57,77 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 z-10">
-      <div>
-        <h2 className="text-xl font-bold text-white">{getTabTitle()}</h2>
-        <p className="text-xs text-slate-400">
-          ¡Bienvenido de nuevo, <span className="font-semibold text-blue-400">{firstName}</span>! Estás gestionando AppG.
+    <header className="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 sticky top-0 z-40">
+      <div className="min-w-0 flex-1">
+        <h2 className="text-base sm:text-xl font-bold text-white truncate">{getTabTitle()}</h2>
+        <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+          ¡Hola, <span className="font-semibold text-blue-400">{firstName}</span>!
         </p>
       </div>
 
-      <div className="flex items-center space-x-3">
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar en el sistema..."
-            className="pl-9 pr-4 py-2 bg-slate-900/80 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition w-48 sm:w-64"
-          />
-        </div>
-
-        {/* User Avatar Badge */}
-        <div className="flex items-center space-x-2 bg-slate-900/80 p-1.5 rounded-lg border border-slate-700">
-          <img
-            src={currentUser?.avatar || defaultAvatar}
-            alt={currentUser?.name || 'Usuario'}
-            className="w-7 h-7 rounded-full object-cover border border-slate-700"
-          />
-          <span className="text-xs font-bold text-white hidden sm:inline px-1">{firstName}</span>
-        </div>
-
+      <div className="flex items-center space-x-2.5 shrink-0">
         {/* Contextual Export Button */}
         <button
           onClick={onExport}
           title={getExportLabel()}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition shadow-lg shadow-blue-600/20"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-blue-600/20"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">{getExportLabel()}</span>
         </button>
 
-        {/* Logout Icon Button */}
-        {onLogout && (
+        {/* Profile Avatar Dropdown Button & Popover */}
+        <div className="relative" ref={dropdownRef}>
           <button
-            onClick={onLogout}
-            className="p-2 rounded-lg bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition"
-            title="Cerrar Sesión"
+            type="button"
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="flex items-center space-x-2 bg-slate-900/90 hover:bg-slate-700/60 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-700 transition cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
+            <img
+              src={currentUser?.avatar || defaultAvatar}
+              alt={currentUser?.name || 'Usuario'}
+              className="w-7 h-7 rounded-full object-cover border border-slate-700 shrink-0"
+            />
+            <span className="text-xs font-bold text-white hidden sm:inline">{firstName}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
-        )}
+
+          {/* Profile Dropdown Popover */}
+          {showProfileMenu && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 p-3 space-y-3 ring-4 ring-blue-500/10">
+              <div className="flex items-center space-x-3 p-1">
+                <img
+                  src={currentUser?.avatar || defaultAvatar}
+                  alt={currentUser?.name || 'Usuario'}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-500 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-white truncate">{currentUser?.name || 'Usuario'}</h4>
+                  <p className="text-[10px] text-slate-400 truncate">{currentUser?.email || 'usuario@empresa.com'}</p>
+                  <span className="inline-block mt-0.5 text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded font-semibold">
+                    {currentUser?.role || 'Administrador'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-2">
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      onLogout();
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

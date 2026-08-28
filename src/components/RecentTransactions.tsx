@@ -208,24 +208,24 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
           <p className="text-xs text-slate-400 mt-1">Buscador inteligente con vista previa de productos e imágenes en tiempo real</p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
           {/* Status Filters */}
-          <div className="flex items-center space-x-1 text-xs bg-slate-900/60 p-1 rounded-lg border border-slate-700">
+          <div className="flex items-center space-x-1 text-xs bg-slate-900/60 p-1 rounded-xl border border-slate-700 overflow-x-auto whitespace-nowrap">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-3 py-1 rounded-md transition ${filterStatus === 'all' ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'all' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
             >
               Todos
             </button>
             <button
               onClick={() => setFilterStatus('Completado')}
-              className={`px-3 py-1 rounded-md transition ${filterStatus === 'Completado' ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Completado' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
             >
               Completados
             </button>
             <button
               onClick={() => setFilterStatus('Pendiente')}
-              className={`px-3 py-1 rounded-md transition ${filterStatus === 'Pendiente' ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Pendiente' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
             >
               Pendientes
             </button>
@@ -237,9 +237,9 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
               setCartItems([]);
               setShowAddModal(true);
             }}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-600/20"
+            className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-600/20 shrink-0 w-full sm:w-auto"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>+ Registrar Nueva Venta</span>
           </button>
         </div>

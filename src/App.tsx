@@ -166,57 +166,56 @@ export default function App() {
           {/* TAB 1: DASHBOARD DINÁMICO DESDE SQLITE */}
           {activeTab === 'dashboard' && (
             <>
-              {/* Botón de prueba */}
-              <div className="flex justify-start sm:justify-end mb-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-blue-600/20 cursor-pointer"
-                >
-                  Esto es una prueba
-                </button>
-              </div>
-              {/* Dynamic Live KPI Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <KPICard
-                  title="Ventas Totales (Ingresos)"
-                  value={`$${dashboardStats.totalSales.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`}
-                  change={`${dashboardStats.completedSalesCount} Ventas`}
-                  isPositive={true}
-                  comparisonText="registradas en SQLite"
-                  icon={DollarSign}
-                  iconBgColor="bg-emerald-500/10"
-                  iconTextColor="text-emerald-400"
-                />
-                <KPICard
-                  title="Stock Total en Almacén"
-                  value={`${dashboardStats.totalStock} Unidades`}
-                  change="Disponible"
-                  isPositive={true}
-                  comparisonText="físico en inventario"
-                  icon={PackageCheck}
-                  iconBgColor="bg-indigo-500/10"
-                  iconTextColor="text-indigo-400"
-                />
-                <KPICard
-                  title="Gastos Importación (Aduana+Flete)"
-                  value={`$${dashboardStats.totalImportExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`}
-                  change={`${dashboardStats.totalBatchesCount} Lotes`}
-                  isPositive={false}
-                  comparisonText={`Aduana: $${dashboardStats.customsTaxPaid} | Flete: $${dashboardStats.shippingPaid}`}
-                  icon={Layers}
-                  iconBgColor="bg-blue-500/10"
-                  iconTextColor="text-blue-400"
-                />
-                <KPICard
-                  title="Productos / SKUs Únicos"
-                  value={`${dashboardStats.totalSkus} SKUs`}
-                  change="Catálogos"
-                  isPositive={true}
-                  comparisonText="sin duplicados en la BD"
-                  icon={Boxes}
-                  iconBgColor="bg-amber-500/10"
-                  iconTextColor="text-amber-400"
-                />
+              {/* Dynamic Live KPI Metrics (Horizontal Scrollable Ribbon on Mobile) */}
+              <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
+                <div className="shrink-0 w-[270px] sm:w-auto snap-start">
+                  <KPICard
+                    title="Ventas Totales (Ingresos)"
+                    value={`$${dashboardStats.totalSales.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`}
+                    change={`${dashboardStats.completedSalesCount} Ventas`}
+                    isPositive={true}
+                    comparisonText="registradas en SQLite"
+                    icon={DollarSign}
+                    iconBgColor="bg-emerald-500/10"
+                    iconTextColor="text-emerald-400"
+                  />
+                </div>
+                <div className="shrink-0 w-[270px] sm:w-auto snap-start">
+                  <KPICard
+                    title="Stock Total en Almacén"
+                    value={`${dashboardStats.totalStock} Unidades`}
+                    change="Disponible"
+                    isPositive={true}
+                    comparisonText="físico en inventario"
+                    icon={PackageCheck}
+                    iconBgColor="bg-indigo-500/10"
+                    iconTextColor="text-indigo-400"
+                  />
+                </div>
+                <div className="shrink-0 w-[270px] sm:w-auto snap-start">
+                  <KPICard
+                    title="Gastos Importación (Aduana+Flete)"
+                    value={`$${dashboardStats.totalImportExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`}
+                    change={`${dashboardStats.totalBatchesCount} Lotes`}
+                    isPositive={false}
+                    comparisonText={`Aduana: $${dashboardStats.customsTaxPaid} | Flete: $${dashboardStats.shippingPaid}`}
+                    icon={Layers}
+                    iconBgColor="bg-blue-500/10"
+                    iconTextColor="text-blue-400"
+                  />
+                </div>
+                <div className="shrink-0 w-[270px] sm:w-auto snap-start">
+                  <KPICard
+                    title="Productos / SKUs Únicos"
+                    value={`${dashboardStats.totalSkus} SKUs`}
+                    change="Catálogos"
+                    isPositive={true}
+                    comparisonText="sin duplicados en la BD"
+                    icon={Boxes}
+                    iconBgColor="bg-amber-500/10"
+                    iconTextColor="text-amber-400"
+                  />
+                </div>
               </div>
 
               {/* Charts Section */}
