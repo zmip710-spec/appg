@@ -539,7 +539,7 @@ export const ImportBatchesView: React.FC = () => {
                       );
                     })()}
 
-                    {/* Multi-Product Optimized Table */}
+                    {/* Multi-Product Optimized Table with Exact Tax % & Total Payment Allocation */}
                     <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
@@ -547,8 +547,9 @@ export const ImportBatchesView: React.FC = () => {
                             <tr>
                               <th className="py-3 px-4 font-semibold">Producto</th>
                               <th className="py-3 px-3 font-semibold text-right">Precio Inicial (FOB)</th>
-                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Aduana (% FOB)</th>
-                              <th className="py-3 px-3 font-semibold text-right text-indigo-400">+ Flete</th>
+                              <th className="py-3 px-3 font-semibold text-center text-blue-400">% Part. Lote</th>
+                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Impuesto & Flete</th>
+                              <th className="py-3 px-3 font-semibold text-right text-indigo-400">% Recargo Impuesto</th>
                               <th className="py-3 px-3 font-semibold text-right text-blue-400">= Costo Landed</th>
                               <th className="py-3 px-4 font-semibold text-right text-emerald-400 bg-emerald-950/40 border-l border-emerald-500/30">
                                 Precio Final Venta (+{marginPct}%)
@@ -559,15 +560,20 @@ export const ImportBatchesView: React.FC = () => {
                             {batch.items.map((item, idx) => {
                               const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
                               const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : ((item.sharePercentage || 0) / 100) * (batch.totalShippingCost || 0);
+                              const totalAllocatedExpenseForItem = itemCustoms + itemShipping;
                               const customsPerUnit = item.quantity > 0 ? itemCustoms / item.quantity : 0;
                               const shippingPerUnit = item.quantity > 0 ? itemShipping / item.quantity : 0;
+                              const totalTaxPerUnit = customsPerUnit + shippingPerUnit;
                               
                               const valFobNoTax = item.unitCostFob;
-                              const valLandedFull = item.finalUnitCost || (item.unitCostFob + customsPerUnit + shippingPerUnit);
+                              const valLandedFull = item.finalUnitCost || (item.unitCostFob + totalTaxPerUnit);
                               const itemMargin = item.profitMarginPct || marginPct;
                               const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
                               const valFinalSellingGtq = valFinalSellingUsd * rate;
-                              const itemCustomsPct = valFobNoTax > 0 ? (customsPerUnit / valFobNoTax) * 100 : 0;
+                              
+                              // Exact % increase over initial FOB price due to import tax/freight
+                              const taxSurchargePct = valFobNoTax > 0 ? (totalTaxPerUnit / valFobNoTax) * 100 : 0;
+                              const sharePct = item.sharePercentage !== undefined ? item.sharePercentage : (batchFobTotal > 0 ? ((item.quantity * item.unitCostFob) / batchFobTotal) * 100 : 0);
 
                               return (
                                 <tr key={idx} className="hover:bg-slate-800/60 transition">
@@ -597,19 +603,29 @@ export const ImportBatchesView: React.FC = () => {
                                     <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
                                   </td>
 
-                                  {/* + Aduana con % visible */}
-                                  <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-amber-300 block text-xs">+${customsPerUnit.toFixed(2)} USD</span>
-                                    <span className="text-[10px] text-amber-400 font-medium block">({itemCustomsPct.toFixed(1)}% FOB)</span>
+                                  {/* % Participación en el Lote */}
+                                  <td className="py-3 px-3 text-center">
+                                    <span className="font-bold font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-xs">
+                                      {sharePct.toFixed(1)}%
+                                    </span>
+                                    <span className="text-[9px] text-slate-400 block mt-0.5">del Lote Total</span>
                                   </td>
 
-                                  {/* + Flete */}
+                                  {/* + Impuesto & Flete ($USD total e individual) */}
                                   <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-indigo-300 block text-xs">+${shippingPerUnit.toFixed(2)} USD</span>
-                                    <span className="text-[10px] text-indigo-400/80 block">Flete/u</span>
+                                    <span className="font-bold text-amber-300 block text-xs">+${totalTaxPerUnit.toFixed(2)} USD/u</span>
+                                    <span className="text-[10px] text-amber-400 font-mono block">Total: ${totalAllocatedExpenseForItem.toFixed(2)}</span>
                                   </td>
 
-                                  {/* = Costo Landed */}
+                                  {/* % Recargo de Impuestos sobre FOB */}
+                                  <td className="py-3 px-3 text-right">
+                                    <span className="font-bold text-indigo-300 font-mono bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 text-xs inline-block">
+                                      +{taxSurchargePct.toFixed(1)}%
+                                    </span>
+                                    <span className="text-[9px] text-indigo-400 block mt-0.5">Recargo sobre FOB</span>
+                                  </td>
+
+                                  {/* = Costo Landed Unitario */}
                                   <td className="py-3 px-3 text-right">
                                     <span className="font-bold text-blue-300 block text-xs">${valLandedFull.toFixed(2)} USD</span>
                                     <span className="font-mono text-[10px] text-blue-400 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
@@ -1006,6 +1022,8 @@ export const ImportBatchesView: React.FC = () => {
                             <th className="py-2.5 px-3">Producto</th>
                             <th className="py-2.5 px-3 text-center">Cantidad</th>
                             <th className="py-2.5 px-3 text-right">Costo FOB</th>
+                            <th className="py-2.5 px-3 text-center text-blue-400">% Part. Lote</th>
+                            <th className="py-2.5 px-3 text-right text-amber-400">% Recargo Imp.</th>
                             <th className="py-2.5 px-3 text-right">Total FOB</th>
                             <th className="py-2.5 px-3 text-center">Acciones</th>
                           </tr>
@@ -1015,6 +1033,12 @@ export const ImportBatchesView: React.FC = () => {
                             const qty = parseInt(item.quantity) || 0;
                             const cost = parseFloat(item.unitCostFob) || 0;
                             const totalFob = qty * cost;
+                            const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
+                            const itemCustomsVal = (itemSharePct / 100) * parsedTax;
+                            const itemShippingVal = (itemSharePct / 100) * parsedShipping;
+                            const totalExpenseForItem = itemCustomsVal + itemShippingVal;
+                            const expensePerUnit = qty > 0 ? totalExpenseForItem / qty : 0;
+                            const itemRecargoPct = cost > 0 ? (expensePerUnit / cost) * 100 : 0;
 
                             return (
                               <tr key={index} className="hover:bg-slate-900/40 transition">
@@ -1029,6 +1053,12 @@ export const ImportBatchesView: React.FC = () => {
                                 <td className="py-2 px-3 font-semibold text-white">{item.productName}</td>
                                 <td className="py-2 px-3 text-center font-medium text-slate-300">{item.quantity} uds</td>
                                 <td className="py-2 px-3 text-right font-mono text-slate-300">${cost.toFixed(2)}</td>
+                                <td className="py-2 px-3 text-center font-mono font-bold text-blue-400 text-[11px]">
+                                  {itemSharePct.toFixed(1)}%
+                                </td>
+                                <td className="py-2 px-3 text-right font-mono font-bold text-amber-400 text-[11px]">
+                                  +{itemRecargoPct.toFixed(1)}%
+                                </td>
                                 <td className="py-2 px-3 text-right font-mono font-bold text-blue-400">${totalFob.toFixed(2)}</td>
                                 <td className="py-2 px-3 text-center space-x-2">
                                   <button
