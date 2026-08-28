@@ -244,6 +244,62 @@ export const ImportBatchesView: React.FC = () => {
     setOpenSkuDropdownIndex(null);
   };
 
+  // Single Product Form Entry State inside Modal
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [singleProductForm, setSingleProductForm] = useState<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>({
+    sku: '',
+    productName: '',
+    quantity: '1',
+    unitCostFob: '',
+    image: ''
+  });
+
+  const handleOpenSingleProductForm = (indexToEdit: number | null = null) => {
+    if (indexToEdit !== null && inputItems[indexToEdit]) {
+      setEditingItemIndex(indexToEdit);
+      setSingleProductForm({ ...inputItems[indexToEdit] });
+    } else {
+      setEditingItemIndex(null);
+      setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+    }
+    setIsAddingProduct(true);
+    setOpenSkuDropdownIndex(null);
+  };
+
+  const handleConfirmSingleProduct = () => {
+    if (!singleProductForm.productName || !singleProductForm.quantity || !singleProductForm.unitCostFob) {
+      alert('Por favor completa el Nombre del Producto, la Cantidad y el Costo FOB.');
+      return;
+    }
+
+    const cleanItem = {
+      sku: singleProductForm.sku.trim() ? singleProductForm.sku.trim().toUpperCase() : `PROD-00${inputItems.length + 1}`,
+      productName: singleProductForm.productName.trim(),
+      quantity: singleProductForm.quantity,
+      unitCostFob: singleProductForm.unitCostFob,
+      image: singleProductForm.image
+    };
+
+    if (editingItemIndex !== null) {
+      const updated = [...inputItems];
+      updated[editingItemIndex] = cleanItem;
+      setInputItems(updated);
+      setEditingItemIndex(null);
+    } else {
+      setInputItems([...inputItems, cleanItem]);
+    }
+
+    setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+    setIsAddingProduct(false);
+    setOpenSkuDropdownIndex(null);
+  };
+
+  const handleRemoveConfirmedItem = (index: number) => {
+    const updated = inputItems.filter((_, i) => i !== index);
+    setInputItems(updated);
+  };
+
   const handleOpenAddModal = () => {
     setBatchName('');
     setCustomsTax('');
@@ -252,6 +308,9 @@ export const ImportBatchesView: React.FC = () => {
     setProfitMarginPct('15.0');
     setCostUpdateStrategy('weighted');
     setInputItems([]);
+    setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+    setIsAddingProduct(true);
+    setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);
     setShowConfirmModal(false);
     setShowAddModal(true);
@@ -723,186 +782,265 @@ export const ImportBatchesView: React.FC = () => {
                 )}
               </div>
 
-              {/* Product Rows Entry (Clean Mobile Cards) */}
+              {/* Product Entry Section with Top-Right + Agregar Producto Button */}
               <div className="space-y-3.5">
                 <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-semibold text-slate-300">Productos a Importar ({inputItems.length})</label>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-200">Productos Agregados al Lote ({inputItems.length})</h4>
+                    <p className="text-[11px] text-slate-400">Ingresa los datos de cada producto y confirma para agregarlo a la lista.</p>
+                  </div>
+                  {!isAddingProduct && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSingleProductForm(null)}
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>+ Agregar Producto</span>
+                    </button>
+                  )}
                 </div>
 
-                {inputItems.length === 0 ? (
-                  <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-slate-400 text-xs">
-                    Haz clic en el botón inferior para agregar productos a este lote.
-                  </div>
-                ) : (
-                  <div className="space-y-3.5">
-                    {inputItems.map((item, index) => {
-                      const cleanTyped = item.sku.trim().toUpperCase();
-                      const matchingInventory = cleanTyped.length >= 1
-                        ? inventoryList.filter(inv =>
-                            inv.sku.toUpperCase().includes(cleanTyped) ||
-                            inv.name.toUpperCase().includes(cleanTyped)
-                          )
-                        : [];
+                {/* Single Active Product Form Card (Shown when isAddingProduct is true) */}
+                {isAddingProduct && (
+                  <div className="bg-slate-900 border-2 border-blue-500/80 p-4 rounded-2xl space-y-3.5 shadow-xl relative z-40">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                      <span className="text-xs font-extrabold text-blue-400">
+                        {editingItemIndex !== null ? `Editando Producto #${editingItemIndex + 1}` : 'Ingresar Datos del Producto'}
+                      </span>
+                      {inputItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingProduct(false)}
+                          className="text-xs text-slate-400 hover:text-white"
+                        >
+                          ✕ Cerrar Formulario
+                        </button>
+                      )}
+                    </div>
 
-                      const showSuggestions = openSkuDropdownIndex === index && matchingInventory.length > 0;
+                    {/* Input Fields */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      {/* SKU */}
+                      <div className="sm:col-span-4 relative">
+                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
+                        <input
+                          type="text"
+                          placeholder="Ej. PROD-001"
+                          value={singleProductForm.sku}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSingleProductForm({ ...singleProductForm, sku: val });
+                            const cleanTyped = val.trim().toUpperCase();
+                            if (cleanTyped.length >= 1) {
+                              setOpenSkuDropdownIndex(-1);
+                            } else {
+                              setOpenSkuDropdownIndex(null);
+                            }
+                            const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
+                            if (match) {
+                              setSingleProductForm(prev => ({
+                                ...prev,
+                                productName: match.name,
+                                image: match.image || prev.image,
+                                unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
+                              }));
+                            }
+                          }}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
+                        />
 
-                      return (
-                        <div key={index} className={`space-y-3 bg-slate-900/90 p-4 rounded-2xl border border-slate-700/80 relative shadow-sm ${showSuggestions ? 'z-50' : 'z-10'}`}>
-                          {/* Header bar of item card: Producto #X on left, Eliminar Fila on right */}
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                            <span className="text-xs font-bold text-slate-200">Producto #{index + 1}</span>
-                            {inputItems.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveItemRow(index)}
-                                className="text-xs font-medium text-rose-400 hover:text-rose-300 transition"
-                              >
-                                Eliminar Fila
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                            
-                            {/* 1. Código SKU */}
-                            <div className="sm:col-span-3 relative">
-                              <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
-                              <input
-                                type="text"
-                                required
-                                placeholder="PROD-001"
-                                value={item.sku}
-                                onFocus={() => {
-                                  if (item.sku.trim().length >= 1) setOpenSkuDropdownIndex(index);
-                                }}
-                                onChange={(e) => handleItemChange(index, 'sku', e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
-                              />
-
-                              {/* Floating Suggestions Popup */}
-                              {showSuggestions && (
-                                <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800 ring-4 ring-blue-500/30">
-                                  <div className="p-2 text-[10px] font-bold text-blue-400 uppercase bg-slate-950 flex justify-between items-center sticky top-0 z-10 border-b border-slate-800">
-                                    <span>Coincidencias Encontradas ({matchingInventory.length})</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setOpenSkuDropdownIndex(null)}
-                                      className="text-slate-400 hover:text-white p-0.5"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-
-                                  {matchingInventory.map((inv) => (
-                                    <div
-                                      key={inv.id}
-                                      onClick={() => handleSelectMatchingSku(index, inv)}
-                                      className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
-                                    >
-                                      <div className="flex items-center space-x-2.5">
-                                        {inv.image ? (
-                                          <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover border border-slate-700" />
-                                        ) : (
-                                          <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px]">📦</div>
-                                        )}
-                                        <div>
-                                          <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
-                                          <span className="text-[11px] text-slate-200">{inv.name}</span>
-                                        </div>
-                                      </div>
-                                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono font-semibold">Stock: {inv.stock}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* 2. Nombre del Producto */}
-                            <div className="sm:col-span-4">
-                              <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto</label>
-                              <input
-                                type="text"
-                                required
-                                placeholder="Ej. Camiseta Algodón"
-                                value={item.productName}
-                                onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                              />
-                            </div>
-
-                            {/* 3. Cantidad & Costo FOB Grid */}
-                            <div className="grid grid-cols-2 gap-3 sm:col-span-5">
-                              <div>
-                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad</label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  required
-                                  placeholder="1"
-                                  value={item.quantity}
-                                  onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD)</label>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  required
-                                  placeholder="0.00"
-                                  value={item.unitCostFob}
-                                  onChange={(e) => handleItemChange(index, 'unitCostFob', e.target.value)}
-                                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Compact Dropzone / Preview for Item Image */}
-                          <div className="pt-1">
-                            {item.image ? (
-                              <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                                <div className="flex items-center space-x-2.5">
-                                  <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700" />
-                                  <div>
-                                    <span className="text-xs text-white font-medium block">Foto adjuntada</span>
-                                    <span className="text-[10px] text-slate-400">Vinculada al producto</span>
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleItemChange(index, 'image', '')}
-                                  className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 transition"
+                        {/* Sku Dropdown Suggestions */}
+                        {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
+                          <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
+                            {inventoryList
+                              .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
+                              .map(inv => (
+                                <div
+                                  key={inv.id}
+                                  onClick={() => {
+                                    setSingleProductForm(prev => ({
+                                      ...prev,
+                                      sku: inv.sku,
+                                      productName: inv.name,
+                                      image: inv.image || prev.image,
+                                      unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
+                                    }));
+                                    setOpenSkuDropdownIndex(null);
+                                  }}
+                                  className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
                                 >
-                                  Quitar foto
-                                </button>
-                              </div>
-                            ) : (
-                              <ImagePicker
-                                value={item.image || ''}
-                                onChange={(img) => handleItemChange(index, 'image', img)}
-                                label="Añadir Foto"
-                              />
-                            )}
+                                  <div className="flex items-center space-x-2">
+                                    {inv.image ? (
+                                      <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover" />
+                                    ) : (
+                                      <div className="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-[10px]">📦</div>
+                                    )}
+                                    <div>
+                                      <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
+                                      <span className="text-[11px] text-slate-200">{inv.name}</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[10px] text-emerald-400">Stock: {inv.stock}</span>
+                                </div>
+                              ))}
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+
+                      {/* Nombre Producto */}
+                      <div className="sm:col-span-8">
+                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ej. Smartwatch Ultra L5"
+                          value={singleProductForm.productName}
+                          onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      {/* Cantidad */}
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad *</label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          placeholder="1"
+                          value={singleProductForm.quantity}
+                          onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      {/* Costo FOB */}
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          placeholder="0.00"
+                          value={singleProductForm.unitCostFob}
+                          onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      {/* Total FOB Preview */}
+                      <div className="sm:col-span-4 bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
+                        <span className="text-[10px] text-slate-400 block">Total FOB Estimado</span>
+                        <span className="text-xs font-mono font-bold text-blue-400">
+                          ${((parseInt(singleProductForm.quantity) || 0) * (parseFloat(singleProductForm.unitCostFob) || 0)).toFixed(2)} USD
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Foto Dropzone */}
+                    <ImagePicker
+                      value={singleProductForm.image || ''}
+                      onChange={(img) => setSingleProductForm({ ...singleProductForm, image: img })}
+                      label="Añadir Foto del Producto"
+                    />
+
+                    {/* Confirmation Button */}
+                    <div className="pt-2 flex justify-end space-x-2">
+                      {inputItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingProduct(false)}
+                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleConfirmSingleProduct}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>{editingItemIndex !== null ? 'Guardar Cambios' : 'Confirmar e Incluir en el Lote'}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* + Agregar Fila de Producto Button at the end of list (Full-width outline style) */}
-                <button
-                  type="button"
-                  onClick={handleAddItemRow}
-                  className="w-full py-3 bg-slate-900/80 hover:bg-slate-800 border border-dashed border-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-2xl flex items-center justify-center space-x-2 transition cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-blue-400" />
-                  <span>+ Agregar Fila de Producto</span>
-                </button>
+                {/* Confirmed Products Summary Table */}
+                {inputItems.length > 0 && (
+                  <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
+                    <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-300">
+                      <span>Lista de Productos Confirmados ({inputItems.length})</span>
+                      {!isAddingProduct && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSingleProductForm(null)}
+                          className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                        >
+                          + Agregar Otro Producto
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-900/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800">
+                          <tr>
+                            <th className="py-2.5 px-3">Foto</th>
+                            <th className="py-2.5 px-3">SKU</th>
+                            <th className="py-2.5 px-3">Producto</th>
+                            <th className="py-2.5 px-3 text-center">Cantidad</th>
+                            <th className="py-2.5 px-3 text-right">Costo FOB</th>
+                            <th className="py-2.5 px-3 text-right">Total FOB</th>
+                            <th className="py-2.5 px-3 text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {inputItems.map((item, index) => {
+                            const qty = parseInt(item.quantity) || 0;
+                            const cost = parseFloat(item.unitCostFob) || 0;
+                            const totalFob = qty * cost;
+
+                            return (
+                              <tr key={index} className="hover:bg-slate-900/40 transition">
+                                <td className="py-2 px-3">
+                                  {item.image ? (
+                                    <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px]">📦</div>
+                                  )}
+                                </td>
+                                <td className="py-2 px-3 font-mono font-bold text-blue-400">{item.sku}</td>
+                                <td className="py-2 px-3 font-semibold text-white">{item.productName}</td>
+                                <td className="py-2 px-3 text-center font-medium text-slate-300">{item.quantity} uds</td>
+                                <td className="py-2 px-3 text-right font-mono text-slate-300">${cost.toFixed(2)}</td>
+                                <td className="py-2 px-3 text-right font-mono font-bold text-blue-400">${totalFob.toFixed(2)}</td>
+                                <td className="py-2 px-3 text-center space-x-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenSingleProductForm(index)}
+                                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveConfirmedItem(index)}
+                                    className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Previsualización de Matriz de Costos (Structured Table & Highlighted Summary Row) */}
