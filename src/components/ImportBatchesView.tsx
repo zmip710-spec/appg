@@ -71,12 +71,13 @@ export const ImportBatchesView: React.FC = () => {
   let totalBatchFob = 0;
 
   const previewItems = inputItems.map((item, idx) => {
-    const qty = parseInt(item.quantity) || 0;
-    const cost = parseFloat(item.unitCostFob) || 0;
+    const qty = Math.max(0, parseInt(item.quantity) || 0);
+    const cost = Math.max(0, parseFloat(item.unitCostFob) || 0);
     const totalFob = qty * cost;
     totalBatchFob += totalFob;
     const sku = item.sku && item.sku.trim() !== '' ? item.sku.trim().toUpperCase() : `PROD-00${idx + 1}`;
-    return { sku, productName: item.productName || 'Producto', quantity: qty, unitCostFob: cost, totalFobValue: totalFob, image: item.image || '' };
+    const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto #${idx + 1}`;
+    return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalFob, image: item.image || '' };
   });
 
   const proratedPreview = previewItems.map(item => {
@@ -113,7 +114,7 @@ export const ImportBatchesView: React.FC = () => {
   const hasStockWithPriceVariation = detectedPriceVariations.length > 0;
 
   const handleAddItemRow = () => {
-    setInputItems([...inputItems, { sku: '', productName: '', quantity: '1', unitCostFob: '10.0', image: '' }]);
+    setInputItems([...inputItems, { sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' }]);
   };
 
   const handleRemoveItemRow = (index: number) => {
@@ -138,6 +139,9 @@ export const ImportBatchesView: React.FC = () => {
       if (match) {
         updated[index].productName = match.name;
         if (match.image) updated[index].image = match.image;
+        if (match.unitCost && (!updated[index].unitCostFob || updated[index].unitCostFob === '')) {
+          updated[index].unitCostFob = match.unitCost.toString();
+        }
       }
     }
 
@@ -149,6 +153,7 @@ export const ImportBatchesView: React.FC = () => {
     updated[index].sku = inv.sku;
     updated[index].productName = inv.name;
     if (inv.image) updated[index].image = inv.image;
+    if (inv.unitCost) updated[index].unitCostFob = inv.unitCost.toString();
     setInputItems(updated);
     setOpenSkuDropdownIndex(null);
   };
