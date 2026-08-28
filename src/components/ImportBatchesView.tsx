@@ -453,226 +453,111 @@ export const ImportBatchesView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Batch Items Breakdown */}
+                {/* Batch Items Breakdown: Clean Multi-Product Matrix Table */}
                 {isExpanded && (
-                  <div className="border-t border-slate-700 bg-slate-900/50 p-3 sm:p-5 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-slate-400 gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                      <span>MATRIZ DE PRECIOS & PRORRATEO (FOB: ${batchFobTotal.toFixed(2)} USD)</span>
-                      <div className="flex items-center space-x-4">
-                        <span className="text-amber-400">🏛️ Aduana: ${batch.totalCustomsTax?.toFixed(2)} USD</span>
-                        <span className="text-indigo-400">🚚 Flete: ${batch.totalShippingCost?.toFixed(2)} USD</span>
-                        <span className="text-emerald-400 font-bold">🏷️ Margen Venta: +{marginPct}%</span>
+                  <div className="border-t border-slate-700 bg-slate-900/90 p-4 space-y-4">
+                    {/* Summary Header Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-slate-300 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-white text-sm">Productos en este Lote ({batch.items.length})</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono font-semibold">
+                          Tasa: Q {rate.toFixed(2)} GTQ / USD
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-4 text-[11px] flex-wrap gap-1">
+                        <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
+                        <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD</strong></span>
+                        <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
+                        <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Margen: +{marginPct}%</span>
                       </div>
                     </div>
 
-                    {/* MOBILE CARDS BREAKDOWN (Matching exact layout from reference screenshot) */}
-                    <div className="md:hidden space-y-4">
-                      {/* Top Centered Total Banner */}
-                      <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3 text-center shadow-xs">
-                        <span className="text-sm font-bold text-blue-700 font-mono">Q 468.00 GTQ</span>
-                      </div>
+                    {/* Multi-Product Optimized Table */}
+                    <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-900/90 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-800">
+                            <tr>
+                              <th className="py-3 px-4 font-semibold">Producto</th>
+                              <th className="py-3 px-3 font-semibold text-right">Precio Inicial (FOB)</th>
+                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Aduana</th>
+                              <th className="py-3 px-3 font-semibold text-right text-indigo-400">+ Flete</th>
+                              <th className="py-3 px-3 font-semibold text-right text-blue-400">= Costo Landed</th>
+                              <th className="py-3 px-4 font-semibold text-right text-emerald-400 bg-emerald-950/40 border-l border-emerald-500/30">
+                                Precio Final Venta (+{marginPct}%)
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/80 bg-slate-900/40">
+                            {batch.items.map((item, idx) => {
+                              const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
+                              const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : ((item.sharePercentage || 0) / 100) * (batch.totalShippingCost || 0);
+                              const customsPerUnit = item.quantity > 0 ? itemCustoms / item.quantity : 0;
+                              const shippingPerUnit = item.quantity > 0 ? itemShipping / item.quantity : 0;
+                              
+                              const valFobNoTax = item.unitCostFob;
+                              const valLandedFull = item.finalUnitCost || (item.unitCostFob + customsPerUnit + shippingPerUnit);
+                              const itemMargin = item.profitMarginPct || marginPct;
+                              const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
+                              const valFinalSellingGtq = valFinalSellingUsd * rate;
 
-                      {/* Product Cards Stack */}
-                      <div className="space-y-2.5">
-                        {batch.items.map((item, idx) => {
-                          const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
-                          const customsPerUnit = item.quantity > 0 ? itemCustoms / item.quantity : 0;
-                          const valLandedFull = item.finalUnitCost || (item.unitCostFob + (item.unitTax || 0));
-                          const itemMargin = item.profitMarginPct || marginPct;
-                          const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
-                          const valFinalSellingGtq = valFinalSellingUsd * rate;
-
-                          // Format specific prices for matching UI if item name matches
-                          let sellingPriceText = `Q ${valFinalSellingGtq.toFixed(2)} GTQ /u`;
-                          let labelText = "Precio Final Venta Unitario";
-
-                          if (item.productName.includes("Power Bank")) {
-                            sellingPriceText = "Q 310.00 GTQ /u";
-                            labelText = "Precio 61 Venta Unitario";
-                          } else if (item.productName.includes("Hub USB")) {
-                            sellingPriceText = "Q 199.99 GTQ /u";
-                            labelText = "Precio 57 Venta Unitario";
-                          } else if (item.productName.includes("Smartwatch")) {
-                            sellingPriceText = "Q 255.92 GTQ /u";
-                          } else if (item.productName.includes("Audífonos")) {
-                            sellingPriceText = "Q 115.50 GTQ /u";
-                          } else if (item.productName.includes("Cargador")) {
-                            sellingPriceText = "Q 185.00 GTQ /u";
-                          }
-
-                          return (
-                            <div key={idx} className={`bg-white border rounded-2xl p-3.5 shadow-sm transition ${idx === 0 ? 'border-blue-300 ring-2 ring-blue-400/20' : 'border-slate-200'}`}>
-                              <div className="flex items-center space-x-3">
-                                {item.image ? (
-                                  <img src={item.image} alt={item.productName} className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100 p-0.5" />
-                                ) : (
-                                  <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0"><ImageIcon className="w-6 h-6" /></div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-start">
-                                    <div>
-                                      <h4 className="font-bold text-slate-900 text-sm leading-tight">{item.productName}</h4>
-                                      {item.sku && <span className="text-[11px] text-slate-500 font-mono block leading-tight">{item.sku}</span>}
+                              return (
+                                <tr key={idx} className="hover:bg-slate-800/60 transition">
+                                  {/* Producto (Foto, SKU, Nombre, Cantidad) */}
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center space-x-3 min-w-[200px]">
+                                      {item.image ? (
+                                        <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0 bg-slate-800" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                          <ImageIcon className="w-5 h-5" />
+                                        </div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <span className="font-mono text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 inline-block mb-0.5">
+                                          {item.sku || `PROD-00${idx+1}`}
+                                        </span>
+                                        <h4 className="font-bold text-white text-xs truncate">{item.productName}</h4>
+                                        <span className="text-[10px] text-slate-400 font-medium">{item.quantity} unidades</span>
+                                      </div>
                                     </div>
-                                    <div className="text-right">
-                                      <span className="font-extrabold text-slate-900 text-xs font-mono block">{sellingPriceText}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex justify-between items-end mt-1">
-                                    <span className="text-xs text-slate-600 font-medium">{item.quantity} unidades</span>
-                                    <span className="text-[10px] text-slate-500 block text-right">{labelText}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                                  </td>
+
+                                  {/* Precio Inicial (FOB Base) */}
+                                  <td className="py-3 px-3 text-right">
+                                    <span className="font-bold text-white block text-xs">${valFobNoTax.toFixed(2)} USD</span>
+                                    <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
+                                  </td>
+
+                                  {/* + Aduana */}
+                                  <td className="py-3 px-3 text-right">
+                                    <span className="font-bold text-amber-300 block text-xs">+${customsPerUnit.toFixed(2)} USD</span>
+                                    <span className="text-[10px] text-amber-400/80 block">Aduana/u</span>
+                                  </td>
+
+                                  {/* + Flete */}
+                                  <td className="py-3 px-3 text-right">
+                                    <span className="font-bold text-indigo-300 block text-xs">+${shippingPerUnit.toFixed(2)} USD</span>
+                                    <span className="text-[10px] text-indigo-400/80 block">Flete/u</span>
+                                  </td>
+
+                                  {/* = Costo Landed */}
+                                  <td className="py-3 px-3 text-right">
+                                    <span className="font-bold text-blue-300 block text-xs">${valLandedFull.toFixed(2)} USD</span>
+                                    <span className="font-mono text-[10px] text-blue-400 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
+                                  </td>
+
+                                  {/* Precio Final Venta (+Margen) */}
+                                  <td className="py-3 px-4 text-right bg-emerald-950/40 border-l border-emerald-500/30">
+                                    <span className="font-black text-white text-xs block">${valFinalSellingUsd.toFixed(2)} USD</span>
+                                    <span className="font-mono font-black text-emerald-400 text-xs block">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-
-                      {/* DESGLOSE DE COSTOS UNITARIOS POR ETAPA Table Section */}
-                      <div className="pt-2">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800 uppercase tracking-tight mb-2">
-                          <span>📊 DESGLOSE DE COSTOS UNITARIOS POR ETAPA</span>
-                        </div>
-                        <span className="text-[11px] text-slate-600 block mb-2 font-medium">(Lote: {batch.id.replace('#', '')})</span>
-
-                        {/* 4-Column Table Grid from Screenshot */}
-                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs bg-white text-[11px]">
-                          {/* Table Headers */}
-                          <div className="grid grid-cols-4 text-center font-bold border-b border-slate-200">
-                            <div className="p-2 bg-blue-50 text-blue-700 border-r border-slate-200">1. BASE CIF</div>
-                            <div className="p-2 bg-amber-50 text-amber-800 border-r border-slate-200">2. ADUANA<br/><span className="text-[9px] font-normal">(+IMP)</span></div>
-                            <div className="p-2 bg-purple-50 text-purple-800 border-r border-slate-200">3. LANDED<br/><span className="text-[9px] font-normal">(+GASTOS ADIC)</span></div>
-                            <div className="p-2 bg-emerald-100 text-emerald-900">4. VENTA<br/><span className="text-[9px] font-normal">(MARGEN +15%)</span></div>
-                          </div>
-
-                          {/* Table Data Rows */}
-                          <div className="grid grid-cols-4 text-center divide-x divide-slate-200">
-                            {/* Column 1: BASE CIF */}
-                            <div className="p-2 bg-blue-50/30 space-y-1.5">
-                              <div>
-                                <span className="text-[9px] text-slate-500 block">Unit FOB Cost:</span>
-                                <span className="font-bold text-slate-900 block">$25.00 USD</span>
-                              </div>
-                              <div className="pt-1 border-t border-slate-200/60">
-                                <span className="text-[9px] text-slate-500 block">Unit GTQ Cost:</span>
-                                <span className="font-bold text-slate-900 block font-mono text-[10px]">Q 195.00 GTQ</span>
-                              </div>
-                            </div>
-
-                            {/* Column 2: ADUANA (+IMP) */}
-                            <div className="p-2 bg-amber-50/30 space-y-1.5">
-                              <div>
-                                <span className="text-[9px] text-slate-600 block">Aduana Cost (Unit):</span>
-                                <span className="font-bold text-amber-700 block">+$2.94 USD</span>
-                              </div>
-                              <div className="pt-1 border-t border-slate-200/60">
-                                <span className="text-[9px] text-slate-600 block">Total (Stage 2):</span>
-                                <span className="font-bold text-amber-800 block font-mono text-[10px]">Q 217.94 GTQ</span>
-                              </div>
-                            </div>
-
-                            {/* Column 3: LANDED (+GASTOS ADIC) */}
-                            <div className="p-2 bg-purple-50/30 space-y-1.5">
-                              <div>
-                                <span className="text-[9px] text-slate-600 block">Flete & Gastos (Unit):</span>
-                                <span className="font-bold text-purple-700 block">+$0.59 USD</span>
-                              </div>
-                              <div className="pt-1 border-t border-slate-200/60">
-                                <span className="text-[9px] text-slate-600 block">Total (Stage 3):</span>
-                                <span className="font-bold text-purple-800 block font-mono text-[10px]">Q 222.53 GTQ</span>
-                              </div>
-                            </div>
-
-                            {/* Column 4: VENTA (MARGEN +15%) */}
-                            <div className="p-2 bg-emerald-50/50 space-y-1.5 relative">
-                              <div>
-                                <span className="text-[9px] text-slate-600 block">Selling Price (Unit):</span>
-                                <span className="font-bold text-emerald-800 block">$32.81 USD</span>
-                              </div>
-                              <div className="pt-1 border-t border-slate-200/60">
-                                <span className="text-[9px] text-slate-600 block">Final (Stage 4):</span>
-                                <span className="font-extrabold text-emerald-900 block font-mono text-[10px]">Q 255.92 GTQ</span>
-                              </div>
-                              <div className="mt-1">
-                                <span className="bg-emerald-200 text-emerald-900 font-bold px-1.5 py-0.5 rounded text-[9px] inline-block border border-emerald-300">
-                                  +15% Margen
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* DESKTOP TABLE BREAKDOWN (Visible on md and larger) */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full text-left text-xs text-slate-300 border border-slate-700 rounded-lg overflow-hidden">
-                        <thead className="bg-slate-900 text-slate-400 uppercase font-semibold border-b border-slate-700">
-                          <tr>
-                            <th className="p-3">Foto</th>
-                            <th className="p-3">SKU</th>
-                            <th className="p-3">Producto</th>
-                            <th className="p-3">Cantidad</th>
-                            <th className="p-3">1. FOB Sin Impuesto</th>
-                            <th className="p-3 text-amber-400">2. Con Impuesto Aduana</th>
-                            <th className="p-3 text-indigo-400">3. Landed (+Flete Completo)</th>
-                            <th className="p-3 bg-emerald-950/60 text-emerald-400 font-extrabold">4. 🏷️ Precio Final Venta (+{marginPct}%)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700/60 bg-slate-800/80">
-                          {batch.items.map((item, idx) => {
-                            const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
-                            const customsPerUnit = item.quantity > 0 ? itemCustoms / item.quantity : 0;
-                            
-                            const valFobNoTax = item.unitCostFob;
-                            const valWithCustoms = item.unitCostFob + customsPerUnit;
-                            const valLandedFull = item.finalUnitCost || (item.unitCostFob + (item.unitTax || 0));
-                            const itemMargin = item.profitMarginPct || marginPct;
-                            const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
-                            const valFinalSellingGtq = valFinalSellingUsd * rate;
-
-                            return (
-                              <tr key={idx} className="hover:bg-slate-700/40 transition">
-                                <td className="p-2.5">
-                                  {item.image ? (
-                                    <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700" />
-                                  ) : (
-                                    <div className="w-9 h-9 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400"><ImageIcon className="w-4 h-4" /></div>
-                                  )}
-                                </td>
-                                <td className="p-3 font-mono font-medium text-blue-400">{item.sku || `PROD-00${idx+1}`}</td>
-                                <td className="p-3 font-semibold text-white">{item.productName}</td>
-                                <td className="p-3">{item.quantity} uds</td>
-                                
-                                {/* 1. Sin Impuesto */}
-                                <td className="p-3">
-                                  <span className="font-semibold text-white block">${valFobNoTax.toFixed(2)} USD</span>
-                                  <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
-                                </td>
-
-                                {/* 2. Con Impuesto Aduana */}
-                                <td className="p-3 text-amber-400">
-                                  <span className="font-bold text-amber-300 block">${valWithCustoms.toFixed(2)} USD</span>
-                                  <span className="font-mono text-[10px] text-amber-300/80 block">Q {(valWithCustoms * rate).toFixed(2)} GTQ</span>
-                                </td>
-
-                                {/* 3. Con Envío (Landed) */}
-                                <td className="p-3 text-indigo-400">
-                                  <span className="font-bold text-indigo-300 block">${valLandedFull.toFixed(2)} USD</span>
-                                  <span className="font-mono text-[10px] text-indigo-300/80 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
-                                </td>
-
-                                {/* 4. Precio Final Venta (+% Margen) */}
-                                <td className="p-3 bg-emerald-950/40 border-l border-emerald-500/30">
-                                  <span className="font-extrabold text-white text-sm block">${valFinalSellingUsd.toFixed(2)} USD</span>
-                                  <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
                     </div>
                   </div>
                 )}
