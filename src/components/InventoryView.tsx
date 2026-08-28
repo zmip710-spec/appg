@@ -254,9 +254,9 @@ export const InventoryView: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+      {/* Summary KPI Cards (Horizontal Scrollable Ribbon on Mobile) */}
+      <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Productos Únicos (SKUs)</span>
             <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><Boxes className="w-5 h-5" /></div>
@@ -265,7 +265,7 @@ export const InventoryView: React.FC = () => {
           <span className="text-xs text-slate-400">Sin duplicados en la BD</span>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Stock Total en Almacén</span>
             <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><PackageCheck className="w-5 h-5" /></div>
@@ -274,7 +274,7 @@ export const InventoryView: React.FC = () => {
           <span className="text-xs text-indigo-400 font-medium">Acumuladas en SQLite</span>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Valor Total del Inventario</span>
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><DollarSign className="w-5 h-5" /></div>

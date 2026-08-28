@@ -261,9 +261,9 @@ export const ImportBatchesView: React.FC = () => {
         </button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+      {/* KPI Cards (Horizontal Scrollable Ribbon on Mobile) */}
+      <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Lotes Procesados</span>
             <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><Package className="w-5 h-5" /></div>
@@ -272,7 +272,7 @@ export const ImportBatchesView: React.FC = () => {
           <span className="text-xs text-slate-400">Registrados en la BD</span>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Gastos Importación (USD / GTQ)</span>
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><DollarSign className="w-5 h-5" /></div>
@@ -288,7 +288,7 @@ export const ImportBatchesView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Margen Comercial de Venta</span>
             <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><TrendingUp className="w-5 h-5" /></div>

@@ -64,9 +64,9 @@ export const AnalyticsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Top BI KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+      {/* Top BI KPI Grid (Horizontal Scrollable Ribbon on Mobile) */}
+      <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-slate-400 uppercase">Costo Promedio Landed</span>
             <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><DollarSign className="w-5 h-5" /></div>
@@ -75,7 +75,7 @@ export const AnalyticsView: React.FC = () => {
           <span className="text-xs text-blue-400">Por unidad en almacén</span>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-slate-400 uppercase">Gastos Aduana vs Flete</span>
             <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><Layers className="w-5 h-5" /></div>
@@ -88,7 +88,7 @@ export const AnalyticsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-slate-400 uppercase">Valoración Total del Almacén</span>
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><PackageCheck className="w-5 h-5" /></div>
@@ -105,8 +105,8 @@ export const AnalyticsView: React.FC = () => {
           <span>Flujo de Valor de Mercancía (Compra FOB ➔ Importación ➔ Inventario ➔ Venta)</span>
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-          <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-700 relative flex flex-col justify-between">
+        <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-visible pt-2">
+          <div className="shrink-0 w-[240px] md:w-auto snap-start bg-slate-900/90 p-4 rounded-xl border border-slate-700 relative flex flex-col justify-between">
             <div>
               <span className="text-[10px] uppercase font-bold text-slate-400">1. Valor FOB Compra</span>
               <h4 className="text-lg font-bold text-white mt-1">${(inventoryValue - totalImportExpenses > 0 ? inventoryValue - totalImportExpenses : inventoryValue * 0.75).toFixed(2)} USD</h4>
@@ -114,7 +114,7 @@ export const AnalyticsView: React.FC = () => {
             <span className="text-[11px] text-slate-400 mt-3 block">Costo base de fábrica</span>
           </div>
 
-          <div className="bg-slate-900/90 p-4 rounded-xl border border-indigo-500/40 relative flex flex-col justify-between">
+          <div className="shrink-0 w-[240px] md:w-auto snap-start bg-slate-900/90 p-4 rounded-xl border border-indigo-500/40 relative flex flex-col justify-between">
             <div>
               <span className="text-[10px] uppercase font-bold text-indigo-400">2. Gastos Importación</span>
               <h4 className="text-lg font-bold text-indigo-400 mt-1">${totalImportExpenses.toFixed(2)} USD</h4>
@@ -122,7 +122,7 @@ export const AnalyticsView: React.FC = () => {
             <span className="text-[11px] text-slate-400 mt-3 block">Aduana (${customsTaxPaid.toFixed(0)}) + Flete (${shippingPaid.toFixed(0)})</span>
           </div>
 
-          <div className="bg-slate-900/90 p-4 rounded-xl border border-blue-500/40 relative flex flex-col justify-between">
+          <div className="shrink-0 w-[240px] md:w-auto snap-start bg-slate-900/90 p-4 rounded-xl border border-blue-500/40 relative flex flex-col justify-between">
             <div>
               <span className="text-[10px] uppercase font-bold text-blue-400">3. Valor Landed en Almacén</span>
               <h4 className="text-lg font-bold text-blue-400 mt-1">${inventoryValue.toFixed(2)} USD</h4>
@@ -130,7 +130,7 @@ export const AnalyticsView: React.FC = () => {
             <span className="text-[11px] text-slate-400 mt-3 block">{totalStock} unidades en stock</span>
           </div>
 
-          <div className="bg-slate-900/90 p-4 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
+          <div className="shrink-0 w-[240px] md:w-auto snap-start bg-slate-900/90 p-4 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
             <div>
               <span className="text-[10px] uppercase font-bold text-emerald-400">4. Ventas Realizadas</span>
               <h4 className="text-lg font-bold text-emerald-400 mt-1">${totalSales.toFixed(2)} USD</h4>
