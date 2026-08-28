@@ -28,9 +28,17 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     try {
       const users = await fetchUsers();
       if (Array.isArray(users)) {
-        setAvailableUsers(users.filter(u => u.status === 'Activo'));
+        const activeUsers = users.filter(u => u.status === 'Activo');
+        setAvailableUsers(activeUsers);
+        if (activeUsers.length === 0) {
+          setIsRegisterMode(true);
+        }
+      } else {
+        setIsRegisterMode(true);
       }
-    } catch {}
+    } catch {
+      setIsRegisterMode(true);
+    }
   };
 
   useEffect(() => {
@@ -164,7 +172,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña (Predeterminada: 123456)</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -260,35 +268,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>{loading ? 'Registrando...' : 'Crear Perfil e Iniciar Sesión'}</span>
             </button>
           </form>
-        )}
-
-        {/* Quick Demo Login Selector */}
-        {!isRegisterMode && availableUsers.length > 0 && (
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <span className="text-[11px] font-bold text-slate-400 uppercase block text-center">
-              ⚡ Iniciar Sesión Rápido en 1 Clic (Clave: 123456)
-            </span>
-
-            <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-              {availableUsers.map((user) => (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => handleQuickLogin(user)}
-                  className="w-full p-2.5 bg-slate-950 hover:bg-blue-600/20 border border-slate-800 hover:border-blue-500/40 rounded-xl flex items-center justify-between transition group text-left"
-                >
-                  <div className="flex items-center space-x-3">
-                    <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-slate-700" />
-                    <div>
-                      <span className="text-xs font-bold text-white group-hover:text-blue-400 block">{user.name}</span>
-                      <span className="text-[10px] text-slate-400">{user.role}</span>
-                    </div>
-                  </div>
-                  <UserCheck className="w-4 h-4 text-slate-500 group-hover:text-blue-400" />
-                </button>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </div>

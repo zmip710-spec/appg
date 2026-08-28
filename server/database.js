@@ -213,17 +213,6 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT '123456'");
 
-    // Semilla de usuarios si está vacía
-    const usersCount = await pgPool.query('SELECT COUNT(*) as count FROM users');
-    if (parseInt(usersCount.rows[0].count) === 0) {
-      await pgPool.query(`
-        INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES
-        ('Sofía Ramírez', 'sofia@nexus.io', 'Administrador', 'Activo', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80', 'Hace 5 min', '123456'),
-        ('Alejandro Morales', 'alejandro@nexus.io', 'Desarrollador', 'Activo', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80', 'Hace 2 horas', '123456'),
-        ('Camila Torres', 'camila@nexus.io', 'Diseñadora UI/UX', 'Activo', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', 'Ayer', '123456');
-      `);
-    }
-
     console.log('✅ Tablas y esquema de PostgreSQL inicializados correctamente.');
   } catch (err) {
     console.error('Error al inicializar las tablas en PostgreSQL:', err);
