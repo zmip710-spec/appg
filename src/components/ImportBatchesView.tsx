@@ -18,12 +18,95 @@ import {
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
 import { ImagePicker } from './ImagePicker';
 
-const fallbackBatches: ImportBatch[] = [];
+const fallbackBatches: ImportBatch[] = [
+  {
+    id: '#5555',
+    name: 'Lote #5555 - Importación Tecnológica',
+    importDate: '28 Ago 2026',
+    totalCustomsTax: 50.00,
+    totalShippingCost: 10.00,
+    exchangeRateGtq: 7.80,
+    profitMarginPct: 15.0,
+    costUpdateStrategy: 'weighted',
+    items: [
+      {
+        sku: 'asdasd',
+        productName: 'Smartwatch Ultra L5',
+        quantity: 17,
+        unitCostFob: 25.00,
+        allocatedCustoms: 2.94,
+        allocatedShipping: 0.59,
+        allocatedTax: 3.53,
+        unitTax: 3.53,
+        finalUnitCost: 28.53,
+        profitMarginPct: 15.0,
+        finalSellingPrice: 32.81,
+        image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=120&q=80'
+      },
+      {
+        sku: 'AUD-Q3',
+        productName: 'Audífonos In-Ear Q3',
+        quantity: 25,
+        unitCostFob: 11.28,
+        allocatedCustoms: 1.20,
+        allocatedShipping: 0.35,
+        allocatedTax: 1.55,
+        unitTax: 1.55,
+        finalUnitCost: 12.83,
+        profitMarginPct: 15.0,
+        finalSellingPrice: 14.81,
+        image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=120&q=80'
+      },
+      {
+        sku: 'CARG-M5',
+        productName: 'Cargador Inalámbrico M5',
+        quantity: 12,
+        unitCostFob: 18.09,
+        allocatedCustoms: 1.80,
+        allocatedShipping: 0.50,
+        allocatedTax: 2.30,
+        unitTax: 2.30,
+        finalUnitCost: 20.39,
+        profitMarginPct: 15.0,
+        finalSellingPrice: 23.72,
+        image: 'https://images.unsplash.com/photo-1622445268465-843857588a36?auto=format&fit=crop&w=120&q=80'
+      },
+      {
+        sku: 'PWR-20K',
+        productName: 'Power Bank 20k-mAh',
+        quantity: 20,
+        unitCostFob: 30.30,
+        allocatedCustoms: 3.10,
+        allocatedShipping: 0.85,
+        allocatedTax: 3.95,
+        unitTax: 3.95,
+        finalUnitCost: 34.25,
+        profitMarginPct: 15.0,
+        finalSellingPrice: 39.74,
+        image: 'https://images.unsplash.com/photo-1609592424074-245152a514d0?auto=format&fit=crop&w=120&q=80'
+      },
+      {
+        sku: 'HUB-7IN1',
+        productName: 'Hub USB-C 7-en-1',
+        quantity: 10,
+        unitCostFob: 19.55,
+        allocatedCustoms: 1.95,
+        allocatedShipping: 0.55,
+        allocatedTax: 2.50,
+        unitTax: 2.50,
+        finalUnitCost: 22.05,
+        profitMarginPct: 15.0,
+        finalSellingPrice: 25.64,
+        image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=120&q=80'
+      }
+    ]
+  }
+];
 
 export const ImportBatchesView: React.FC = () => {
   const [batches, setBatches] = useState<ImportBatch[]>(fallbackBatches);
   const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
-  const [expandedBatchId, setExpandedBatchId] = useState<string | null>('#LOT-2026-01');
+  const [expandedBatchId, setExpandedBatchId] = useState<string | null>('#5555');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
@@ -423,53 +506,75 @@ export const ImportBatchesView: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Desglose Progresivo de Precios en 4 Etapas con divisiones claras */}
-                            <div className="space-y-2 pt-1">
-                              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                                📊 Desglose de Precios por Etapa
-                              </span>
+                            {/* Desglose Progresivo de Precios en 4 Etapas (Lote: 5555) */}
+                            <div className="space-y-2.5 pt-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block">
+                                  DESGLOSE DE COSTOS UNITARIOS POR ETAPA (Lote: 5555)
+                                </span>
+                                <span className="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Desglosando Costos</span>
+                              </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                                {/* Etapa 1: Base FOB */}
-                                <div className="bg-slate-950/90 border border-slate-700/80 p-2.5 rounded-xl space-y-1">
-                                  <span className="text-slate-400 text-[10px] font-semibold block uppercase">1. Base FOB (Sin Impuesto)</span>
+                                {/* Etapa 1: BASE CIF (Blue header) */}
+                                <div className="bg-blue-600/20 border border-blue-500/40 p-2.5 rounded-xl space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-blue-400 text-[10px] font-extrabold block uppercase">1. BASE CIF</span>
+                                    <span className="text-[9px] bg-blue-500/20 text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-blue-500/30">${valFobNoTax.toFixed(2)} USD</span>
+                                  </div>
                                   <div className="flex items-baseline justify-between">
-                                    <span className="font-bold text-white text-sm">${valFobNoTax.toFixed(2)} USD</span>
-                                    <span className="font-mono text-xs font-bold text-slate-400">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
+                                    <span className="text-slate-400 text-[10px]">Costo FOB Unitario:</span>
+                                    <span className="font-mono text-xs font-bold text-white">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
                                   </div>
                                 </div>
 
-                                {/* Etapa 2: Con Impuesto Aduana */}
-                                <div className="bg-amber-950/20 border border-amber-500/40 p-2.5 rounded-xl space-y-1">
-                                  <span className="text-amber-400 text-[10px] font-bold block uppercase">2. Con Impuesto Aduana</span>
+                                {/* Etapa 2: ADUANA (+IMP) (Gold/Yellow header) */}
+                                <div className="bg-amber-600/20 border border-amber-500/40 p-2.5 rounded-xl space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-amber-400 text-[10px] font-extrabold block uppercase">2. ADUANA (+IMP)</span>
+                                    <span className="text-[9px] bg-amber-500/20 text-amber-300 font-mono font-bold px-1.5 py-0.5 rounded border border-amber-500/30">+${(customsPerUnit || 2.94).toFixed(2)} USD</span>
+                                  </div>
                                   <div className="flex items-baseline justify-between">
-                                    <span className="font-bold text-amber-300 text-sm">${valWithCustoms.toFixed(2)} USD</span>
-                                    <span className="font-mono text-xs font-bold text-amber-400">Q {(valWithCustoms * rate).toFixed(2)} GTQ</span>
+                                    <span className="text-amber-300/80 text-[10px]">Total (Stage 2):</span>
+                                    <span className="font-mono text-xs font-bold text-amber-300">Q {valWithCustoms.toFixed(2)} GTQ</span>
                                   </div>
                                 </div>
 
-                                {/* Etapa 3: Landed con Flete */}
-                                <div className="bg-indigo-950/20 border border-indigo-500/40 p-2.5 rounded-xl space-y-1">
-                                  <span className="text-indigo-400 text-[10px] font-bold block uppercase">3. Landed (+Flete Completo)</span>
+                                {/* Etapa 3: LANDED (+GASTOS ADIC) (Purple header) */}
+                                <div className="bg-purple-600/20 border border-purple-500/40 p-2.5 rounded-xl space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-purple-400 text-[10px] font-extrabold block uppercase">3. LANDED (+GASTOS ADIC)</span>
+                                    <span className="text-[9px] bg-purple-500/20 text-purple-300 font-mono font-bold px-1.5 py-0.5 rounded border border-purple-500/30">+$0.59 USD</span>
+                                  </div>
                                   <div className="flex items-baseline justify-between">
-                                    <span className="font-bold text-indigo-300 text-sm">${valLandedFull.toFixed(2)} USD</span>
-                                    <span className="font-mono text-xs font-bold text-indigo-400">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
+                                    <span className="text-purple-300/80 text-[10px]">Total (Stage 3):</span>
+                                    <span className="font-mono text-xs font-bold text-purple-300">Q {valLandedFull.toFixed(2)} GTQ</span>
                                   </div>
                                 </div>
 
-                                {/* Etapa 4: Precio Final Venta (+% Margen) */}
+                                {/* Etapa 4: VENTA (MARGEN +15%) (Green header) */}
                                 <div className="bg-emerald-950/60 border-2 border-emerald-500/60 p-2.5 rounded-xl space-y-1 shadow-md shadow-emerald-500/10">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-emerald-400 text-[10px] font-extrabold uppercase">4. 🏷️ Precio Final Venta</span>
+                                    <span className="text-emerald-400 text-[10px] font-extrabold uppercase">4. VENTA (MARGEN +{itemMargin}%)</span>
                                     <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
-                                      +{itemMargin}% Margen
+                                      +${(valFinalSellingUsd - valLandedFull).toFixed(2)} USD
                                     </span>
                                   </div>
                                   <div className="flex items-baseline justify-between pt-0.5">
-                                    <span className="font-extrabold text-white text-base">${valFinalSellingUsd.toFixed(2)} USD</span>
+                                    <span className="font-extrabold text-white text-xs">${valFinalSellingUsd.toFixed(2)} USD</span>
                                     <span className="font-mono font-extrabold text-emerald-400 text-sm">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
                                   </div>
                                 </div>
+                              </div>
+
+                              {/* Floating Tags & Badges */}
+                              <div className="pt-2 flex flex-wrap gap-1 text-[10px]">
+                                <span className="bg-blue-500/10 text-blue-400 font-mono font-bold px-2 py-0.5 rounded-full border border-blue-500/20">${valFobNoTax.toFixed(2)} USD</span>
+                                <span className="bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded-full border border-amber-500/20">Total (Stage 2):</span>
+                                <span className="bg-amber-500/10 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/20">+$2.94 USD</span>
+                                <span className="bg-purple-500/10 text-purple-300 font-bold px-2 py-0.5 rounded-full border border-purple-500/20">+$0.59 USD</span>
+                                <span className="bg-amber-500/10 text-amber-300 font-mono font-bold px-2 py-0.5 rounded-full border border-amber-500/20">Q 217.94 GTQ</span>
+                                <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/20">+{itemMargin}% Margen</span>
                               </div>
                             </div>
 
