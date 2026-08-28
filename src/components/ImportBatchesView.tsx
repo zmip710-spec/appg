@@ -117,6 +117,7 @@ export const ImportBatchesView: React.FC = () => {
   // New batch form state
   const [batchName, setBatchName] = useState('');
   const [customsTax, setCustomsTax] = useState<string>('');
+  const [customsTaxPctInput, setCustomsTaxPctInput] = useState<string>('');
   const [shippingCost, setShippingCost] = useState<string>('');
   const [exchangeRateGtq, setExchangeRateGtq] = useState<string>('7.80');
   const [profitMarginPct, setProfitMarginPct] = useState<string>('15.0');
@@ -162,6 +163,31 @@ export const ImportBatchesView: React.FC = () => {
     const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto #${idx + 1}`;
     return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalFob, image: item.image || '' };
   });
+
+  // Calculate live customs percentage on total FOB
+  const computedCustomsTaxPct = totalBatchFob > 0 ? (parsedTax / totalBatchFob) * 100 : 0;
+
+  // Dual handlers for USD and % Customs Tax
+  const handleCustomsTaxUsdChange = (val: string) => {
+    setCustomsTax(val);
+    const usd = parseFloat(val) || 0;
+    if (totalBatchFob > 0 && usd > 0) {
+      setCustomsTaxPctInput(((usd / totalBatchFob) * 100).toFixed(2));
+    } else {
+      setCustomsTaxPctInput('');
+    }
+  };
+
+  const handleCustomsTaxPctChange = (pctStr: string) => {
+    setCustomsTaxPctInput(pctStr);
+    const pct = parseFloat(pctStr) || 0;
+    if (totalBatchFob > 0 && pct > 0) {
+      const usd = (pct / 100) * totalBatchFob;
+      setCustomsTax(usd.toFixed(2));
+    } else if (pctStr === '') {
+      setCustomsTax('');
+    }
+  };
 
   const proratedPreview = previewItems.map(item => {
     const sharePercentage = totalBatchFob > 0 ? (item.totalFobValue / totalBatchFob) * 100 : 0;
@@ -457,20 +483,25 @@ export const ImportBatchesView: React.FC = () => {
                 {isExpanded && (
                   <div className="border-t border-slate-700 bg-slate-900/90 p-4 space-y-4">
                     {/* Summary Header Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-slate-300 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-white text-sm">Productos en este Lote ({batch.items.length})</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono font-semibold">
-                          Tasa: Q {rate.toFixed(2)} GTQ / USD
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-[11px] flex-wrap gap-1">
-                        <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
-                        <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD</strong></span>
-                        <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
-                        <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Margen: +{marginPct}%</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const batchCustomsPct = batchFobTotal > 0 ? ((batch.totalCustomsTax || 0) / batchFobTotal) * 100 : 0;
+                      return (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-slate-300 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-white text-sm">Productos en este Lote ({batch.items.length})</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono font-semibold">
+                              Tasa: Q {rate.toFixed(2)} GTQ / USD
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4 text-[11px] flex-wrap gap-1">
+                            <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
+                            <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD ({batchCustomsPct.toFixed(1)}% FOB)</strong></span>
+                            <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
+                            <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Margen: +{marginPct}%</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Multi-Product Optimized Table */}
                     <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
@@ -480,7 +511,7 @@ export const ImportBatchesView: React.FC = () => {
                             <tr>
                               <th className="py-3 px-4 font-semibold">Producto</th>
                               <th className="py-3 px-3 font-semibold text-right">Precio Inicial (FOB)</th>
-                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Aduana</th>
+                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Aduana (% FOB)</th>
                               <th className="py-3 px-3 font-semibold text-right text-indigo-400">+ Flete</th>
                               <th className="py-3 px-3 font-semibold text-right text-blue-400">= Costo Landed</th>
                               <th className="py-3 px-4 font-semibold text-right text-emerald-400 bg-emerald-950/40 border-l border-emerald-500/30">
@@ -500,6 +531,7 @@ export const ImportBatchesView: React.FC = () => {
                               const itemMargin = item.profitMarginPct || marginPct;
                               const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
                               const valFinalSellingGtq = valFinalSellingUsd * rate;
+                              const itemCustomsPct = valFobNoTax > 0 ? (customsPerUnit / valFobNoTax) * 100 : 0;
 
                               return (
                                 <tr key={idx} className="hover:bg-slate-800/60 transition">
@@ -529,10 +561,10 @@ export const ImportBatchesView: React.FC = () => {
                                     <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
                                   </td>
 
-                                  {/* + Aduana */}
+                                  {/* + Aduana con % visible */}
                                   <td className="py-3 px-3 text-right">
                                     <span className="font-bold text-amber-300 block text-xs">+${customsPerUnit.toFixed(2)} USD</span>
-                                    <span className="text-[10px] text-amber-400/80 block">Aduana/u</span>
+                                    <span className="text-[10px] text-amber-400 font-medium block">({itemCustomsPct.toFixed(1)}% FOB)</span>
                                   </td>
 
                                   {/* + Flete */}
@@ -588,9 +620,9 @@ export const ImportBatchesView: React.FC = () => {
 
             {/* Modal Form Scrollable */}
             <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
-              {/* Batch General Info (Neutral Emojiless Compact Grid) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
-                <div>
+              {/* Batch General Info (Neutral Emojiless Compact Grid with % Aduana) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-medium text-slate-400 mb-1">Nombre del Lote</label>
                   <input
                     type="text"
@@ -602,16 +634,33 @@ export const ImportBatchesView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Impuesto Aduana (USD)</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-medium text-slate-400">Impuesto Aduana (USD)</label>
+                  </div>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     placeholder="0.00"
                     value={customsTax}
-                    onChange={(e) => setCustomsTax(e.target.value)}
+                    onChange={(e) => handleCustomsTaxUsdChange(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-amber-400 mb-1">% Costo Aduana (% FOB)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Ej. 10.0%"
+                      value={customsTaxPctInput !== '' ? customsTaxPctInput : (computedCustomsTaxPct > 0 ? computedCustomsTaxPct.toFixed(2) : '')}
+                      onChange={(e) => handleCustomsTaxPctChange(e.target.value)}
+                      className="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-400"
+                    />
+                    <span className="absolute right-3 top-2 text-xs text-amber-400/80 font-bold">%</span>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
