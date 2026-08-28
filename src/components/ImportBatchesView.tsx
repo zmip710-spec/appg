@@ -18,24 +18,7 @@ import {
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
 import { ImagePicker } from './ImagePicker';
 
-const fallbackBatches: ImportBatch[] = [
-  {
-    id: '#LOT-2026-01',
-    name: 'Lote Ropa & Accesorios Agosto',
-    importDate: '26 Ago 2026',
-    totalCustomsTax: 50.0,
-    totalShippingCost: 100.0,
-    exchangeRateGtq: 7.80,
-    profitMarginPct: 15.0,
-    costUpdateStrategy: 'weighted',
-    status: 'Procesado',
-    items: [
-      { sku: 'PROD-001', productName: 'Camisetas Algodón', quantity: 10, unitCostFob: 10.0, totalFobValue: 100.0, sharePercentage: 33.33, allocatedCustoms: 16.67, allocatedShipping: 33.33, allocatedTax: 50.0, unitTax: 5.0, finalUnitCost: 15.0, profitMarginPct: 15.0, finalSellingPrice: 17.25, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=150&q=80' },
-      { sku: 'PROD-002', productName: 'Gorras Deportivas', quantity: 20, unitCostFob: 5.0, totalFobValue: 100.0, sharePercentage: 33.33, allocatedCustoms: 16.67, allocatedShipping: 33.33, allocatedTax: 50.0, unitTax: 2.5, finalUnitCost: 7.5, profitMarginPct: 15.0, finalSellingPrice: 8.63, image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=150&q=80' },
-      { sku: 'PROD-003', productName: 'Chaquetas Impermeables', quantity: 5, unitCostFob: 20.0, totalFobValue: 100.0, sharePercentage: 33.34, allocatedCustoms: 16.66, allocatedShipping: 33.34, allocatedTax: 50.0, unitTax: 10.0, finalUnitCost: 30.0, profitMarginPct: 15.0, finalSellingPrice: 34.50, image: 'https://images.unsplash.com/photo-1548883354-7622d03aca27?w=150&q=80' }
-    ]
-  }
-];
+const fallbackBatches: ImportBatch[] = [];
 
 export const ImportBatchesView: React.FC = () => {
   const [batches, setBatches] = useState<ImportBatch[]>(fallbackBatches);

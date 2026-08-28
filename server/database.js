@@ -224,16 +224,6 @@ async function initPgTables() {
       `);
     }
 
-    // Semilla de inventario si está vacío
-    const invCount = await pgPool.query('SELECT COUNT(*) as count FROM inventory');
-    if (parseInt(invCount.rows[0].count) === 0) {
-      await pgPool.query(`
-        INSERT INTO inventory (sku, name, category, stock, unitCost, image, lastUpdated) VALUES
-        ('PROD-001', 'Camisetas Algodón', 'Textil', 10, 15.0, 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=150&q=80', '26 Ago 2026'),
-        ('PROD-002', 'Gorras Deportivas', 'Accesorios', 20, 7.5, 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=150&q=80', '26 Ago 2026');
-      `);
-    }
-
     console.log('✅ Tablas y esquema de PostgreSQL inicializados correctamente.');
   } catch (err) {
     console.error('Error al inicializar las tablas en PostgreSQL:', err);

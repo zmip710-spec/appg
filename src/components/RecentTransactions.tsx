@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Database, ShoppingCart, AlertCircle, CheckCircle, Package, Search, Image as ImageIcon } from 'lucide-react';
 import { fetchTransactions, createTransaction, updateTransactionStatusApi, deleteTransactionApi, fetchInventory, Transaction, InventoryProduct } from '../services/api';
 
-const fallbackTransactions: Transaction[] = [
-  { id: '#TRX-9482', client: 'Empresa Alpha S.A.', service: 'Camisetas Algodón (3 unidades)', date: '26 Ago 2026', amount: 'Q 351.00 GTQ', status: 'Completado' },
-  { id: '#TRX-9481', client: 'Carlos Mendoza', service: 'Gorras Deportivas (2 unidades)', date: '26 Ago 2026', amount: 'Q 117.00 GTQ', status: 'Completado' },
-  { id: '#TRX-9480', client: 'Lucía Fernández', service: 'Chaquetas Impermeables (1 unidad)', date: '25 Ago 2026', amount: 'Q 234.00 GTQ', status: 'Pendiente' },
-];
+const fallbackTransactions: Transaction[] = [];
 
 interface RecentTransactionsProps {
   searchTerm: string;

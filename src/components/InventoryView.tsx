@@ -22,12 +22,7 @@ import {
 import { InventoryProduct, fetchInventory, createInventoryApi, deleteInventoryApi, updateStockApi, updateProductImageApi, PriceHistoryEntry, fetchPriceHistoryApi } from '../services/api';
 import { ImagePicker } from './ImagePicker';
 
-const fallbackInventory: InventoryProduct[] = [
-  { id: 1, sku: 'PROD-001', name: 'Camisetas Algodón Premium', category: 'Ropa', stock: 45, unitCost: 15.0, previousUnitCost: 14.5, priceChangeDelta: 0.5, priceChangePct: 3.45, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=150&q=80', lastUpdated: '26 Ago 2026' },
-  { id: 2, sku: 'PROD-002', name: 'Gorras Deportivas Snapback', category: 'Accesorios', stock: 12, unitCost: 7.5, previousUnitCost: 7.5, priceChangeDelta: 0, priceChangePct: 0, image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=150&q=80', lastUpdated: '26 Ago 2026' },
-  { id: 3, sku: 'PROD-003', name: 'Chaquetas Impermeables Outdoor', category: 'Ropa', stock: 5, unitCost: 30.0, previousUnitCost: 28.0, priceChangeDelta: 2.0, priceChangePct: 7.14, image: 'https://images.unsplash.com/photo-1548883354-7622d03aca27?w=150&q=80', lastUpdated: '26 Ago 2026' },
-  { id: 4, sku: 'PROD-004', name: 'Mochila Urbana Laptop 15"', category: 'Equipaje', stock: 0, unitCost: 22.0, previousUnitCost: 22.0, priceChangeDelta: 0, priceChangePct: 0, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=150&q=80', lastUpdated: '25 Ago 2026' },
-];
+const fallbackInventory: InventoryProduct[] = [];
 
 export const InventoryView: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryProduct[]>(fallbackInventory);
