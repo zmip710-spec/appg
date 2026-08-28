@@ -18,6 +18,70 @@ function convertSql(sql) {
   return sql.replace(/\?/g, () => `$${paramIndex++}`);
 }
 
+function normalizeRow(row) {
+  if (!row || typeof row !== 'object') return row;
+  const normalized = {};
+  for (const key in row) {
+    const val = row[key];
+    const lowerKey = key.toLowerCase();
+
+    let targetKey = key;
+    if (lowerKey === 'lastlogin') targetKey = 'lastLogin';
+
+    // Batches
+    if (lowerKey === 'importdate') targetKey = 'importDate';
+    if (lowerKey === 'totalcustomstax') targetKey = 'totalCustomsTax';
+    if (lowerKey === 'totalshippingcost') targetKey = 'totalShippingCost';
+    if (lowerKey === 'exchangerategtq') targetKey = 'exchangeRateGtq';
+    if (lowerKey === 'profitmarginpct') targetKey = 'profitMarginPct';
+    if (lowerKey === 'costupdatestrategy') targetKey = 'costUpdateStrategy';
+
+    // Batch Items
+    if (lowerKey === 'batchid') targetKey = 'batchId';
+    if (lowerKey === 'productname') targetKey = 'productName';
+    if (lowerKey === 'unitcostfob') targetKey = 'unitCostFob';
+    if (lowerKey === 'totalfobvalue') targetKey = 'totalFobValue';
+    if (lowerKey === 'sharepercentage') targetKey = 'sharePercentage';
+    if (lowerKey === 'allocatedcustoms') targetKey = 'allocatedCustoms';
+    if (lowerKey === 'allocatedshipping') targetKey = 'allocatedShipping';
+    if (lowerKey === 'allocatedtax') targetKey = 'allocatedTax';
+    if (lowerKey === 'unittax') targetKey = 'unitTax';
+    if (lowerKey === 'finalunitcost') targetKey = 'finalUnitCost';
+    if (lowerKey === 'finalsellingprice') targetKey = 'finalSellingPrice';
+
+    // Inventory
+    if (lowerKey === 'unitcost') targetKey = 'unitCost';
+    if (lowerKey === 'previousunitcost') targetKey = 'previousUnitCost';
+    if (lowerKey === 'pricechangedelta') targetKey = 'priceChangeDelta';
+    if (lowerKey === 'pricechangepct') targetKey = 'priceChangePct';
+    if (lowerKey === 'lastupdated') targetKey = 'lastUpdated';
+
+    // Price History
+    if (lowerKey === 'oldcost') targetKey = 'oldCost';
+    if (lowerKey === 'newcost') targetKey = 'newCost';
+    if (lowerKey === 'changedate') targetKey = 'changeDate';
+    if (lowerKey === 'batchname') targetKey = 'batchName';
+
+    let parsedVal = val;
+    if (val !== null && val !== undefined) {
+      if (typeof val === 'string' && !isNaN(val) && val.trim() !== '' &&
+          !lowerKey.includes('date') && !lowerKey.includes('name') &&
+          !lowerKey.includes('sku') && !lowerKey.includes('id') &&
+          !lowerKey.includes('status') && !lowerKey.includes('role') &&
+          !lowerKey.includes('email') && !lowerKey.includes('client') &&
+          !lowerKey.includes('service') && !lowerKey.includes('amount') &&
+          !lowerKey.includes('avatar') && !lowerKey.includes('image') &&
+          !lowerKey.includes('category') && !lowerKey.includes('login') &&
+          !lowerKey.includes('strategy')) {
+        parsedVal = parseFloat(val);
+      }
+    }
+
+    normalized[targetKey] = parsedVal;
+  }
+  return normalized;
+}
+
 if (isPg) {
   pgPool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -34,7 +98,7 @@ if (isPg) {
   });
 }
 
-// Inicializar tablas en PostgreSQL cuando DATABASE_URL esté presente
+// Inicializar tablas y garantizar esquema completo en PostgreSQL
 async function initPgTables() {
   if (!pgPool) return;
   try {
@@ -132,7 +196,24 @@ async function initPgTables() {
       );
     `);
 
-    // Semilla de usuarios si la tabla está vacía
+    // Garantizar que todas las columnas existan en tablas PostgreSQL creadas previamente
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS totalShippingCost NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS exchangeRateGtq NUMERIC DEFAULT 7.80");
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS profitMarginPct NUMERIC DEFAULT 15.0");
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS costUpdateStrategy VARCHAR(50) DEFAULT 'weighted'");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS sku VARCHAR(255) DEFAULT 'PROD-001'");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedCustoms NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedShipping NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS profitMarginPct NUMERIC DEFAULT 15.0");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS finalSellingPrice NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS image TEXT");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS image TEXT");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS previousUnitCost NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangeDelta NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT '123456'");
+
+    // Semilla de usuarios si está vacía
     const usersCount = await pgPool.query('SELECT COUNT(*) as count FROM users');
     if (parseInt(usersCount.rows[0].count) === 0) {
       await pgPool.query(`
@@ -261,7 +342,7 @@ if (isPg) {
   });
 }
 
-// Adaptador unificado para PostgreSQL / SQLite
+// Adaptador unificado para PostgreSQL / SQLite con normalización automática de CamelCase
 const db = {
   isPg,
   all: function (sql, params, cb) {
@@ -275,15 +356,7 @@ const db = {
       const pgSql = convertSql(sql).replace(/ORDER BY rowid DESC/gi, 'ORDER BY id DESC');
       pgPool.query(pgSql, params)
         .then(res => {
-          const rows = res.rows.map(row => {
-            const formatted = { ...row };
-            for (const k in formatted) {
-              if (typeof formatted[k] === 'string' && !isNaN(formatted[k]) && formatted[k].trim() !== '' && !k.toLowerCase().includes('date') && !k.toLowerCase().includes('name') && !k.toLowerCase().includes('sku') && !k.toLowerCase().includes('id')) {
-                formatted[k] = parseFloat(formatted[k]);
-              }
-            }
-            return formatted;
-          });
+          const rows = res.rows.map(normalizeRow);
           if (cb) cb(null, rows);
         })
         .catch(err => {
@@ -305,14 +378,7 @@ const db = {
       const pgSql = convertSql(sql);
       pgPool.query(pgSql, params)
         .then(res => {
-          const row = res.rows[0] || null;
-          if (row) {
-            for (const k in row) {
-              if (typeof row[k] === 'string' && !isNaN(row[k]) && row[k].trim() !== '' && !k.toLowerCase().includes('date') && !k.toLowerCase().includes('name') && !k.toLowerCase().includes('sku') && !k.toLowerCase().includes('id')) {
-                row[k] = parseFloat(row[k]);
-              }
-            }
-          }
+          const row = res.rows[0] ? normalizeRow(res.rows[0]) : null;
           if (cb) cb(null, row);
         })
         .catch(err => {
