@@ -878,15 +878,77 @@ export const ImportBatchesView: React.FC = () => {
                 )}
               </div>
 
-              {/* Real-time Calculation Preview Table */}
+              {/* Real-time Calculation Preview (Mobile Cards & Desktop Table) */}
               {proratedPreview.length > 0 && (
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-blue-500/30 space-y-2 relative z-10">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-blue-400 gap-1">
+                <div className="bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-blue-500/40 space-y-3 relative z-10 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold text-blue-400 gap-1.5 pb-2 border-b border-slate-800">
                     <span>PREVISUALIZACIÓN DE MATRIZ DE COSTOS & PRECIO VENTA (+{parsedMargin}%)</span>
-                    <span className="text-emerald-400 font-bold">GASTOS: ${totalLandedExpenses.toFixed(2)} USD (Q {(totalLandedExpenses * parsedGtqRate).toFixed(2)} GTQ)</span>
+                    <span className="text-emerald-400 font-mono">GASTOS: ${totalLandedExpenses.toFixed(2)} USD (Q {(totalLandedExpenses * parsedGtqRate).toFixed(2)} GTQ)</span>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* MOBILE PREVIEW CARDS (Visible on small screens md:hidden) */}
+                  <div className="md:hidden space-y-3">
+                    {proratedPreview.map((item, idx) => {
+                      const customsPerUnit = item.quantity > 0 ? item.allocatedCustoms / item.quantity : 0;
+                      const valFobNoTax = item.unitCostFob;
+                      const valWithCustoms = item.unitCostFob + customsPerUnit;
+                      const valLandedFull = item.finalUnitCost;
+                      const sellingPriceUsd = item.finalSellingPrice;
+                      const sellingPriceGtq = sellingPriceUsd * parsedGtqRate;
+
+                      return (
+                        <div key={idx} className="bg-slate-800 border border-slate-700/80 rounded-xl p-3 space-y-2.5 shadow-md">
+                          <div className="flex items-center space-x-3">
+                            {item.image ? (
+                              <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400 shrink-0">📦</div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-0.5">
+                                <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                  {item.sku}
+                                </span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  {item.quantity} uds
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-white text-xs truncate">{item.productName}</h4>
+                            </div>
+                          </div>
+
+                          {/* 4-Step Pricing Matrix for Preview */}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-slate-950 border border-slate-700/80 p-2 rounded-lg">
+                              <span className="text-slate-400 text-[10px] block uppercase font-semibold">1. FOB Base</span>
+                              <span className="font-bold text-white text-xs">${valFobNoTax.toFixed(2)} USD</span>
+                            </div>
+
+                            <div className="bg-amber-950/20 border border-amber-500/40 p-2 rounded-lg">
+                              <span className="text-amber-400 text-[10px] block uppercase font-bold">2. Con Aduana</span>
+                              <span className="font-bold text-amber-300 text-xs">${valWithCustoms.toFixed(2)} USD</span>
+                            </div>
+
+                            <div className="bg-indigo-950/20 border border-indigo-500/40 p-2 rounded-lg">
+                              <span className="text-indigo-400 text-[10px] block uppercase font-bold">3. Landed (+Flete)</span>
+                              <span className="font-bold text-indigo-300 text-xs">${valLandedFull.toFixed(2)} USD</span>
+                            </div>
+
+                            <div className="bg-emerald-950/60 border border-emerald-500/50 p-2 rounded-lg">
+                              <span className="text-emerald-400 text-[10px] block uppercase font-extrabold">4. 🏷️ Precio Venta</span>
+                              <div className="flex items-baseline justify-between pt-0.5">
+                                <span className="font-extrabold text-white text-xs">${sellingPriceUsd.toFixed(2)} USD</span>
+                                <span className="font-mono font-extrabold text-emerald-400 text-xs">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* DESKTOP PREVIEW TABLE VIEW (Visible on md and larger) */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-xs text-slate-300">
                       <thead className="text-slate-400 uppercase font-semibold border-b border-slate-700">
                         <tr>
