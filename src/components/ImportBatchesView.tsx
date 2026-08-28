@@ -117,7 +117,6 @@ export const ImportBatchesView: React.FC = () => {
   // New batch form state
   const [batchName, setBatchName] = useState('');
   const [customsTax, setCustomsTax] = useState<string>('');
-  const [customsTaxPctInput, setCustomsTaxPctInput] = useState<string>('');
   const [shippingCost, setShippingCost] = useState<string>('');
   const [exchangeRateGtq, setExchangeRateGtq] = useState<string>('7.80');
   const [profitMarginPct, setProfitMarginPct] = useState<string>('15.0');
@@ -164,30 +163,8 @@ export const ImportBatchesView: React.FC = () => {
     return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalFob, image: item.image || '' };
   });
 
-  // Calculate live customs percentage on total FOB
+  // Calculate live customs percentage on total FOB (100% Automatic Read-Only)
   const computedCustomsTaxPct = totalBatchFob > 0 ? (parsedTax / totalBatchFob) * 100 : 0;
-
-  // Dual handlers for USD and % Customs Tax
-  const handleCustomsTaxUsdChange = (val: string) => {
-    setCustomsTax(val);
-    const usd = parseFloat(val) || 0;
-    if (totalBatchFob > 0 && usd > 0) {
-      setCustomsTaxPctInput(((usd / totalBatchFob) * 100).toFixed(2));
-    } else {
-      setCustomsTaxPctInput('');
-    }
-  };
-
-  const handleCustomsTaxPctChange = (pctStr: string) => {
-    setCustomsTaxPctInput(pctStr);
-    const pct = parseFloat(pctStr) || 0;
-    if (totalBatchFob > 0 && pct > 0) {
-      const usd = (pct / 100) * totalBatchFob;
-      setCustomsTax(usd.toFixed(2));
-    } else if (pctStr === '') {
-      setCustomsTax('');
-    }
-  };
 
   const proratedPreview = previewItems.map(item => {
     const sharePercentage = totalBatchFob > 0 ? (item.totalFobValue / totalBatchFob) * 100 : 0;
@@ -620,9 +597,9 @@ export const ImportBatchesView: React.FC = () => {
 
             {/* Modal Form Scrollable */}
             <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
-              {/* Batch General Info (Neutral Emojiless Compact Grid with % Aduana) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
-                <div className="sm:col-span-1">
+              {/* Batch General Info (Neutral Emojiless Compact Grid with Automatic % Aduana Badge) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
+                <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Nombre del Lote</label>
                   <input
                     type="text"
@@ -633,9 +610,15 @@ export const ImportBatchesView: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="block text-xs font-medium text-slate-400">Impuesto Aduana (USD)</label>
+                    {computedCustomsTaxPct > 0 && (
+                      <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                        {computedCustomsTaxPct.toFixed(1)}% FOB
+                      </span>
+                    )}
                   </div>
                   <input
                     type="number"
@@ -643,25 +626,11 @@ export const ImportBatchesView: React.FC = () => {
                     min="0"
                     placeholder="0.00"
                     value={customsTax}
-                    onChange={(e) => handleCustomsTaxUsdChange(e.target.value)}
+                    onChange={(e) => setCustomsTax(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-amber-400 mb-1">% Costo Aduana (% FOB)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Ej. 10.0%"
-                      value={customsTaxPctInput !== '' ? customsTaxPctInput : (computedCustomsTaxPct > 0 ? computedCustomsTaxPct.toFixed(2) : '')}
-                      onChange={(e) => handleCustomsTaxPctChange(e.target.value)}
-                      className="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-400"
-                    />
-                    <span className="absolute right-3 top-2 text-xs text-amber-400/80 font-bold">%</span>
-                  </div>
-                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
                   <input
@@ -674,6 +643,7 @@ export const ImportBatchesView: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Margen de Venta (%)</label>
                   <input
