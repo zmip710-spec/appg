@@ -556,39 +556,40 @@ export const ImportBatchesView: React.FC = () => {
 
       {/* Add New Batch Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col my-auto overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col my-auto overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/60 shrink-0">
+            <div className="p-4 sm:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/80 shrink-0">
               <div>
                 <h3 className="font-bold text-white text-base">Registrar Nuevo Lote de Importación</h3>
-                <p className="text-xs text-slate-400">Matriz: FOB Sin Impuesto, Con Aduana, Landed y Precio Final Venta (+% Margen)</p>
+                <p className="text-xs text-slate-400">Matriz: FOB Sin Impuesto, Con Aduana, Landed y Precio Final Venta</p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg transition"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Form Scrollable */}
-            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
-              {/* Batch General Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/60">
-                <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nombre del Lote</label>
+            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
+              {/* Batch General Info (Neutral Emojiless Compact Grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Nombre del Lote</label>
                   <input
                     type="text"
                     required
                     placeholder="Ej. Lote Calzado Septiembre"
                     value={batchName}
                     onChange={(e) => setBatchName(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-amber-400 uppercase mb-1">🏛️ Impuesto Aduana ($USD)</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Impuesto Aduana (USD)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -596,11 +597,11 @@ export const ImportBatchesView: React.FC = () => {
                     placeholder="0.00"
                     value={customsTax}
                     onChange={(e) => setCustomsTax(e.target.value)}
-                    className="w-full bg-slate-800 border border-amber-500/40 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-indigo-400 uppercase mb-1">🚚 Costo Flete ($USD)</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -608,11 +609,11 @@ export const ImportBatchesView: React.FC = () => {
                     placeholder="0.00"
                     value={shippingCost}
                     onChange={(e) => setShippingCost(e.target.value)}
-                    className="w-full bg-slate-800 border border-indigo-500/40 rounded-lg px-3 py-2 text-sm text-indigo-300 font-semibold focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-emerald-400 uppercase mb-1">🏷️ Margen Venta (%)</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Margen de Venta (%)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -620,15 +621,15 @@ export const ImportBatchesView: React.FC = () => {
                     placeholder="15.0"
                     value={profitMarginPct}
                     onChange={(e) => setProfitMarginPct(e.target.value)}
-                    className="w-full bg-slate-800 border border-emerald-500/50 rounded-lg px-3 py-2 text-sm text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Tasa de cambio GTQ & Estrategia de Actualización de Costo */}
+              {/* Exchange Rate GTQ & Stock Price Variation Strategy */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between bg-slate-900/40 p-3 rounded-lg border border-slate-700/50">
-                  <span className="text-xs text-slate-300 font-medium">Tasa de Cambio Quetzales (Q GTQ / USD):</span>
+                <div className="flex items-center justify-between bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/80">
+                  <label className="text-xs font-medium text-slate-300">Tipo de Cambio (USD a GTQ):</label>
                   <div className="w-36">
                     <input
                       type="number"
@@ -636,16 +637,16 @@ export const ImportBatchesView: React.FC = () => {
                       min="0.1"
                       value={exchangeRateGtq}
                       onChange={(e) => setExchangeRateGtq(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs text-emerald-400 font-mono font-bold text-right"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white font-mono font-semibold text-right focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 {hasStockWithPriceVariation ? (
-                  <div className="bg-amber-500/10 border border-amber-500/40 p-3.5 rounded-xl space-y-2">
-                    <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs uppercase">
+                  <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl space-y-2.5">
+                    <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>⚠️ Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
+                      <span>Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
                     </div>
                     <p className="text-[11px] text-amber-200/90 leading-relaxed">
                       Detectamos que aún hay unidades guardadas en almacén y el nuevo lote presenta una variación de costo. Elige cómo actualizar el precio del inventario:
@@ -653,63 +654,55 @@ export const ImportBatchesView: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
                       <div
                         onClick={() => setCostUpdateStrategy('weighted')}
-                        className={`p-2.5 rounded-lg border cursor-pointer transition flex items-start space-x-2.5 ${
+                        className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
                           costUpdateStrategy === 'weighted'
                             ? 'bg-blue-600/20 border-blue-500 text-white shadow'
-                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
                         }`}
                       >
                         <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'weighted'} onChange={() => {}} className="mt-0.5" />
                         <div>
-                          <span className="font-bold text-white block">📊 Promedio Ponderado</span>
+                          <span className="font-bold text-white block">Promedio Ponderado</span>
                           <span className="text-[11px] text-slate-400 block mt-0.5">Combina las existencias en stock con el nuevo costo del lote.</span>
                         </div>
                       </div>
 
                       <div
                         onClick={() => setCostUpdateStrategy('latest')}
-                        className={`p-2.5 rounded-lg border cursor-pointer transition flex items-start space-x-2.5 ${
+                        className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
                           costUpdateStrategy === 'latest'
                             ? 'bg-emerald-600/20 border-emerald-500 text-white shadow'
-                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
                         }`}
                       >
                         <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'latest'} onChange={() => {}} className="mt-0.5" />
                         <div>
-                          <span className="font-bold text-white block">🏷️ Reemplazar con Último Costo</span>
+                          <span className="font-bold text-white block">Reemplazar con Último Costo</span>
                           <span className="text-[11px] text-slate-400 block mt-0.5">Actualiza el precio del producto al 100% con la nueva importación.</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-700/50 text-[11px] text-slate-400 flex items-center space-x-2">
+                  <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/50 text-[11px] text-slate-400 flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Sin variación de precio sobre existencias activas en stock. El costo se asignará directamente.</span>
                   </div>
                 )}
               </div>
 
-              {/* Product Rows Entry */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-slate-300 uppercase">Productos a Importar ({inputItems.length})</label>
-                  <button
-                    type="button"
-                    onClick={handleAddItemRow}
-                    className="flex items-center space-x-1.5 bg-slate-700 hover:bg-slate-600 text-blue-400 font-semibold px-3 py-1.5 rounded-lg text-xs transition border border-blue-500/30"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Agregar Fila de Producto</span>
-                  </button>
+              {/* Product Rows Entry (Clean Mobile Cards) */}
+              <div className="space-y-3.5">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-semibold text-slate-300">Productos a Importar ({inputItems.length})</label>
                 </div>
 
                 {inputItems.length === 0 ? (
-                  <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-xl p-6 text-center text-slate-400 text-xs">
-                    Haz clic en <strong className="text-blue-400">+ Agregar Fila de Producto</strong> para añadir ítems a este lote.
+                  <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-slate-400 text-xs">
+                    Haz clic en el botón inferior para agregar productos a este lote.
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     {inputItems.map((item, index) => {
                       const cleanTyped = item.sku.trim().toUpperCase();
                       const matchingInventory = cleanTyped.length >= 1
@@ -722,42 +715,41 @@ export const ImportBatchesView: React.FC = () => {
                       const showSuggestions = openSkuDropdownIndex === index && matchingInventory.length > 0;
 
                       return (
-                        <div key={index} className={`space-y-3 bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-700/80 relative shadow-md ${showSuggestions ? 'z-50' : 'z-10'}`}>
-                          {/* Header bar of item card on mobile: Index badge + Delete Button */}
-                          <div className="flex items-center justify-between pb-1 sm:hidden border-b border-slate-800">
-                            <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
-                              Producto #{index + 1}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItemRow(index)}
-                              className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-lg transition flex items-center space-x-1 text-xs"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                              <span className="text-rose-400 text-xs">Eliminar Fila</span>
-                            </button>
+                        <div key={index} className={`space-y-3 bg-slate-900/90 p-4 rounded-2xl border border-slate-700/80 relative shadow-sm ${showSuggestions ? 'z-50' : 'z-10'}`}>
+                          {/* Header bar of item card: Producto #X on left, Eliminar Fila on right */}
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <span className="text-xs font-bold text-slate-200">Producto #{index + 1}</span>
+                            {inputItems.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItemRow(index)}
+                                className="text-xs font-medium text-rose-400 hover:text-rose-300 transition"
+                              >
+                                Eliminar Fila
+                              </button>
+                            )}
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start sm:items-center">
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                             
-                            {/* 1. Strict Matching Filtered SKU Box */}
-                            <div className="sm:col-span-4 relative">
-                              <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Código SKU</label>
+                            {/* 1. Código SKU */}
+                            <div className="sm:col-span-3 relative">
+                              <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
                               <input
                                 type="text"
                                 required
-                                placeholder="Código SKU (ej. PROD-001)..."
+                                placeholder="PROD-001"
                                 value={item.sku}
                                 onFocus={() => {
                                   if (item.sku.trim().length >= 1) setOpenSkuDropdownIndex(index);
                                 }}
                                 onChange={(e) => handleItemChange(index, 'sku', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-blue-400 font-mono font-bold focus:outline-none focus:border-blue-500 uppercase"
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
                               />
 
                               {/* Floating Suggestions Popup */}
                               {showSuggestions && (
-                                <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800 ring-4 ring-blue-500/30">
+                                <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800 ring-4 ring-blue-500/30">
                                   <div className="p-2 text-[10px] font-bold text-blue-400 uppercase bg-slate-950 flex justify-between items-center sticky top-0 z-10 border-b border-slate-800">
                                     <span>Coincidencias Encontradas ({matchingInventory.length})</span>
                                     <button
@@ -793,101 +785,103 @@ export const ImportBatchesView: React.FC = () => {
                               )}
                             </div>
 
-                            {/* 2. Product Name */}
+                            {/* 2. Nombre del Producto */}
                             <div className="sm:col-span-4">
-                              <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Nombre del Producto</label>
+                              <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto</label>
                               <input
                                 type="text"
                                 required
-                                placeholder="Nombre del Producto"
+                                placeholder="Ej. Camiseta Algodón"
                                 value={item.productName}
                                 onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                               />
                             </div>
 
-                            {/* 3. Quantity & Cost FOB (Side-by-side Grid on Mobile, Flex on Desktop) */}
-                            <div className="grid grid-cols-2 gap-2 sm:col-span-4 sm:flex sm:items-center">
-                              <div className="w-full">
-                                <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Cantidad</label>
+                            {/* 3. Cantidad & Costo FOB Grid */}
+                            <div className="grid grid-cols-2 gap-3 sm:col-span-5">
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad</label>
                                 <input
                                   type="number"
                                   min="1"
                                   required
-                                  placeholder="Cant"
+                                  placeholder="1"
                                   value={item.quantity}
                                   onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white font-semibold text-center focus:outline-none focus:border-blue-500"
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
                                 />
                               </div>
 
-                              <div className="w-full">
-                                <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1 sm:hidden">Costo FOB ($USD)</label>
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD)</label>
                                 <input
                                   type="number"
                                   step="0.01"
                                   min="0"
                                   required
-                                  placeholder="FOB $"
+                                  placeholder="0.00"
                                   value={item.unitCostFob}
                                   onChange={(e) => handleItemChange(index, 'unitCostFob', e.target.value)}
-                                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-emerald-400 font-bold focus:outline-none focus:border-blue-500"
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
                                 />
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveItemRow(index)}
-                                className="hidden sm:flex p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0"
-                                title="Eliminar Fila"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
                             </div>
                           </div>
 
-                          {/* Image Attachment preview/picker */}
-                          {item.image ? (
-                            <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                              <div className="flex items-center space-x-2.5">
-                                <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700" />
-                                <div>
-                                  <span className="text-xs text-white font-semibold block">Imagen Seleccionada</span>
-                                  <span className="text-[10px] text-slate-400">Vinculada al producto</span>
+                          {/* Compact Dropzone / Preview for Item Image */}
+                          <div className="pt-1">
+                            {item.image ? (
+                              <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                                <div className="flex items-center space-x-2.5">
+                                  <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700" />
+                                  <div>
+                                    <span className="text-xs text-white font-medium block">Foto adjuntada</span>
+                                    <span className="text-[10px] text-slate-400">Vinculada al producto</span>
+                                  </div>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleItemChange(index, 'image', '')}
+                                  className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 transition"
+                                >
+                                  Quitar foto
+                                </button>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleItemChange(index, 'image', '')}
-                                className="text-xs text-rose-400 hover:underline px-2 py-1 font-semibold"
-                              >
-                                Quitar Foto
-                              </button>
-                            </div>
-                          ) : (
-                            <ImagePicker
-                              value={item.image || ''}
-                              onChange={(img) => handleItemChange(index, 'image', img)}
-                              label="📷 Foto del Producto (Subir o Tomar Foto)"
-                            />
-                          )}
+                            ) : (
+                              <ImagePicker
+                                value={item.image || ''}
+                                onChange={(img) => handleItemChange(index, 'image', img)}
+                                label="Añadir Foto"
+                              />
+                            )}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
+
+                {/* + Agregar Fila de Producto Button at the end of list (Full-width outline style) */}
+                <button
+                  type="button"
+                  onClick={handleAddItemRow}
+                  className="w-full py-3 bg-slate-900/80 hover:bg-slate-800 border border-dashed border-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-2xl flex items-center justify-center space-x-2 transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-blue-400" />
+                  <span>+ Agregar Fila de Producto</span>
+                </button>
               </div>
 
-              {/* Real-time Calculation Preview (Mobile Cards & Desktop Table) */}
+              {/* Previsualización de Matriz de Costos (Structured Table & Highlighted Summary Row) */}
               {proratedPreview.length > 0 && (
-                <div className="bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-blue-500/40 space-y-3 relative z-10 shadow-xl">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold text-blue-400 gap-1.5 pb-2 border-b border-slate-800">
-                    <span>PREVISUALIZACIÓN DE MATRIZ DE COSTOS & PRECIO VENTA (+{parsedMargin}%)</span>
-                    <span className="text-emerald-400 font-mono">GASTOS: ${totalLandedExpenses.toFixed(2)} USD (Q {(totalLandedExpenses * parsedGtqRate).toFixed(2)} GTQ)</span>
+                <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-700/80 space-y-4 relative z-10 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold text-slate-200 gap-1.5 pb-3 border-b border-slate-800">
+                    <span>Previsualización de Desglose de Costos por Producto</span>
+                    <span className="text-slate-400 font-normal">Gastos Landed: ${totalLandedExpenses.toFixed(2)} USD</span>
                   </div>
 
-                  {/* MOBILE PREVIEW CARDS (Visible on small screens md:hidden) */}
-                  <div className="md:hidden space-y-3">
+                  <div className="space-y-4">
                     {proratedPreview.map((item, idx) => {
                       const customsPerUnit = item.quantity > 0 ? item.allocatedCustoms / item.quantity : 0;
                       const valFobNoTax = item.unitCostFob;
@@ -897,117 +891,84 @@ export const ImportBatchesView: React.FC = () => {
                       const sellingPriceGtq = sellingPriceUsd * parsedGtqRate;
 
                       return (
-                        <div key={idx} className="bg-slate-800 border border-slate-700/80 rounded-xl p-3 space-y-2.5 shadow-md">
-                          <div className="flex items-center space-x-3">
+                        <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3">
+                          {/* Header: Item SKU & Name */}
+                          <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800/80">
                             {item.image ? (
-                              <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
+                              <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0" />
                             ) : (
-                              <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400 shrink-0">📦</div>
+                              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs">📦</div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-2 mb-0.5">
-                                <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                                  {item.sku}
-                                </span>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                  {item.quantity} uds
-                                </span>
+                            <div className="min-w-0 flex-1 flex items-center justify-between">
+                              <div>
+                                <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
+                                <h4 className="text-xs font-semibold text-white truncate">{item.productName}</h4>
                               </div>
-                              <h4 className="font-bold text-white text-xs truncate">{item.productName}</h4>
+                              <span className="text-[11px] text-slate-400 font-medium">{item.quantity} uds</span>
                             </div>
                           </div>
 
-                          {/* 4-Step Pricing Matrix for Preview */}
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="bg-slate-950 border border-slate-700/80 p-2 rounded-lg">
-                              <span className="text-slate-400 text-[10px] block uppercase font-semibold">1. FOB Base</span>
-                              <span className="font-bold text-white text-xs">${valFobNoTax.toFixed(2)} USD</span>
-                            </div>
+                          {/* Step-by-Step Breakdown Table */}
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                              <thead className="text-[10px] text-slate-400 uppercase font-semibold border-b border-slate-800">
+                                <tr>
+                                  <th className="pb-1.5 font-medium">Paso / Concepto</th>
+                                  <th className="pb-1.5 font-medium text-right">Precio (USD)</th>
+                                  <th className="pb-1.5 font-medium text-right">Precio (GTQ)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800/60">
+                                <tr>
+                                  <td className="py-2 text-slate-300">1. FOB Base</td>
+                                  <td className="py-2 text-right font-medium text-slate-200">${valFobNoTax.toFixed(2)} USD</td>
+                                  <td className="py-2 text-right font-mono text-slate-400">Q {(valFobNoTax * parsedGtqRate).toFixed(2)} GTQ</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2 text-slate-300">2. Con Aduana</td>
+                                  <td className="py-2 text-right font-medium text-amber-300">${valWithCustoms.toFixed(2)} USD</td>
+                                  <td className="py-2 text-right font-mono text-amber-400/90">Q {(valWithCustoms * parsedGtqRate).toFixed(2)} GTQ</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2 text-slate-300">3. Landed (+Flete)</td>
+                                  <td className="py-2 text-right font-medium text-indigo-300">${valLandedFull.toFixed(2)} USD</td>
+                                  <td className="py-2 text-right font-mono text-indigo-400/90">Q {(valLandedFull * parsedGtqRate).toFixed(2)} GTQ</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
 
-                            <div className="bg-amber-950/20 border border-amber-500/40 p-2 rounded-lg">
-                              <span className="text-amber-400 text-[10px] block uppercase font-bold">2. Con Aduana</span>
-                              <span className="font-bold text-amber-300 text-xs">${valWithCustoms.toFixed(2)} USD</span>
-                            </div>
-
-                            <div className="bg-indigo-950/20 border border-indigo-500/40 p-2 rounded-lg">
-                              <span className="text-indigo-400 text-[10px] block uppercase font-bold">3. Landed (+Flete)</span>
-                              <span className="font-bold text-indigo-300 text-xs">${valLandedFull.toFixed(2)} USD</span>
-                            </div>
-
-                            <div className="bg-emerald-950/60 border border-emerald-500/50 p-2 rounded-lg">
-                              <span className="text-emerald-400 text-[10px] block uppercase font-extrabold">4. 🏷️ Precio Venta</span>
-                              <div className="flex items-baseline justify-between pt-0.5">
-                                <span className="font-extrabold text-white text-xs">${sellingPriceUsd.toFixed(2)} USD</span>
-                                <span className="font-mono font-extrabold text-emerald-400 text-xs">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
-                              </div>
+                          {/* Fila final tipo resumen destacada para el Precio Final de Venta */}
+                          <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
+                              4. Precio Venta (+{parsedMargin}%)
+                            </span>
+                            <div className="flex items-center space-x-2 font-mono font-extrabold text-xs sm:text-sm text-white">
+                              <span className="text-white">${sellingPriceUsd.toFixed(2)} USD</span>
+                              <span className="text-slate-500 font-normal">|</span>
+                              <span className="text-emerald-400">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
                             </div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-
-                  {/* DESKTOP PREVIEW TABLE VIEW (Visible on md and larger) */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left text-xs text-slate-300">
-                      <thead className="text-slate-400 uppercase font-semibold border-b border-slate-700">
-                        <tr>
-                          <th className="py-2">Foto</th>
-                          <th className="py-2">SKU</th>
-                          <th className="py-2">Producto</th>
-                          <th className="py-2">1. FOB Sin Imp</th>
-                          <th className="py-2 text-amber-400">2. Con Aduana</th>
-                          <th className="py-2 text-indigo-400">3. Landed (+Flete)</th>
-                          <th className="py-2 text-emerald-400 font-bold">4. 🏷️ Precio Venta (+{parsedMargin}%)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800">
-                        {proratedPreview.map((item, idx) => {
-                          const customsPerUnit = item.quantity > 0 ? item.allocatedCustoms / item.quantity : 0;
-                          const valWithCustoms = item.unitCostFob + customsPerUnit;
-                          const sellingPriceUsd = item.finalSellingPrice;
-                          const sellingPriceGtq = sellingPriceUsd * parsedGtqRate;
-
-                          return (
-                            <tr key={idx}>
-                              <td className="py-1">
-                                {item.image ? (
-                                  <img src={item.image} alt="Preview" className="w-6 h-6 rounded object-cover border border-slate-700" />
-                                ) : (
-                                  <span className="text-[10px] text-slate-500">Sin Foto</span>
-                                )}
-                              </td>
-                              <td className="py-2 font-mono font-bold text-blue-400">{item.sku}</td>
-                              <td className="py-2 text-white font-semibold">{item.productName}</td>
-                              <td className="py-2">${item.unitCostFob.toFixed(2)}</td>
-                              <td className="py-2 text-amber-400">${valWithCustoms.toFixed(2)}</td>
-                              <td className="py-2 text-indigo-400">${item.finalUnitCost.toFixed(2)}</td>
-                              <td className="py-2">
-                                <span className="font-bold text-white block">${sellingPriceUsd.toFixed(2)} USD</span>
-                                <span className="font-mono font-extrabold text-emerald-400 text-[11px] block">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+              {/* Actions Footer */}
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700/80">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold transition"
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={previewItems.length === 0}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-blue-600/20"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-blue-600/20 cursor-pointer"
                 >
                   Guardar Lote & Prorratear
                 </button>
