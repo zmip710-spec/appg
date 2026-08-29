@@ -104,12 +104,13 @@ const fallbackBatches: ImportBatch[] = [
 ];
 
 export const ImportBatchesView: React.FC = () => {
-  const [batches, setBatches] = useState<ImportBatch[]>(fallbackBatches);
+  const [batches, setBatches] = useState<ImportBatch[]>([]);
   const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
-  const [expandedBatchId, setExpandedBatchId] = useState<string | null>('#5555');
+  const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Active dropdown open index for SKU selector
   const [openSkuDropdownIndex, setOpenSkuDropdownIndex] = useState<number | null>(null);
@@ -124,6 +125,7 @@ export const ImportBatchesView: React.FC = () => {
   const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>>([]);
 
   const loadBatchesData = async () => {
+    setIsLoading(true);
     try {
       const data = await fetchBatches();
       const invData = await fetchInventory();
@@ -137,6 +139,8 @@ export const ImportBatchesView: React.FC = () => {
       }
     } catch {
       setIsDbConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -452,7 +456,12 @@ export const ImportBatchesView: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-base font-bold text-white">Historial de Lotes de Importación</h3>
 
-        {batches.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="bg-slate-800 border border-slate-700/80 rounded-xl h-24 w-full"></div>
+            <div className="bg-slate-800 border border-slate-700/80 rounded-xl h-24 w-full"></div>
+          </div>
+        ) : batches.length === 0 ? (
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
             No hay lotes registrados. Haz clic en "+ Nuevo Lote de Importación" para agregar uno.
           </div>

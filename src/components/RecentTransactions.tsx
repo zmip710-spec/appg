@@ -30,7 +30,8 @@ export const formatAmountInGtq = (amt: string) => {
 };
 
 export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTerm }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(fallbackTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -44,6 +45,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   const [saleStatus, setSaleStatus] = useState<string>('Completado');
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const data = await fetchTransactions();
       const invData = await fetchInventory();
@@ -56,6 +58,8 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
       }
     } catch {
       setIsDbConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -247,7 +251,12 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
       {/* MOBILE CARDS VIEW (Visible only on small screens md:hidden) */}
       <div className="md:hidden p-4 space-y-3">
-        {filteredData.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-20 w-full"></div>
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-20 w-full"></div>
+          </div>
+        ) : filteredData.length === 0 ? (
           <div className="text-center py-6 text-slate-400 text-sm">
             No se encontraron ventas. Haz clic en "+ Registrar Nueva Venta" para realizar una.
           </div>

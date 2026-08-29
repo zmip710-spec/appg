@@ -3,16 +3,9 @@ import { Search, Plus, Filter, Shield, Database, Trash2, UserPlus, Lock } from '
 import { fetchUsers, createUser, toggleUserStatusApi, deleteUserApi, User } from '../services/api';
 import { ImagePicker } from './ImagePicker';
 
-const initialFallbackUsers: User[] = [
-  { id: '1', name: 'Sofía Ramírez', email: 'sofia@nexus.io', role: 'Administrador', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80', lastLogin: 'Hace 5 min' },
-  { id: '2', name: 'Alejandro Morales', email: 'alejandro@nexus.io', role: 'Desarrollador', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80', lastLogin: 'Hace 2 horas' },
-  { id: '3', name: 'Camila Torres', email: 'camila@nexus.io', role: 'Diseñadora UI/UX', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', lastLogin: 'Ayer' },
-  { id: '4', name: 'Mateo Silva', email: 'mateo@nexus.io', role: 'Soporte Técnico', status: 'Inactivo', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80', lastLogin: 'Hace 5 días' },
-  { id: '5', name: 'Valeria Ortiz', email: 'valeria@nexus.io', role: 'Marketing Manager', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80', lastLogin: 'Hace 1 hora' },
-];
-
 export const UsersView: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(initialFallbackUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -20,6 +13,7 @@ export const UsersView: React.FC = () => {
   const [isDbConnected, setIsDbConnected] = useState(false);
 
   const loadDataFromDb = async () => {
+    setIsLoading(true);
     try {
       const dbUsers = await fetchUsers();
       if (Array.isArray(dbUsers)) {
@@ -28,6 +22,8 @@ export const UsersView: React.FC = () => {
       }
     } catch {
       setIsDbConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -147,7 +143,12 @@ export const UsersView: React.FC = () => {
       {/* MOBILE CARDS VIEW (Visible only on small screens md:hidden) */}
       <div className="md:hidden space-y-3">
         <h3 className="font-bold text-white text-base px-1">Equipo de Trabajo ({filteredUsers.length})</h3>
-        {filteredUsers.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-20 w-full"></div>
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-20 w-full"></div>
+          </div>
+        ) : filteredUsers.length === 0 ? (
           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400 text-sm">
             No se encontraron usuarios. Haz clic en "+ Agregar Usuario" para registrar uno.
           </div>

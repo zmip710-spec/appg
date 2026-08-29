@@ -25,7 +25,8 @@ import { ImagePicker } from './ImagePicker';
 const fallbackInventory: InventoryProduct[] = [];
 
 export const InventoryView: React.FC = () => {
-  const [inventory, setInventory] = useState<InventoryProduct[]>(fallbackInventory);
+  const [inventory, setInventory] = useState<InventoryProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
@@ -49,6 +50,7 @@ export const InventoryView: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const loadInventory = async () => {
+    setIsLoading(true);
     try {
       const data = await fetchInventory();
       if (Array.isArray(data)) {
@@ -57,6 +59,8 @@ export const InventoryView: React.FC = () => {
       }
     } catch {
       setIsDbConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -290,7 +294,13 @@ export const InventoryView: React.FC = () => {
       {/* MOBILE CARDS VIEW (Visible only on small screens md:hidden) */}
       <div className="md:hidden space-y-4">
         <h3 className="font-bold text-white text-base px-1">Catálogo Detallado ({filteredInventory.length})</h3>
-        {filteredInventory.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-24 w-full"></div>
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-24 w-full"></div>
+            <div className="bg-slate-800 border border-slate-700 rounded-xl h-24 w-full"></div>
+          </div>
+        ) : filteredInventory.length === 0 ? (
           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400 text-sm">
             No se encontraron productos en el inventario. Haz clic en "+ Nuevo Producto / SKU" para agregar uno.
           </div>

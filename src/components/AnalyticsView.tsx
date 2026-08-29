@@ -7,8 +7,10 @@ export const AnalyticsView: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryProduct[]>([]);
   const [batches, setBatches] = useState<ImportBatch[]>([]);
   const [isDbConnected, setIsDbConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadAnalyticsData = async () => {
+    setIsLoading(true);
     try {
       const statsData = await fetchDashboardStatsApi();
       const invData = await fetchInventory();
@@ -20,6 +22,8 @@ export const AnalyticsView: React.FC = () => {
       setIsDbConnected(true);
     } catch {
       setIsDbConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,6 +46,19 @@ export const AnalyticsView: React.FC = () => {
   const avgUnitCost = inventory.length > 0
     ? (inventory.reduce((sum, item) => sum + item.unitCost, 0) / inventory.length).toFixed(2)
     : '0.00';
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-20 w-full"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28"></div>
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28"></div>
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
