@@ -49,7 +49,7 @@ export const AnalyticsView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6 animate-pulse min-h-[500px]">
         <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-20 w-full"></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28"></div>
@@ -61,7 +61,7 @@ export const AnalyticsView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[500px]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800 p-5 rounded-xl border border-slate-700">
         <div>

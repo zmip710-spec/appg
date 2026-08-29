@@ -193,7 +193,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   });
 
   return (
-    <div className="bg-slate-800 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm space-y-0">
+    <div className="bg-slate-800 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm space-y-0 min-h-[500px]">
       {/* Header */}
       <div className="p-5 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
