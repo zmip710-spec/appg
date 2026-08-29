@@ -215,17 +215,34 @@ export const InventoryView: React.FC = () => {
   const totalInventoryValueGtq = totalInventoryValue * 7.80;
   const totalUniqueSkus = inventory.length;
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 min-h-[500px] animate-pulse">
+        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-24 w-full"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28 w-full"></div>
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28 w-full"></div>
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-28 w-full"></div>
+        </div>
+        <div className="space-y-3">
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-24 w-full"></div>
+          <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 h-24 w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 min-h-[500px]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800 p-5 rounded-xl border border-slate-700">
         <div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-bold text-white">Inventario Consolidado & Detalle de Stock</h2>
             {isDbConnected && (
-              <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                 <Database className="w-3 h-3" />
-                <span>Base de Datos SQLite Conectada</span>
+                <span>BD Conectada</span>
               </span>
             )}
           </div>

@@ -192,6 +192,17 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
     return matchesSearch && matchesStatus;
   });
 
+  if (isLoading) {
+    return (
+      <div className="bg-slate-800 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm p-5 space-y-4 min-h-[500px] animate-pulse">
+        <div className="h-12 bg-slate-700/60 rounded-xl w-full"></div>
+        <div className="h-20 bg-slate-700/40 rounded-xl w-full"></div>
+        <div className="h-20 bg-slate-700/40 rounded-xl w-full"></div>
+        <div className="h-20 bg-slate-700/40 rounded-xl w-full"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-slate-800 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm space-y-0 min-h-[500px]">
       {/* Header */}
