@@ -40,6 +40,33 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// API Auth Register Endpoint
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, role, avatar, password } = req.body;
+  if (!name || !email) return res.status(400).json({ error: 'Nombre y email son requeridos.' });
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = name.trim();
+  const userAvatar = avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80';
+  const userPassword = password && password.trim() !== '' ? password.trim() : '123456';
+  const lastLogin = 'Ahora mismo';
+  const status = 'Activo';
+
+  db.get('SELECT id FROM users WHERE LOWER(email) = ?', [cleanEmail], (err, existing) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (existing) {
+      return res.status(400).json({ error: `El correo "${cleanEmail}" ya está registrado.` });
+    }
+
+    const query = 'INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    db.run(query, [cleanName, cleanEmail, role || 'Desarrollador', status, userAvatar, lastLogin, userPassword], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      const newUser = { id: this.lastID, name: cleanName, email: cleanEmail, role: role || 'Desarrollador', status, avatar: userAvatar, lastLogin };
+      res.json({ success: true, user: newUser });
+    });
+  });
+});
+
 // API Users & Team Management (With Password Storage)
 app.get('/api/users', (req, res) => {
   db.all('SELECT id, name, email, role, status, avatar, lastLogin FROM users ORDER BY id DESC', [], (err, rows) => {
@@ -634,6 +661,23 @@ app.delete('/api/inventory/:id', (req, res) => {
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(distPath, 'index.html'));
+});
+
+// Dedicated 404 JSON handler for unhandled /api requests
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `La ruta de API '${req.method} ${req.originalUrl}' no existe.` });
+});
+
+// Global Express Error Handler (Guarantees valid JSON response for any server error)
+app.use((err, req, res, next) => {
+  console.error('Unhandled Server Error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const statusCode = err.status || err.statusCode || 500;
+  res.status(statusCode).json({
+    error: err.message || 'Error interno en el servidor backend.'
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

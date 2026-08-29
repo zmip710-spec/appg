@@ -1,8 +1,4 @@
-const isDev = typeof window !== 'undefined' && (window.location.port === '3000' || window.location.port === '5173');
-
-const API_BASE_URL = isDev
-  ? `http://${window.location.hostname}:4000/api`
-  : '/api';
+const API_BASE_URL = '/api';
 
 export interface User {
   id: string | number;
@@ -103,11 +99,25 @@ export const loginApi = async (email: string, password?: string): Promise<User> 
     body: JSON.stringify({ email, password }),
   });
   if (!response.ok) {
-    const errJson = await response.json();
+    const errJson = await response.json().catch(() => ({ error: 'Error de respuesta en inicio de sesión' }));
     throw new Error(errJson.error || 'Error al iniciar sesión');
   }
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   return data.user;
+};
+
+export const registerApi = async (data: { name: string; email: string; password?: string; role?: string; avatar?: string }): Promise<User> => {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errJson = await response.json().catch(() => ({ error: 'Error de respuesta en registro de usuario' }));
+    throw new Error(errJson.error || 'Error al registrar usuario');
+  }
+  const resData = await response.json().catch(() => ({}));
+  return resData.user || resData;
 };
 
 export const updateUserProfileApi = async (
