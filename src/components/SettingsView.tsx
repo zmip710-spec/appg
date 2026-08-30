@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Bell, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle } from 'lucide-react';
+import { Save, Bell, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users } from 'lucide-react';
 import { updateUserProfileApi, changePasswordApi, User } from '../services/api';
 import { ImagePicker } from './ImagePicker';
+import { UsersView } from './UsersView';
 
 interface SettingsViewProps {
   currentUser?: User | null;
@@ -9,7 +10,7 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'team'>('profile');
 
   // Form State bound EXCLUSIVELY to currentUser
   const [name, setName] = useState(currentUser?.name || '');
@@ -113,10 +114,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
         <div>
           <h2 className="text-xl font-bold text-white flex items-center space-x-2">
             <UserIcon className="w-5 h-5 text-blue-400" />
-            <span>Configuración del Perfil de Usuario</span>
+            <span>Configuración de Cuenta & Gestión de Equipo</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Modifica la información, contraseña y foto de perfil del usuario logueado actualmente (<span className="text-blue-400 font-semibold">{currentUser?.name || 'Invitado'}</span>)
+            Modifica la información de tu perfil, seguridad y administra los miembros del equipo registrado en la base de datos
           </p>
         </div>
 
@@ -140,15 +141,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
             <UserIcon className="w-4 h-4" />
             <span>Mi Perfil ({currentUser?.name?.split(' ')[0]})</span>
           </button>
-          <button
-            onClick={() => { setActiveTab('notifications'); setErrorMsg(''); }}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-              activeTab === 'notifications' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
-            }`}
-          >
-            <Bell className="w-4 h-4" />
-            <span>Notificaciones</span>
-          </button>
+          {currentUser?.role !== 'Vendedor' && (
+            <button
+              onClick={() => { setActiveTab('team'); setErrorMsg(''); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                activeTab === 'team' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Gestión de Equipo</span>
+            </button>
+          )}
           <button
             onClick={() => { setActiveTab('security'); setErrorMsg(''); }}
             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
@@ -157,6 +160,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           >
             <Lock className="w-4 h-4" />
             <span>Seguridad y Contraseña</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab('notifications'); setErrorMsg(''); }}
+            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+              activeTab === 'notifications' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
+            }`}
+          >
+            <Bell className="w-4 h-4" />
+            <span>Notificaciones</span>
           </button>
         </div>
 
@@ -232,6 +244,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
               </div>
             </form>
           )}
+
+          {activeTab === 'team' && <UsersView />}
 
           {activeTab === 'notifications' && (
             <div className="space-y-5">

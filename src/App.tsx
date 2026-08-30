@@ -31,10 +31,12 @@ export default function App() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Temporarily redirect dashboard and analytics to inventory
+  // Temporarily redirect dashboard, analytics to inventory, and users to settings
   useEffect(() => {
     if (activeTab === 'dashboard' || activeTab === 'analytics') {
       setActiveTab('inventory');
+    } else if (activeTab === 'users') {
+      setActiveTab('settings');
     }
   }, [activeTab]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
@@ -273,13 +275,7 @@ export default function App() {
           {/* TAB: LOTES & ADUANA */}
           {activeTab === 'batches' && <ImportBatchesView />}
 
-          {/* TAB 2: ANALÍTICAS */}
-          {activeTab === 'analytics' && <AnalyticsView />}
-
-          {/* TAB 3: USUARIOS */}
-          {activeTab === 'users' && <UsersView />}
-
-          {/* TAB 4: VENTAS */}
+          {/* TAB: VENTAS */}
           {activeTab === 'sales' && <SalesView />}
 
           {/* TAB 5: CONFIGURACIÓN EXCLUSIVA PARA EL USUARIO LOGUEADO */}
