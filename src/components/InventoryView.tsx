@@ -62,8 +62,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const [selectedProductImportDetails, setSelectedProductImportDetails] = useState<{
     fobUsd: number;
     sharePercentage: number;
+    unitCustomsUsd: number;
+    unitShippingUsd: number;
     unitTaxUsd: number;
     totalExpensesUsd: number;
+    customsPct: number;
+    shippingPct: number;
     recargoPct: number;
     batchName?: string;
   } | null>(null);
@@ -82,27 +86,43 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
         if (history && history.length > 0) {
           const latest = history[history.length - 1];
-          const fob = latest.unitCostFob && latest.unitCostFob > 0 ? latest.unitCostFob : selectedDetailProduct.unitCost * 0.8;
           const landed = selectedDetailProduct.unitCost;
-          const uTax = latest.unitTax || (landed - fob);
+          const fob = latest.unitCostFob && latest.unitCostFob > 0 ? latest.unitCostFob : landed * 0.8;
+          const qty = latest.quantity || selectedDetailProduct.stock || 1;
+          const uCustoms = latest.allocatedCustoms && qty > 0 ? latest.allocatedCustoms / qty : (landed - fob) * 0.5;
+          const uShipping = latest.allocatedShipping && qty > 0 ? latest.allocatedShipping / qty : (landed - fob) * 0.5;
+          const uTax = latest.unitTax || (uCustoms + uShipping);
+          const customsPct = fob > 0 ? (uCustoms / fob) * 100 : 12.5;
+          const shippingPct = fob > 0 ? (uShipping / fob) * 100 : 12.5;
           const recargo = fob > 0 ? ((landed - fob) / fob) * 100 : 25.0;
+
           setSelectedProductImportDetails({
             fobUsd: fob,
             sharePercentage: latest.sharePercentage || 0,
+            unitCustomsUsd: uCustoms,
+            unitShippingUsd: uShipping,
             unitTaxUsd: uTax,
             totalExpensesUsd: latest.allocatedTax || (uTax * selectedDetailProduct.stock),
+            customsPct,
+            shippingPct,
             recargoPct: recargo,
             batchName: latest.batchName
           });
         } else {
           const landed = selectedDetailProduct.unitCost;
           const fob = landed * 0.8;
-          const uTax = landed - fob;
+          const uCustoms = (landed - fob) * 0.5;
+          const uShipping = (landed - fob) * 0.5;
+          const uTax = uCustoms + uShipping;
           setSelectedProductImportDetails({
             fobUsd: fob,
             sharePercentage: 0,
+            unitCustomsUsd: uCustoms,
+            unitShippingUsd: uShipping,
             unitTaxUsd: uTax,
             totalExpensesUsd: uTax * selectedDetailProduct.stock,
+            customsPct: 12.5,
+            shippingPct: 12.5,
             recargoPct: 25.0
           });
         }
@@ -110,12 +130,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         if (!isMounted) return;
         const landed = selectedDetailProduct.unitCost;
         const fob = landed * 0.8;
-        const uTax = landed - fob;
+        const uCustoms = (landed - fob) * 0.5;
+        const uShipping = (landed - fob) * 0.5;
+        const uTax = uCustoms + uShipping;
         setSelectedProductImportDetails({
           fobUsd: fob,
           sharePercentage: 0,
+          unitCustomsUsd: uCustoms,
+          unitShippingUsd: uShipping,
           unitTaxUsd: uTax,
           totalExpensesUsd: uTax * selectedDetailProduct.stock,
+          customsPct: 12.5,
+          shippingPct: 12.5,
           recargoPct: 25.0
         });
       }
@@ -632,18 +658,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                     <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                       {selectedDetailProduct.sku}
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-700 text-slate-300">
-                      {selectedDetailProduct.category || 'General'}
+                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-700 text-slate-200">
+                      {selectedDetailProduct.stock} uds disponibles
                     </span>
                   </div>
                   <h3 className="font-bold text-white text-sm sm:text-base truncate mt-0.5">{selectedDetailProduct.name}</h3>
                 </div>
               </div>
-              <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0">✕</button>
+              <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(92vh-140px)] space-y-3.5 pt-3 pr-1">
-              {/* Organized 2-Column Mobile Financial Breakdown Matrix */}
+            <div className="overflow-y-auto max-h-[calc(92vh-140px)] space-y-3 pt-3 pr-1">
+              {/* Step-by-Step Vertical Financial Receipt */}
               {(() => {
                 const stockQty = selectedDetailProduct.stock;
                 const landedUsd = selectedDetailProduct.unitCost;
@@ -653,19 +679,24 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
                 const fobUsd = selectedProductImportDetails?.fobUsd || landedUsd * 0.8;
                 const fobGtq = fobUsd * 7.80;
-                const sharePct = selectedProductImportDetails?.sharePercentage || 0;
-                const unitTaxUsd = selectedProductImportDetails?.unitTaxUsd || (landedUsd - fobUsd);
-                const unitTaxGtq = unitTaxUsd * 7.80;
-                const totalExpensesUsd = selectedProductImportDetails?.totalExpensesUsd || (unitTaxUsd * stockQty);
-                const recargoPct = selectedProductImportDetails?.recargoPct || (fobUsd > 0 ? ((landedUsd - fobUsd) / fobUsd) * 100 : 25.0);
+
+                const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd || (landedUsd - fobUsd) * 0.5;
+                const unitCustomsGtq = unitCustomsUsd * 7.80;
+                const customsPct = selectedProductImportDetails?.customsPct || (fobUsd > 0 ? (unitCustomsUsd / fobUsd) * 100 : 12.5);
+
+                const unitShippingUsd = selectedProductImportDetails?.unitShippingUsd || (landedUsd - fobUsd) * 0.5;
+                const unitShippingGtq = unitShippingUsd * 7.80;
+                const shippingPct = selectedProductImportDetails?.shippingPct || (fobUsd > 0 ? (unitShippingUsd / fobUsd) * 100 : 12.5);
 
                 const sellingUsd = landedUsd * 1.15;
                 const sellingGtq = sellingUsd * 7.80;
+                const profitUsd = sellingUsd - landedUsd;
+                const profitGtq = profitUsd * 7.80;
 
                 return (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between px-1">
-                      <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">📊 Desglose Financiero de Importación</span>
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-700/80">
+                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">Estructura de Costos del Producto</span>
                       {selectedProductImportDetails?.batchName && (
                         <span className="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
                           📦 {selectedProductImportDetails.batchName}
@@ -673,52 +704,77 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {/* 1. Existencias & Valoración */}
-                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Existencias</span>
-                        <span className="font-bold text-white text-xs sm:text-sm block">{stockQty} Unidades</span>
-                        <span className="text-[10px] text-slate-400 font-mono block">Val: ${totalValUsd.toFixed(2)} USD</span>
-                        <span className="text-[10px] text-emerald-400 font-mono font-semibold block">Q {totalValGtq.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ</span>
+                    {/* Step 1: Costo Base (Compra China / FOB) */}
+                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-slate-200">1. Costo Base (Compra China / FOB)</span>
+                        <span className="text-[10px] text-slate-400 font-mono">Por Unidad</span>
                       </div>
-
-                      {/* 2. Precio Inicial (FOB) */}
-                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Costo FOB Base</span>
-                        <span className="font-bold text-white text-xs sm:text-sm block">${fobUsd.toFixed(2)} USD</span>
-                        <span className="text-[10px] text-slate-400 font-mono block">Q {fobGtq.toFixed(2)} GTQ</span>
-                        <span className="text-[9px] text-blue-400 block font-medium">unitario proveedor</span>
+                      <div className="flex justify-between items-baseline pt-0.5">
+                        <span className="text-sm font-mono font-bold text-white">${fobUsd.toFixed(2)} USD</span>
+                        <span className="text-xs font-mono font-extrabold text-slate-300">Q {fobGtq.toFixed(2)} GTQ</span>
                       </div>
-
-                      {/* 3. Participación en Lote */}
-                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">% Part. Lote</span>
-                        <span className="font-bold text-blue-400 text-xs sm:text-sm font-mono block">{sharePct > 0 ? `${sharePct.toFixed(1)}%` : 'Sin lote'}</span>
-                        <span className="text-[10px] text-slate-400 block font-mono">de carga total</span>
+                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between">
+                        <span>Total Lote ({stockQty} uds):</span>
+                        <span className="font-mono">${(fobUsd * stockQty).toFixed(2)} USD (Q {(fobGtq * stockQty).toFixed(2)} GTQ)</span>
                       </div>
+                    </div>
 
-                      {/* 4. Gastos Importación (Aduana + Flete) */}
-                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Aduana + Flete</span>
-                          <span className="text-[9px] font-bold text-amber-400 font-mono">+{recargoPct.toFixed(1)}%</span>
-                        </div>
-                        <span className="font-bold text-amber-300 text-xs block">+${unitTaxUsd.toFixed(2)} USD/u</span>
-                        <span className="text-[10px] text-indigo-300 font-mono block">+Q {unitTaxGtq.toFixed(2)} GTQ/u</span>
+                    {/* Step 2: Recargo Aduana */}
+                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-amber-300">2. Recargo Aduana</span>
+                        <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                          +{customsPct.toFixed(1)}% s/FOB
+                        </span>
                       </div>
-
-                      {/* 5. Costo Landed Final */}
-                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
-                        <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider block">Costo Landed Final</span>
-                        <span className="font-bold text-indigo-200 text-xs sm:text-sm block">${landedUsd.toFixed(2)} USD</span>
-                        <span className="text-[10px] text-indigo-400 font-mono font-extrabold block">Q {landedGtq.toFixed(2)} GTQ</span>
+                      <div className="flex justify-between items-baseline pt-0.5">
+                        <span className="text-xs font-mono font-semibold text-amber-200">+$ {unitCustomsUsd.toFixed(2)} USD/u</span>
+                        <span className="text-xs font-mono font-bold text-amber-300">+Q {unitCustomsGtq.toFixed(2)} GTQ/u</span>
                       </div>
+                    </div>
 
-                      {/* 6. Precio Venta Sugerido */}
-                      <div className="bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/40 space-y-0.5">
-                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">🏷️ Precio Venta (+15%)</span>
-                        <span className="font-extrabold text-white text-xs sm:text-sm block">${sellingUsd.toFixed(2)} USD</span>
-                        <span className="text-xs text-emerald-400 font-mono font-extrabold block">Q {sellingGtq.toFixed(2)} GTQ</span>
+                    {/* Step 3: Recargo Flete */}
+                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-indigo-300">3. Recargo Flete</span>
+                        <span className="text-[10px] font-bold text-indigo-400 font-mono bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                          +{shippingPct.toFixed(1)}% s/FOB
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-baseline pt-0.5">
+                        <span className="text-xs font-mono font-semibold text-indigo-200">+$ {unitShippingUsd.toFixed(2)} USD/u</span>
+                        <span className="text-xs font-mono font-bold text-indigo-300">+Q {unitShippingGtq.toFixed(2)} GTQ/u</span>
+                      </div>
+                    </div>
+
+                    {/* Step 4: Costo Aquí (Landed Final) */}
+                    <div className="bg-blue-950/40 p-3 rounded-xl border border-blue-500/40 space-y-1.5 shadow-md">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-blue-300 text-xs">4. Costo Aquí (Costo Base + Aduana + Flete = Landed Final)</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-sm font-mono font-bold text-white">${landedUsd.toFixed(2)} USD</span>
+                        <span className="text-sm font-mono font-extrabold text-indigo-300">Q {landedGtq.toFixed(2)} GTQ</span>
+                      </div>
+                      <div className="text-[10px] text-blue-300/80 pt-1 border-t border-blue-900/50 flex justify-between">
+                        <span>Valoración Almacén ({stockQty} uds):</span>
+                        <span className="font-mono font-bold text-indigo-200">${totalValUsd.toFixed(2)} USD (Q {totalValGtq.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ)</span>
+                      </div>
+                    </div>
+
+                    {/* Step 5: Precio Venta Final */}
+                    <div className="bg-emerald-950/70 p-3.5 rounded-xl border border-emerald-500/50 space-y-2 shadow-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Final (Costo Aquí + 15% Margen)</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-base font-mono font-extrabold text-white">${sellingUsd.toFixed(2)} USD</span>
+                        <span className="text-base font-mono font-black text-emerald-400">Q {sellingGtq.toFixed(2)} GTQ</span>
+                      </div>
+                      <div className="text-[10px] text-emerald-300 pt-1.5 border-t border-emerald-800/60 flex justify-between items-center">
+                        <span>Ganancia Estimada por Unidad:</span>
+                        <span className="font-mono font-extrabold text-emerald-300 text-xs">+Q {profitGtq.toFixed(2)} GTQ (+${profitUsd.toFixed(2)})</span>
                       </div>
                     </div>
                   </div>
