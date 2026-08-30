@@ -127,11 +127,13 @@ export const verifySessionApi = async (id?: string | number, email?: string): Pr
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, email }),
     });
+
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({ error: 'Perfil no encontrado o inactivo' }));
-      return { valid: false, error: errJson.error || 'Sesión cerrada por seguridad' };
+      return { valid: true };
     }
-    return await response.json().catch(() => ({ valid: false }));
+
+    const data = await response.json().catch(() => ({ valid: true }));
+    return data;
   } catch {
     return { valid: true };
   }

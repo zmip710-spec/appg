@@ -44,7 +44,7 @@ app.post('/api/auth/login', (req, res) => {
 app.post('/api/auth/verify', (req, res) => {
   const { id, email } = req.body;
   if (!id && !email) {
-    return res.status(400).json({ valid: false, error: 'ID o correo requerido para verificación.' });
+    return res.json({ valid: false, error: 'ID o correo requerido para verificación.' });
   }
 
   const query = id ? 'SELECT * FROM users WHERE id = ?' : 'SELECT * FROM users WHERE LOWER(email) = ?';
@@ -52,10 +52,10 @@ app.post('/api/auth/verify', (req, res) => {
 
   db.get(query, [param], (err, user) => {
     if (err || !user) {
-      return res.status(404).json({ valid: false, error: 'El perfil de usuario ya no existe en la base de datos.' });
+      return res.json({ valid: false, error: 'El perfil de usuario ya no existe en la base de datos.' });
     }
     if (user.status !== 'Activo') {
-      return res.status(403).json({ valid: false, error: 'El usuario se encuentra inactivo. Sesión cerrada.' });
+      return res.json({ valid: false, error: 'El usuario se encuentra inactivo. Sesión cerrada.' });
     }
     res.json({ valid: true, user });
   });
