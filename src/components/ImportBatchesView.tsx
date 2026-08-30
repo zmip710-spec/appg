@@ -14,7 +14,8 @@ import {
   Tag,
   AlertCircle,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  FileText
 } from 'lucide-react';
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
 import { ImagePicker } from './ImagePicker';
@@ -108,6 +109,7 @@ export const ImportBatchesView: React.FC = () => {
   const [batches, setBatches] = useState<ImportBatch[]>([]);
   const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
   const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
+  const [selectedBatchForFullDetails, setSelectedBatchForFullDetails] = useState<ImportBatch | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addBatchStep, setAddBatchStep] = useState<1 | 2>(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -513,11 +515,24 @@ export const ImportBatchesView: React.FC = () => {
                       </span>
                     </div>
                     <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBatchForFullDetails(batch);
+                      }}
+                      className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer shrink-0"
+                      title="Ver Informe Completo del Lote"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Ver Informe Completo</span>
+                      <span className="sm:hidden text-[10px]">Ver Detalle</span>
+                    </button>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteBatch(batch.id);
                       }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition cursor-pointer"
                       title="Eliminar lote"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -544,6 +559,14 @@ export const ImportBatchesView: React.FC = () => {
                             <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
                             <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD ({batchCustomsPct.toFixed(1)}%)</strong></span>
                             <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBatchForFullDetails(batch)}
+                              className="ml-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[10px] flex items-center space-x-1 shadow transition cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>📋 Informe Completo</span>
+                            </button>
                           </div>
                         </div>
                       );
@@ -1526,6 +1549,284 @@ export const ImportBatchesView: React.FC = () => {
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer"
               >
                 ✅ Confirmar y Guardar Lote
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Exhaustivo de Informe Completo del Lote */}
+      {selectedBatchForFullDetails && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs overflow-hidden animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="flex justify-between items-start border-b border-slate-700 pb-3 shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                      {selectedBatchForFullDetails.id}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      ✓ {selectedBatchForFullDetails.status || 'Procesado'}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white leading-tight mt-0.5">{selectedBatchForFullDetails.name}</h3>
+                  <span className="text-[11px] text-slate-400 block font-medium">Registrado el {selectedBatchForFullDetails.importDate}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedBatchForFullDetails(null)}
+                className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(92vh-130px)] space-y-4 pr-1">
+              {/* Batch Metadata Configuration Ribbon */}
+              {(() => {
+                const b = selectedBatchForFullDetails;
+                const rate = b.exchangeRateGtq || 7.80;
+                const margin = b.profitMarginPct || 15.0;
+
+                let grandTotalFob = 0;
+                let grandTotalLanded = 0;
+                let grandTotalSelling = 0;
+                let totalUnits = 0;
+
+                const itemsDetailed = (b.items || []).map(item => {
+                  const qty = item.quantity || 0;
+                  totalUnits += qty;
+                  const fobCost = item.unitCostFob || 0;
+                  const totalFob = item.totalFobValue || (qty * fobCost);
+                  grandTotalFob += totalFob;
+
+                  const sharePct = item.sharePercentage || 0;
+                  const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : (sharePct / 100) * (b.totalCustomsTax || 0);
+                  const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : (sharePct / 100) * (b.totalShippingCost || 0);
+                  const itemTotalExpense = itemCustoms + itemShipping;
+
+                  const unitCustoms = qty > 0 ? itemCustoms / qty : 0;
+                  const unitShipping = qty > 0 ? itemShipping / qty : 0;
+                  const unitTax = qty > 0 ? itemTotalExpense / qty : 0;
+
+                  const customsPct = fobCost > 0 ? (unitCustoms / fobCost) * 100 : 0;
+                  const shippingPct = fobCost > 0 ? (unitShipping / fobCost) * 100 : 0;
+                  const totalRecargoPct = fobCost > 0 ? (unitTax / fobCost) * 100 : 0;
+
+                  const landedCost = item.finalUnitCost || (fobCost + unitTax);
+                  const totalLanded = landedCost * qty;
+                  grandTotalLanded += totalLanded;
+
+                  const sellingPrice = item.finalSellingPrice || (landedCost * (1 + margin / 100));
+                  const totalSelling = sellingPrice * qty;
+                  grandTotalSelling += totalSelling;
+
+                  const unitProfit = sellingPrice - landedCost;
+                  const totalProfit = unitProfit * qty;
+
+                  return {
+                    ...item,
+                    qty,
+                    fobCost,
+                    totalFob,
+                    sharePct,
+                    itemCustoms,
+                    itemShipping,
+                    itemTotalExpense,
+                    unitCustoms,
+                    unitShipping,
+                    unitTax,
+                    customsPct,
+                    shippingPct,
+                    totalRecargoPct,
+                    landedCost,
+                    totalLanded,
+                    sellingPrice,
+                    totalSelling,
+                    unitProfit,
+                    totalProfit
+                  };
+                });
+
+                const totalCustomsTax = b.totalCustomsTax || 0;
+                const totalShippingCost = b.totalShippingCost || 0;
+                const totalLandedExpenses = totalCustomsTax + totalShippingCost;
+                const grandTotalProfit = grandTotalSelling - grandTotalLanded;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Key Config Badges */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-700/80">
+                        <span className="text-[10px] text-slate-400 block font-medium uppercase">Tipo de Cambio</span>
+                        <span className="font-bold text-blue-400 font-mono text-xs">Q {rate.toFixed(2)} GTQ / USD</span>
+                      </div>
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-700/80">
+                        <span className="text-[10px] text-slate-400 block font-medium uppercase">Margen Aplicado</span>
+                        <span className="font-bold text-emerald-400 font-mono text-xs">+{margin.toFixed(1)}% Venta</span>
+                      </div>
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-700/80">
+                        <span className="text-[10px] text-slate-400 block font-medium uppercase">Estrategia de Costo</span>
+                        <span className="font-bold text-white text-[11px] block truncate">
+                          {b.costUpdateStrategy === 'latest' ? '🏷️ Reemplazar Último' : '📊 Promedio Ponderado'}
+                        </span>
+                      </div>
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-700/80">
+                        <span className="text-[10px] text-slate-400 block font-medium uppercase">Carga Física</span>
+                        <span className="font-bold text-indigo-300 font-mono text-xs">{b.items.length} SKUs • {totalUnits} Uds</span>
+                      </div>
+                    </div>
+
+                    {/* Consolidated Shipment Financial Totals Matrix */}
+                    <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-700/80 space-y-3">
+                      <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block border-b border-slate-800 pb-1.5">
+                        📊 Totales Consolidados del Embarque
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                        <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-400 block font-medium">Total FOB (Compra)</span>
+                          <span className="text-xs font-mono font-bold text-white block">${grandTotalFob.toFixed(2)} USD</span>
+                          <span className="text-[10px] font-mono text-slate-400 block">Q {(grandTotalFob * rate).toFixed(2)} GTQ</span>
+                        </div>
+                        <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-400 block font-medium">Gastos Aduana + Flete</span>
+                          <span className="text-xs font-mono font-bold text-amber-300 block">${totalLandedExpenses.toFixed(2)} USD</span>
+                          <span className="text-[10px] font-mono text-amber-400 block">Q {(totalLandedExpenses * rate).toFixed(2)} GTQ</span>
+                        </div>
+                        <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-400 block font-medium">Costo Landed Total</span>
+                          <span className="text-xs font-mono font-bold text-indigo-300 block">${grandTotalLanded.toFixed(2)} USD</span>
+                          <span className="text-[10px] font-mono text-indigo-400 font-semibold block">Q {(grandTotalLanded * rate).toFixed(2)} GTQ</span>
+                        </div>
+                        <div className="bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-500/40">
+                          <span className="text-[10px] text-emerald-400 block font-medium">Valoración Venta Total</span>
+                          <span className="text-xs font-mono font-bold text-white block">${grandTotalSelling.toFixed(2)} USD</span>
+                          <span className="text-xs font-mono font-extrabold text-emerald-400 block">Q {(grandTotalSelling * rate).toFixed(2)} GTQ</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+                        <span className="text-slate-300 font-semibold">Ganancia Bruta Proyectada del Lote:</span>
+                        <span className="font-mono font-extrabold text-emerald-400 text-sm">
+                          +Q {(grandTotalProfit * rate).toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ <span className="text-xs font-normal text-slate-400">(+${grandTotalProfit.toFixed(2)} USD)</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Exhaustive Product-by-Product Breakdown List */}
+                    <div className="space-y-3">
+                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block px-1">
+                        📦 Detalle Completo Producto por Producto ({itemsDetailed.length} Catálogos):
+                      </span>
+
+                      <div className="space-y-3">
+                        {itemsDetailed.map((item, idx) => (
+                          <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-md">
+                            {/* Product Header */}
+                            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                              <div className="flex items-center space-x-3 min-w-0">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-xs shrink-0">📦</div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
+                                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                      {item.sharePct.toFixed(1)}% del lote
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-white text-xs sm:text-sm truncate mt-0.5">{item.productName}</h4>
+                                </div>
+                              </div>
+                              <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-800 text-slate-200 border border-slate-700 shrink-0">
+                                {item.qty} uds
+                              </span>
+                            </div>
+
+                            {/* Complete Step-by-Step Financial Matrix per Item */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+                              {/* 1. FOB Base */}
+                              <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                <span className="text-[10px] text-slate-400 block font-medium">1. Costo FOB Base (Compra)</span>
+                                <span className="font-bold text-white text-xs block">${item.fobCost.toFixed(2)} USD/u</span>
+                                <span className="text-[10px] font-mono text-slate-400 block">Q {(item.fobCost * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[9px] text-slate-500 block pt-1 border-t border-slate-800/80 mt-1">Total: ${item.totalFob.toFixed(2)} USD</span>
+                              </div>
+
+                              {/* 2. Recargo Aduana */}
+                              <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] text-slate-400 font-medium">2. Recargo Aduana</span>
+                                  <span className="text-[9px] font-bold text-amber-400 font-mono">+{item.customsPct.toFixed(1)}%</span>
+                                </div>
+                                <span className="font-bold text-amber-300 text-xs block">+$ {item.unitCustoms.toFixed(2)} USD/u</span>
+                                <span className="text-[10px] font-mono text-amber-400 block">+Q {(item.unitCustoms * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[9px] text-slate-500 block pt-1 border-t border-slate-800/80 mt-1">Total: ${item.itemCustoms.toFixed(2)} USD</span>
+                              </div>
+
+                              {/* 3. Recargo Flete */}
+                              <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] text-slate-400 font-medium">3. Recargo Flete</span>
+                                  <span className="text-[9px] font-bold text-indigo-400 font-mono">+{item.shippingPct.toFixed(1)}%</span>
+                                </div>
+                                <span className="font-bold text-indigo-300 text-xs block">+$ {item.unitShipping.toFixed(2)} USD/u</span>
+                                <span className="text-[10px] font-mono text-indigo-400 block">+Q {(item.unitShipping * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[9px] text-slate-500 block pt-1 border-t border-slate-800/80 mt-1">Total: ${item.itemShipping.toFixed(2)} USD</span>
+                              </div>
+
+                              {/* 4. Costo Landed Final */}
+                              <div className="bg-blue-950/40 p-2.5 rounded-lg border border-blue-500/40">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] text-blue-300 font-bold">4. Costo Landed Final</span>
+                                  <span className="text-[9px] font-bold text-amber-400 font-mono">+{item.totalRecargoPct.toFixed(1)}% Recargo</span>
+                                </div>
+                                <span className="font-bold text-white text-xs block">${item.landedCost.toFixed(2)} USD/u</span>
+                                <span className="text-[10px] font-mono text-indigo-300 font-extrabold block">Q {(item.landedCost * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[9px] text-blue-300/80 block pt-1 border-t border-blue-900/50 mt-1">Total: ${item.totalLanded.toFixed(2)} USD</span>
+                              </div>
+
+                              {/* 5. Precio Venta Final */}
+                              <div className="bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-500/40">
+                                <span className="text-[10px] text-emerald-400 font-extrabold uppercase block">5. Precio Venta (+{margin}%)</span>
+                                <span className="font-bold text-white text-xs block">${item.sellingPrice.toFixed(2)} USD/u</span>
+                                <span className="text-xs font-mono font-black text-emerald-400 block">Q {(item.sellingPrice * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[9px] text-emerald-300 block pt-1 border-t border-emerald-900/60 mt-1">Total: ${item.totalSelling.toFixed(2)} USD</span>
+                              </div>
+
+                              {/* 6. Ganancia Bruta */}
+                              <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                <span className="text-[10px] text-slate-400 block font-medium">6. Ganancia Bruta Estimada</span>
+                                <span className="font-bold text-emerald-400 text-xs block">+Q {(item.unitProfit * rate).toFixed(2)} GTQ/u</span>
+                                <span className="text-[10px] font-mono text-slate-300 block">(+${item.unitProfit.toFixed(2)} USD/u)</span>
+                                <span className="text-[9px] text-emerald-400 font-mono block pt-1 border-t border-slate-800/80 mt-1">Total: +Q {(item.totalProfit * rate).toFixed(2)} GTQ</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex justify-end pt-3 border-t border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedBatchForFullDetails(null)}
+                className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+              >
+                Cerrar Informe
               </button>
             </div>
           </div>
