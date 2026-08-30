@@ -39,6 +39,8 @@ function normalizeRow(row) {
     // Batch Items
     if (lowerKey === 'batchid') targetKey = 'batchId';
     if (lowerKey === 'productname') targetKey = 'productName';
+    if (lowerKey === 'brand') targetKey = 'brand';
+    if (lowerKey === 'model') targetKey = 'model';
     if (lowerKey === 'unitcostfob') targetKey = 'unitCostFob';
     if (lowerKey === 'totalfobvalue') targetKey = 'totalFobValue';
     if (lowerKey === 'sharepercentage') targetKey = 'sharePercentage';
@@ -211,6 +213,10 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS previousUnitCost NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangeDelta NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS model TEXT DEFAULT ''");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS model TEXT DEFAULT ''");
     await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT '123456'");
 
     console.log('✅ Tablas y esquema de PostgreSQL inicializados correctamente.');
@@ -265,6 +271,8 @@ if (isPg) {
         batchId TEXT NOT NULL,
         sku TEXT NOT NULL DEFAULT 'PROD-001',
         productName TEXT NOT NULL,
+        brand TEXT DEFAULT '',
+        model TEXT DEFAULT '',
         quantity INTEGER NOT NULL,
         unitCostFob REAL NOT NULL,
         totalFobValue REAL NOT NULL,
@@ -282,6 +290,8 @@ if (isPg) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sku TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
+        brand TEXT DEFAULT '',
+        model TEXT DEFAULT '',
         category TEXT DEFAULT 'General',
         stock INTEGER NOT NULL DEFAULT 0,
         unitCost REAL NOT NULL DEFAULT 0.0,
@@ -308,11 +318,15 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE batches ADD COLUMN profitMarginPct REAL DEFAULT 15.0", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN costUpdateStrategy TEXT DEFAULT 'weighted'", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN sku TEXT DEFAULT 'PROD-001'", () => {});
+    sqliteDb.run("ALTER TABLE batch_items ADD COLUMN brand TEXT DEFAULT ''", () => {});
+    sqliteDb.run("ALTER TABLE batch_items ADD COLUMN model TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN allocatedCustoms REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN allocatedShipping REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN profitMarginPct REAL DEFAULT 15.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN finalSellingPrice REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN image TEXT", () => {});
+    sqliteDb.run("ALTER TABLE inventory ADD COLUMN brand TEXT DEFAULT ''", () => {});
+    sqliteDb.run("ALTER TABLE inventory ADD COLUMN model TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN image TEXT", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN previousUnitCost REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangeDelta REAL DEFAULT 0.0", () => {});

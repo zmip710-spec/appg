@@ -111,7 +111,12 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   // Filtered Inventory List for Search
   const cleanSearch = productSearch.trim().toLowerCase();
   const matchingProducts = cleanSearch.length >= 1
-    ? inventoryList.filter(p => p.sku.toLowerCase().includes(cleanSearch) || p.name.toLowerCase().includes(cleanSearch))
+    ? inventoryList.filter(p =>
+        p.sku.toLowerCase().includes(cleanSearch) ||
+        p.name.toLowerCase().includes(cleanSearch) ||
+        (p.brand && p.brand.toLowerCase().includes(cleanSearch)) ||
+        (p.model && p.model.toLowerCase().includes(cleanSearch))
+      )
     : inventoryList;
 
   // Grand Totals Calculation (Primarily in Quetzales)
@@ -451,10 +456,14 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                             ) : (
                               <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs">📦</div>
                             )}
-                            <div>
-                              <span className="font-mono font-bold text-blue-400 block">{prod.sku}</span>
-                              <span className="text-xs text-slate-200 font-semibold">{prod.name}</span>
-                            </div>
+                          <div>
+                            <span className="font-mono font-bold text-blue-400 block">{prod.sku} {prod.brand ? `| ${prod.brand}` : ''}</span>
+                            <span className="text-xs text-slate-200 font-semibold">
+                              {[prod.brand, prod.model].filter(Boolean).join(' ')
+                                ? `${[prod.brand, prod.model].filter(Boolean).join(' ')} - ${prod.name}`
+                                : prod.name}
+                            </span>
+                          </div>
                           </div>
 
                           <div className="text-right">

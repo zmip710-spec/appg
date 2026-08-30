@@ -388,8 +388,10 @@ app.post('/api/batches', (req, res) => {
     grandTotalFob += totalFob;
     const sku = item.sku && item.sku.trim() !== '' ? item.sku.trim().toUpperCase() : `PROD-00${index + 1}`;
     const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto ${index + 1}`;
+    const brand = item.brand ? item.brand.trim() : '';
+    const model = item.model ? item.model.trim() : '';
     const image = item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80';
-    return { sku, productName, quantity: qty, unitCostFob: unitCost, totalFobValue: totalFob, image };
+    return { sku, productName, brand, model, quantity: qty, unitCostFob: unitCost, totalFobValue: totalFob, image };
   });
 
   // 2. Prorate Customs Tax + Shipping Cost separately proportionately to FOB Value
@@ -426,12 +428,12 @@ app.post('/api/batches', (req, res) => {
         }
 
         const stmt = db.prepare(`
-          INSERT INTO batch_items (batchId, sku, productName, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO batch_items (batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         finalItems.forEach(item => {
-          stmt.run(batchId, item.sku, item.productName, item.quantity, item.unitCostFob, item.totalFobValue, item.sharePercentage, item.allocatedCustoms, item.allocatedShipping, item.allocatedTax, item.unitTax, item.finalUnitCost, marginFloat, item.finalSellingPrice, item.image);
+          stmt.run(batchId, item.sku, item.productName, item.brand || '', item.model || '', item.quantity, item.unitCostFob, item.totalFobValue, item.sharePercentage, item.allocatedCustoms, item.allocatedShipping, item.allocatedTax, item.unitTax, item.finalUnitCost, marginFloat, item.finalSellingPrice, item.image);
         });
 
         // Sequential Inventory Upsert Logic to prevent async race conditions & UNIQUE SKU collisions
@@ -474,10 +476,12 @@ app.post('/api/batches', (req, res) => {
               const delta = parseFloat((item.finalUnitCost - oldCost).toFixed(2));
               const pct = oldCost > 0 ? parseFloat(((delta / oldCost) * 100).toFixed(2)) : 0;
               const updatedImage = (item.image && !item.image.includes('unsplash.com/photo-1523275335684')) ? item.image : existing.image;
+              const updatedBrand = item.brand || existing.brand || '';
+              const updatedModel = item.model || existing.model || '';
 
               db.run(
-                'UPDATE inventory SET name = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
-                [item.productName, newStock, newCost, oldCost, delta, pct, updatedImage, importDate, targetSku],
+                'UPDATE inventory SET name = ?, brand = ?, model = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
+                [item.productName, updatedBrand, updatedModel, newStock, newCost, oldCost, delta, pct, updatedImage, importDate, targetSku],
                 () => {
                   db.run(
                     'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -489,8 +493,8 @@ app.post('/api/batches', (req, res) => {
             } else {
               // Insert New Product in Inventory
               db.run(
-                'INSERT INTO inventory (sku, name, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, item.productName, 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, item.image, importDate],
+                'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [cleanSku, item.productName, item.brand || '', item.model || '', 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, item.image, importDate],
                 (err) => {
                   if (err) {
                     console.error('Error al insertar en inventario SQLite:', err.message);
@@ -611,13 +615,15 @@ app.get('/api/inventory/history/:sku', (req, res) => {
 
 // Create Direct SKU / Product in Inventory
 app.post('/api/inventory', (req, res) => {
-  const { sku, name, category, stock, unitCost, image } = req.body;
+  const { sku, name, brand, model, category, stock, unitCost, image } = req.body;
   if (!sku || !name) {
     return res.status(400).json({ error: 'Código SKU y Nombre de producto son requeridos.' });
   }
 
   const cleanSku = sku.trim().toUpperCase();
   const cleanName = name.trim();
+  const cleanBrand = brand ? brand.trim() : '';
+  const cleanModel = model ? model.trim() : '';
   const cat = category && category.trim() !== '' ? category.trim() : 'General';
   const stockInt = Math.max(0, parseInt(stock) || 0);
   const costFloat = Math.max(0, parseFloat(unitCost) || 0);
@@ -630,8 +636,8 @@ app.post('/api/inventory', (req, res) => {
       return res.status(400).json({ error: `El Código SKU "${cleanSku}" ya existe en el inventario.` });
     }
 
-    const query = 'INSERT INTO inventory (sku, name, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    db.run(query, [cleanSku, cleanName, cat, stockInt, costFloat, costFloat, 0, 0, imgUrl, lastUpdated], function (err) {
+    const query = 'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    db.run(query, [cleanSku, cleanName, cleanBrand, cleanModel, cat, stockInt, costFloat, costFloat, 0, 0, imgUrl, lastUpdated], function (err) {
       if (err) return res.status(500).json({ error: err.message });
       const insertedId = this.lastID;
       
@@ -645,6 +651,8 @@ app.post('/api/inventory', (req, res) => {
         id: insertedId,
         sku: cleanSku,
         name: cleanName,
+        brand: cleanBrand,
+        model: cleanModel,
         category: cat,
         stock: stockInt,
         unitCost: costFloat,

@@ -169,6 +169,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   // Form State for new SKU/Product
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
   const [category, setCategory] = useState('General');
   const [stock, setStock] = useState<string>('10');
   const [unitCost, setUnitCost] = useState<string>('10.0');
@@ -198,41 +200,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     setHistoryProduct(product);
     setShowHistoryModal(true);
     try {
-      const data = await fetchPriceHistoryApi(product.sku, product.name);
-      if (Array.isArray(data) && data.length > 0) {
-        setPriceHistory(data);
-      } else {
-        const fallbackEntry: PriceHistoryEntry = {
-          id: 1,
-          sku: product.sku,
-          batchId: 'Registro de Inventario',
-          oldCost: product.previousUnitCost || product.unitCost,
-          newCost: product.unitCost,
-          delta: product.priceChangeDelta || 0,
-          pct: product.priceChangePct || 0,
-          changeDate: product.lastUpdated || 'Reciente'
-        };
-        setPriceHistory([fallbackEntry]);
-      }
+      const history = await fetchPriceHistoryApi(product.sku, product.name);
+      setPriceHistory(history);
     } catch {
-      const fallbackEntry: PriceHistoryEntry = {
-        id: 1,
-        sku: product.sku,
-        batchId: 'Registro de Inventario',
-        oldCost: product.previousUnitCost || product.unitCost,
-        newCost: product.unitCost,
-        delta: product.priceChangeDelta || 0,
-        pct: product.priceChangePct || 0,
-        changeDate: product.lastUpdated || 'Reciente'
-      };
-      setPriceHistory([fallbackEntry]);
+      setPriceHistory([]);
     }
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+
     if (!sku.trim() || !name.trim()) {
-      setErrorMessage('El código SKU y el Nombre son obligatorios.');
+      setErrorMessage('Código SKU y Nombre de producto son requeridos.');
       return;
     }
 
@@ -240,6 +220,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       await createInventoryApi({
         sku: sku.trim().toUpperCase(),
         name: name.trim(),
+        brand: brand.trim(),
+        model: model.trim(),
         category: category.trim() || 'General',
         stock: parseInt(stock, 10) || 0,
         unitCost: parseFloat(unitCost) || 0.0,
@@ -303,6 +285,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const resetForm = () => {
     setSku('');
     setName('');
+    setBrand('');
+    setModel('');
     setCategory('General');
     setStock('10');
     setUnitCost('10.0');
@@ -310,12 +294,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     setErrorMessage('');
   };
 
-  // Real-time Search & Filter Chips
+  // Real-time Search & Filter Chips (Includes match by Brand & Model)
   const filteredInventory = inventory.filter((item) => {
+    const query = search.toLowerCase();
     const matchesSearch =
-      item.sku.toLowerCase().includes(search.toLowerCase()) ||
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.category && item.category.toLowerCase().includes(search.toLowerCase()));
+      item.sku.toLowerCase().includes(query) ||
+      item.name.toLowerCase().includes(query) ||
+      (item.brand && item.brand.toLowerCase().includes(query)) ||
+      (item.model && item.model.toLowerCase().includes(query)) ||
+      (item.category && item.category.toLowerCase().includes(query));
 
     let matchesFilter = true;
     if (filterStatus === 'in_stock') matchesFilter = item.stock > 10;
@@ -514,15 +501,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0"
                 />
 
-                {/* Center: Name in Bold + SKU & Category */}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-white text-xs truncate leading-tight">{item.name}</h4>
-                  <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 truncate mt-0.5">
-                    <span className="font-mono text-slate-300 font-semibold">{item.sku}</span>
-                    <span>•</span>
-                    <span className="truncate">{item.category || 'General'}</span>
-                  </div>
-                </div>
+                {/* Center: Name in Bold + SKU & Brand */}
+                {(() => {
+                  const brandModelStr = [item.brand, item.model].filter(Boolean).join(' ');
+                  const fullTitle = brandModelStr ? `${brandModelStr} - ${item.name}` : item.name;
+                  return (
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-white text-xs truncate leading-tight">{fullTitle}</h4>
+                      <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 truncate mt-0.5">
+                        <span className="font-mono text-slate-300 font-semibold">{item.sku} {item.brand ? `| ${item.brand}` : ''}</span>
+                        <span>•</span>
+                        <span className="truncate">{item.category || 'General'}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Right: Stock Badge + Price in GTQ */}
                 <div className="text-right shrink-0">
@@ -593,7 +586,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                         />
                       </td>
                       <td className="px-5 py-3 font-mono font-bold text-blue-400">{item.sku}</td>
-                      <td className="px-5 py-3 font-semibold text-white">{item.name}</td>
+                      <td className="px-5 py-3 font-semibold text-white">
+                        <span className="block truncate">
+                          {[item.brand, item.model].filter(Boolean).join(' ')
+                            ? `${[item.brand, item.model].filter(Boolean).join(' ')} - ${item.name}`
+                            : item.name}
+                        </span>
+                        {item.brand && (
+                          <span className="text-[11px] text-slate-400 block font-normal">Marca: {item.brand} {item.model ? `• Modelo: ${item.model}` : ''}</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3">
                         <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-md font-medium">
                           {item.category || 'General'}
@@ -668,17 +670,23 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   alt={selectedDetailProduct.name}
                   className="w-12 h-12 rounded-xl object-cover border border-slate-600 shadow shrink-0"
                 />
-                <div className="min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                      {selectedDetailProduct.sku}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-700 text-slate-200">
-                      {selectedDetailProduct.stock} uds disponibles
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-white text-sm sm:text-base truncate mt-0.5">{selectedDetailProduct.name}</h3>
-                </div>
+                {(() => {
+                  const brandModelStr = [selectedDetailProduct.brand, selectedDetailProduct.model].filter(Boolean).join(' ');
+                  const fullTitle = brandModelStr ? `${brandModelStr} - ${selectedDetailProduct.name}` : selectedDetailProduct.name;
+                  return (
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                          {selectedDetailProduct.sku} {selectedDetailProduct.brand ? `| ${selectedDetailProduct.brand}` : ''}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-700 text-slate-200">
+                          {selectedDetailProduct.stock} uds disponibles
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-white text-sm sm:text-base truncate mt-0.5">{fullTitle}</h3>
+                    </div>
+                  );
+                })()}
               </div>
               <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
             </div>
@@ -901,15 +909,39 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold uppercase mb-1">Nombre del Producto</label>
+                <label className="block text-slate-400 font-semibold uppercase mb-1">Nombre del Producto *</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej. Audífonos Bluetooth Pro"
+                  placeholder="Ej. Audífonos Bluetooth Pro / Smartphone"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500"
                 />
+              </div>
+
+              {/* Marca & Modelo (Fila de 2 columnas) */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-400 font-semibold uppercase mb-1">Marca (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Xiaomi, Honda"
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold uppercase mb-1">Modelo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Redmi Note 13, CG125"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

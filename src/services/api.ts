@@ -28,6 +28,8 @@ export interface BatchItem {
   batchId?: string;
   sku?: string;
   productName: string;
+  brand?: string;
+  model?: string;
   quantity: number;
   unitCostFob: number;
   totalFobValue?: number;
@@ -59,6 +61,8 @@ export interface InventoryProduct {
   id: number;
   sku: string;
   name: string;
+  brand?: string;
+  model?: string;
   category: string;
   stock: number;
   unitCost: number;

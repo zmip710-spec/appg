@@ -256,9 +256,11 @@ export const ImportBatchesView: React.FC = () => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [showImagePickerInForm, setShowImagePickerInForm] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
-  const [singleProductForm, setSingleProductForm] = useState<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>({
+  const [singleProductForm, setSingleProductForm] = useState<{ sku: string; productName: string; brand: string; model: string; quantity: string; unitCostFob: string; image: string }>({
     sku: '',
     productName: '',
+    brand: '',
+    model: '',
     quantity: '1',
     unitCostFob: '',
     image: ''
@@ -267,11 +269,19 @@ export const ImportBatchesView: React.FC = () => {
   const handleOpenSingleProductForm = (indexToEdit: number | null = null) => {
     if (indexToEdit !== null && inputItems[indexToEdit]) {
       setEditingItemIndex(indexToEdit);
-      setSingleProductForm({ ...inputItems[indexToEdit] });
+      setSingleProductForm({
+        sku: inputItems[indexToEdit].sku || '',
+        productName: inputItems[indexToEdit].productName || '',
+        brand: inputItems[indexToEdit].brand || '',
+        model: inputItems[indexToEdit].model || '',
+        quantity: inputItems[indexToEdit].quantity || '1',
+        unitCostFob: inputItems[indexToEdit].unitCostFob || '',
+        image: inputItems[indexToEdit].image || ''
+      });
       setShowImagePickerInForm(!!inputItems[indexToEdit].image);
     } else {
       setEditingItemIndex(null);
-      setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+      setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
       setShowImagePickerInForm(false);
     }
     setIsAddingProduct(true);
@@ -287,6 +297,8 @@ export const ImportBatchesView: React.FC = () => {
     const cleanItem = {
       sku: singleProductForm.sku.trim() ? singleProductForm.sku.trim().toUpperCase() : `PROD-00${inputItems.length + 1}`,
       productName: singleProductForm.productName.trim(),
+      brand: singleProductForm.brand.trim(),
+      model: singleProductForm.model.trim(),
       quantity: singleProductForm.quantity,
       unitCostFob: singleProductForm.unitCostFob,
       image: singleProductForm.image
@@ -1101,9 +1113,32 @@ export const ImportBatchesView: React.FC = () => {
                             <input
                               type="text"
                               required
-                              placeholder="Ej. Smartwatch Ultra L5"
+                              placeholder="Ej. Smartwatch Ultra L5 / Smartphone"
                               value={singleProductForm.productName}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+
+                          {/* Marca & Modelo (Fila de 2 columnas) */}
+                          <div className="sm:col-span-6">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Marca (Opcional)</label>
+                            <input
+                              type="text"
+                              placeholder="Ej. Xiaomi, Honda, Samsung"
+                              value={singleProductForm.brand}
+                              onChange={(e) => setSingleProductForm({ ...singleProductForm, brand: e.target.value })}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-6">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Modelo (Opcional)</label>
+                            <input
+                              type="text"
+                              placeholder="Ej. Redmi Note 13, CG125"
+                              value={singleProductForm.model}
+                              onChange={(e) => setSingleProductForm({ ...singleProductForm, model: e.target.value })}
                               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                             />
                           </div>
