@@ -46,12 +46,11 @@ export default function App() {
   useEffect(() => {
     const checkSecuritySession = async () => {
       if (!currentUser) return;
-      const res = await verifySessionApi(currentUser.id, currentUser.email);
+      const res = await verifySessionApi(currentUser.id, currentUser.email || currentUser.name);
       if (!res.valid) {
         localStorage.removeItem('nexus_user');
         setCurrentUser(null);
-        setToastMessage(res.error || 'Tu perfil no existe o ha sido desactivado. Sesión cerrada.');
-        setShowToast(true);
+        setShowToast(false);
       } else if (res.user) {
         if (JSON.stringify(res.user) !== JSON.stringify(currentUser)) {
           setCurrentUser(res.user);
@@ -90,6 +89,8 @@ export default function App() {
   }, [darkMode]);
 
   const handleLoginSuccess = (user: User) => {
+    setShowToast(false);
+    setToastMessage('');
     setCurrentUser(user);
     try {
       localStorage.setItem('nexus_user', JSON.stringify(user));
