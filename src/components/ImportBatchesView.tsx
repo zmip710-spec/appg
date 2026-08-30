@@ -571,14 +571,6 @@ export const ImportBatchesView: React.FC = () => {
                             <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
                             <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD ({batchCustomsPct.toFixed(1)}%)</strong></span>
                             <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedBatchForFullDetails(batch)}
-                              className="ml-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[10px] flex items-center space-x-1 shadow transition cursor-pointer"
-                            >
-                              <FileText className="w-3 h-3" />
-                              <span>📋 Informe Completo</span>
-                            </button>
                           </div>
                         </div>
                       );
