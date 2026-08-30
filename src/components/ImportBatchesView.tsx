@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Tag,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
 import { ImagePicker } from './ImagePicker';
@@ -108,6 +109,7 @@ export const ImportBatchesView: React.FC = () => {
   const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
   const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [addBatchStep, setAddBatchStep] = useState<1 | 2>(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -317,6 +319,7 @@ export const ImportBatchesView: React.FC = () => {
     setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);
     setShowConfirmModal(false);
+    setAddBatchStep(1);
     setShowAddModal(true);
   };
 
@@ -763,15 +766,25 @@ export const ImportBatchesView: React.FC = () => {
         )}
       </div>
 
-      {/* Add New Batch Modal */}
+      {/* Add New Batch Modal (2-Step Guided Stepper Flow) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col my-auto overflow-hidden">
-            {/* Modal Header */}
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[92vh] shadow-2xl flex flex-col my-auto overflow-hidden">
+            
+            {/* Modal Header with Stepper Progress */}
             <div className="p-4 sm:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/80 shrink-0">
               <div>
-                <h3 className="font-bold text-white text-base">Registrar Nuevo Lote de Importación</h3>
-                <p className="text-xs text-slate-400">Matriz: FOB Sin Impuesto, Con Aduana, Landed y Precio Final Venta</p>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-white text-base">Registrar Nuevo Lote de Importación</h3>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    Paso {addBatchStep} de 2
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {addBatchStep === 1
+                    ? 'Paso 1: Parámetros Generales y Financieros del Lote'
+                    : 'Paso 2: Vista Previa Comprimida y Carga de Productos'}
+                </p>
               </div>
               <button
                 type="button"
@@ -782,522 +795,489 @@ export const ImportBatchesView: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Form Scrollable */}
-            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
-              {/* Batch General Info (Neutral Emojiless Compact Grid with Automatic % Aduana Badge) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Nombre del Lote</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. Lote Calzado Septiembre"
-                    value={batchName}
-                    onChange={(e) => setBatchName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-xs font-medium text-slate-400">Impuesto Aduana (USD)</label>
-                    {computedCustomsTaxPct > 0 && (
-                      <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                        {computedCustomsTaxPct.toFixed(1)}% FOB
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={customsTax}
-                    onChange={(e) => setCustomsTax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={shippingCost}
-                    onChange={(e) => setShippingCost(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Margen de Venta (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    placeholder="15.0"
-                    value={profitMarginPct}
-                    onChange={(e) => setProfitMarginPct(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Exchange Rate GTQ & Stock Price Variation Strategy */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/80">
-                  <label className="text-xs font-medium text-slate-300">Tipo de Cambio (USD a GTQ):</label>
-                  <div className="w-36">
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.1"
-                      value={exchangeRateGtq}
-                      onChange={(e) => setExchangeRateGtq(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white font-mono font-semibold text-right focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {hasStockWithPriceVariation ? (
-                  <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl space-y-2.5">
-                    <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
-                    </div>
-                    <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                      Detectamos que aún hay unidades guardadas en almacén y el nuevo lote presenta una variación de costo. Elige cómo actualizar el precio del inventario:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                      <div
-                        onClick={() => setCostUpdateStrategy('weighted')}
-                        className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
-                          costUpdateStrategy === 'weighted'
-                            ? 'bg-blue-600/20 border-blue-500 text-white shadow'
-                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                        }`}
-                      >
-                        <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'weighted'} onChange={() => {}} className="mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white block">Promedio Ponderado</span>
-                          <span className="text-[11px] text-slate-400 block mt-0.5">Combina las existencias en stock con el nuevo costo del lote.</span>
-                        </div>
-                      </div>
-
-                      <div
-                        onClick={() => setCostUpdateStrategy('latest')}
-                        className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
-                          costUpdateStrategy === 'latest'
-                            ? 'bg-emerald-600/20 border-emerald-500 text-white shadow'
-                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                        }`}
-                      >
-                        <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'latest'} onChange={() => {}} className="mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white block">Reemplazar con Último Costo</span>
-                          <span className="text-[11px] text-slate-400 block mt-0.5">Actualiza el precio del producto al 100% con la nueva importación.</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/50 text-[11px] text-slate-400 flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Sin variación de precio sobre existencias activas en stock. El costo se asignará directamente.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Product Entry Section with Top-Right + Agregar Producto Button */}
-              <div className="space-y-3.5">
-                <div className="flex justify-between items-center px-1">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-200">Productos Agregados al Lote ({inputItems.length})</h4>
-                    <p className="text-[11px] text-slate-400">Ingresa los datos de cada producto y confirma para agregarlo a la lista.</p>
-                  </div>
-                  {!isAddingProduct && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenSingleProductForm(null)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>+ Agregar Producto</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Single Active Product Form Card (Shown when isAddingProduct is true) */}
-                {isAddingProduct && (
-                  <div className="bg-slate-900 border-2 border-blue-500/80 p-4 rounded-2xl space-y-3.5 shadow-xl relative z-40">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                      <span className="text-xs font-extrabold text-blue-400">
-                        {editingItemIndex !== null ? `Editando Producto #${editingItemIndex + 1}` : 'Ingresar Datos del Producto'}
-                      </span>
-                      {inputItems.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingProduct(false)}
-                          className="text-xs text-slate-400 hover:text-white"
-                        >
-                          ✕ Cerrar Formulario
-                        </button>
-                      )}
+            {/* Modal Form Container */}
+            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+              
+              {/* PASO 1: Parámetros Generales del Lote */}
+              {addBatchStep === 1 && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Nombre del Lote *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej. Lote Calzado Septiembre"
+                        value={batchName}
+                        onChange={(e) => setBatchName(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                      />
                     </div>
 
-                    {/* Input Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                      {/* SKU */}
-                      <div className="sm:col-span-4 relative">
-                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
-                        <input
-                          type="text"
-                          placeholder="Ej. PROD-001"
-                          value={singleProductForm.sku}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setSingleProductForm({ ...singleProductForm, sku: val });
-                            const cleanTyped = val.trim().toUpperCase();
-                            if (cleanTyped.length >= 1) {
-                              setOpenSkuDropdownIndex(-1);
-                            } else {
-                              setOpenSkuDropdownIndex(null);
-                            }
-                            const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
-                            if (match) {
-                              setSingleProductForm(prev => ({
-                                ...prev,
-                                productName: match.name,
-                                image: match.image || prev.image,
-                                unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
-                              }));
-                            }
-                          }}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
-                        />
-
-                        {/* Sku Dropdown Suggestions */}
-                        {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
-                          <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
-                            {inventoryList
-                              .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
-                              .map(inv => (
-                                <div
-                                  key={inv.id}
-                                  onClick={() => {
-                                    setSingleProductForm(prev => ({
-                                      ...prev,
-                                      sku: inv.sku,
-                                      productName: inv.name,
-                                      image: inv.image || prev.image,
-                                      unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
-                                    }));
-                                    setOpenSkuDropdownIndex(null);
-                                  }}
-                                  className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    {inv.image ? (
-                                      <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover" />
-                                    ) : (
-                                      <div className="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-[10px]">📦</div>
-                                    )}
-                                    <div>
-                                      <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
-                                      <span className="text-[11px] text-slate-200">{inv.name}</span>
-                                    </div>
-                                  </div>
-                                  <span className="text-[10px] text-emerald-400">Stock: {inv.stock}</span>
-                                </div>
-                              ))}
-                          </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-xs font-medium text-slate-400">Impuesto Aduana (USD)</label>
+                        {computedCustomsTaxPct > 0 && (
+                          <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                            {computedCustomsTaxPct.toFixed(1)}% FOB
+                          </span>
                         )}
                       </div>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={customsTax}
+                        onChange={(e) => setCustomsTax(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
 
-                      {/* Nombre Producto */}
-                      <div className="sm:col-span-8">
-                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ej. Smartwatch Ultra L5"
-                          value={singleProductForm.productName}
-                          onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={shippingCost}
+                        onChange={(e) => setShippingCost(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
 
-                      {/* Cantidad */}
-                      <div className="sm:col-span-4">
-                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad *</label>
-                        <input
-                          type="number"
-                          min="1"
-                          required
-                          placeholder="1"
-                          value={singleProductForm.quantity}
-                          onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Margen de Venta (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        placeholder="15.0"
+                        value={profitMarginPct}
+                        onChange={(e) => setProfitMarginPct(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
 
-                      {/* Costo FOB */}
-                      <div className="sm:col-span-4">
-                        <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD) *</label>
+                  {/* Exchange Rate GTQ & Stock Price Variation Strategy */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/80">
+                      <label className="text-xs font-medium text-slate-300">Tipo de Cambio (USD a GTQ):</label>
+                      <div className="w-36">
                         <input
                           type="number"
                           step="0.01"
-                          min="0"
-                          required
-                          placeholder="0.00"
-                          value={singleProductForm.unitCostFob}
-                          onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+                          min="0.1"
+                          value={exchangeRateGtq}
+                          onChange={(e) => setExchangeRateGtq(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white font-mono font-semibold text-right focus:outline-none focus:border-blue-500"
                         />
                       </div>
-
-                      {/* Total FOB Preview */}
-                      <div className="sm:col-span-4 bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
-                        <span className="text-[10px] text-slate-400 block">Total FOB Estimado</span>
-                        <span className="text-xs font-mono font-bold text-blue-400">
-                          ${((parseInt(singleProductForm.quantity) || 0) * (parseFloat(singleProductForm.unitCostFob) || 0)).toFixed(2)} USD
-                        </span>
-                      </div>
                     </div>
 
-                    {/* Foto Dropzone */}
-                    <ImagePicker
-                      value={singleProductForm.image || ''}
-                      onChange={(img) => setSingleProductForm({ ...singleProductForm, image: img })}
-                      label="Añadir Foto del Producto"
-                    />
-
-                    {/* Confirmation Button */}
-                    <div className="pt-2 flex justify-end space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingProduct(false)}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleConfirmSingleProduct}
-                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        <span>{editingItemIndex !== null ? 'Guardar Cambios' : 'Confirmar e Incluir en el Lote'}</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Empty state when no products added and form is closed */}
-                {inputItems.length === 0 && !isAddingProduct && (
-                  <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-slate-400 text-xs space-y-2">
-                    <p>Aún no has agregado productos a este lote.</p>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenSingleProductForm(null)}
-                      className="inline-flex items-center space-x-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Haz clic en "+ Agregar Producto" arriba a la derecha para ingresar un producto</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Confirmed Products Summary Table */}
-                {inputItems.length > 0 && (
-                  <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
-                    <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-300">
-                      <span>Lista de Productos Confirmados ({inputItems.length})</span>
-                      {!isAddingProduct && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenSingleProductForm(null)}
-                          className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
-                        >
-                          + Agregar Otro Producto
-                        </button>
-                      )}
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-900/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800">
-                          <tr>
-                            <th className="py-2.5 px-3">Foto</th>
-                            <th className="py-2.5 px-3">SKU</th>
-                            <th className="py-2.5 px-3">Producto</th>
-                            <th className="py-2.5 px-3 text-center">Cantidad</th>
-                            <th className="py-2.5 px-3 text-right">Costo FOB</th>
-                            <th className="py-2.5 px-3 text-center text-blue-400">% Part. Lote</th>
-                            <th className="py-2.5 px-3 text-right text-amber-400">% Recargo Imp.</th>
-                            <th className="py-2.5 px-3 text-right">Total FOB</th>
-                            <th className="py-2.5 px-3 text-center">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/60">
-                          {inputItems.map((item, index) => {
-                            const qty = parseInt(item.quantity) || 0;
-                            const cost = parseFloat(item.unitCostFob) || 0;
-                            const totalFob = qty * cost;
-                            const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
-                            const itemCustomsVal = (itemSharePct / 100) * parsedTax;
-                            const itemShippingVal = (itemSharePct / 100) * parsedShipping;
-                            const totalExpenseForItem = itemCustomsVal + itemShippingVal;
-                            const expensePerUnit = qty > 0 ? totalExpenseForItem / qty : 0;
-                            const itemRecargoPct = cost > 0 ? (expensePerUnit / cost) * 100 : 0;
-
-                            return (
-                              <tr key={index} className="hover:bg-slate-900/40 transition">
-                                <td className="py-2 px-3">
-                                  {item.image ? (
-                                    <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700" />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px]">📦</div>
-                                  )}
-                                </td>
-                                <td className="py-2 px-3 font-mono font-bold text-blue-400">{item.sku}</td>
-                                <td className="py-2 px-3 font-semibold text-white">{item.productName}</td>
-                                <td className="py-2 px-3 text-center font-medium text-slate-300">{item.quantity} uds</td>
-                                <td className="py-2 px-3 text-right font-mono text-slate-300">${cost.toFixed(2)}</td>
-                                <td className="py-2 px-3 text-center font-mono font-bold text-blue-400 text-[11px]">
-                                  {itemSharePct.toFixed(1)}%
-                                </td>
-                                <td className="py-2 px-3 text-right font-mono font-bold text-amber-400 text-[11px]">
-                                  +{itemRecargoPct.toFixed(1)}%
-                                </td>
-                                <td className="py-2 px-3 text-right font-mono font-bold text-blue-400">${totalFob.toFixed(2)}</td>
-                                <td className="py-2 px-3 text-center space-x-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenSingleProductForm(index)}
-                                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20"
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveConfirmedItem(index)}
-                                    className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20"
-                                  >
-                                    Eliminar
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Previsualización de Matriz de Costos (Structured Table & Highlighted Summary Row) */}
-              {proratedPreview.length > 0 && (
-                <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-700/80 space-y-4 relative z-10 shadow-xl">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold text-slate-200 gap-1.5 pb-3 border-b border-slate-800">
-                    <span>Previsualización de Desglose de Costos por Producto</span>
-                    <span className="text-slate-400 font-normal">Gastos Landed: ${totalLandedExpenses.toFixed(2)} USD</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {proratedPreview.map((item, idx) => {
-                      const customsPerUnit = item.quantity > 0 ? item.allocatedCustoms / item.quantity : 0;
-                      const valFobNoTax = item.unitCostFob;
-                      const valWithCustoms = item.unitCostFob + customsPerUnit;
-                      const valLandedFull = item.finalUnitCost;
-                      const sellingPriceUsd = item.finalSellingPrice;
-                      const sellingPriceGtq = sellingPriceUsd * parsedGtqRate;
-
-                      return (
-                        <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3">
-                          {/* Header: Item SKU & Name */}
-                          <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800/80">
-                            {item.image ? (
-                              <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs">📦</div>
-                            )}
-                            <div className="min-w-0 flex-1 flex items-center justify-between">
-                              <div>
-                                <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
-                                <h4 className="text-xs font-semibold text-white truncate">{item.productName}</h4>
-                              </div>
-                              <span className="text-[11px] text-slate-400 font-medium">{item.quantity} uds</span>
+                    {hasStockWithPriceVariation ? (
+                      <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl space-y-2.5">
+                        <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
+                        </div>
+                        <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                          Detectamos que aún hay unidades guardadas en almacén y el nuevo lote presenta una variación de costo. Elige cómo actualizar el precio del inventario:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                          <div
+                            onClick={() => setCostUpdateStrategy('weighted')}
+                            className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
+                              costUpdateStrategy === 'weighted'
+                                ? 'bg-blue-600/20 border-blue-500 text-white shadow'
+                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                            }`}
+                          >
+                            <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'weighted'} onChange={() => {}} className="mt-0.5" />
+                            <div>
+                              <span className="font-bold text-white block">Promedio Ponderado</span>
+                              <span className="text-[11px] text-slate-400 block mt-0.5">Combina las existencias en stock con el nuevo costo del lote.</span>
                             </div>
                           </div>
 
-                          {/* Step-by-Step Breakdown Table */}
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                              <thead className="text-[10px] text-slate-400 uppercase font-semibold border-b border-slate-800">
-                                <tr>
-                                  <th className="pb-1.5 font-medium">Paso / Concepto</th>
-                                  <th className="pb-1.5 font-medium text-right">Precio (USD)</th>
-                                  <th className="pb-1.5 font-medium text-right">Precio (GTQ)</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-800/60">
-                                <tr>
-                                  <td className="py-2 text-slate-300">1. FOB Base</td>
-                                  <td className="py-2 text-right font-medium text-slate-200">${valFobNoTax.toFixed(2)} USD</td>
-                                  <td className="py-2 text-right font-mono text-slate-400">Q {(valFobNoTax * parsedGtqRate).toFixed(2)} GTQ</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2 text-slate-300">2. Con Aduana</td>
-                                  <td className="py-2 text-right font-medium text-amber-300">${valWithCustoms.toFixed(2)} USD</td>
-                                  <td className="py-2 text-right font-mono text-amber-400/90">Q {(valWithCustoms * parsedGtqRate).toFixed(2)} GTQ</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2 text-slate-300">3. Landed (+Flete)</td>
-                                  <td className="py-2 text-right font-medium text-indigo-300">${valLandedFull.toFixed(2)} USD</td>
-                                  <td className="py-2 text-right font-mono text-indigo-400/90">Q {(valLandedFull * parsedGtqRate).toFixed(2)} GTQ</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Fila final tipo resumen destacada para el Precio Final de Venta */}
-                          <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
-                              4. Precio Venta (+{parsedMargin}%)
-                            </span>
-                            <div className="flex items-center space-x-2 font-mono font-extrabold text-xs sm:text-sm text-white">
-                              <span className="text-white">${sellingPriceUsd.toFixed(2)} USD</span>
-                              <span className="text-slate-500 font-normal">|</span>
-                              <span className="text-emerald-400">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
+                          <div
+                            onClick={() => setCostUpdateStrategy('latest')}
+                            className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
+                              costUpdateStrategy === 'latest'
+                                ? 'bg-emerald-600/20 border-emerald-500 text-white shadow'
+                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                            }`}
+                          >
+                            <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'latest'} onChange={() => {}} className="mt-0.5" />
+                            <div>
+                              <span className="font-bold text-white block">Reemplazar con Último Costo</span>
+                              <span className="text-[11px] text-slate-400 block mt-0.5">Actualiza el precio del producto al 100% con la nueva importación.</span>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/50 text-[11px] text-slate-400 flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Sin variación de precio sobre existencias activas en stock. El costo se asignará directamente.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 1 Action Bar */}
+                  <div className="pt-4 border-t border-slate-700 flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!batchName.trim()) {
+                          alert('Por favor ingresa un nombre para el lote.');
+                          return;
+                        }
+                        setAddBatchStep(2);
+                        if (inputItems.length === 0) {
+                          setIsAddingProduct(true);
+                        }
+                      }}
+                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/20 cursor-pointer"
+                    >
+                      <span>Continuar a Agregar Productos</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* Actions Footer */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700/80">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={previewItems.length === 0}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-blue-600/20 cursor-pointer"
-                >
-                  Guardar Lote & Prorratear
-                </button>
-              </div>
+              {/* PASO 2: Vista Previa Comprimida y Carga de Productos */}
+              {addBatchStep === 2 && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  {/* Vista Previa Comprimida de Parámetros */}
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between gap-2 shadow-sm text-xs">
+                    <div className="flex items-center space-x-2 flex-wrap gap-1 min-w-0">
+                      <span className="font-bold text-white truncate">📦 {batchName}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-amber-400 font-semibold font-mono">Aduana: ${parseFloat(customsTax || '0').toFixed(2)}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-indigo-400 font-semibold font-mono">Flete: ${parseFloat(shippingCost || '0').toFixed(2)}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-emerald-400 font-semibold">Margen: +{profitMarginPct}%</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-blue-400 font-semibold font-mono">TC: Q{parseFloat(exchangeRateGtq || '7.80').toFixed(2)}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setAddBatchStep(1)}
+                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 rounded-lg text-[11px] font-bold shrink-0 transition"
+                    >
+                      ✏️ Editar parámetros
+                    </button>
+                  </div>
+
+                  {/* Product Entry Section */}
+                  <div className="space-y-3.5">
+                    <div className="flex justify-between items-center px-1">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-200">Productos Agregados al Lote ({inputItems.length})</h4>
+                        <p className="text-[11px] text-slate-400">Ingresa los datos del producto y presiona confirmar para agregarlo a la lista.</p>
+                      </div>
+                      {!isAddingProduct && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSingleProductForm(null)}
+                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>+ Agregar Producto</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Single Active Product Form Card */}
+                    {isAddingProduct && (
+                      <div className="bg-slate-900 border-2 border-blue-500/80 p-4 rounded-2xl space-y-3.5 shadow-xl relative z-40">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                          <span className="text-xs font-extrabold text-blue-400">
+                            {editingItemIndex !== null ? `Editando Producto #${editingItemIndex + 1}` : 'Ingresar Datos del Producto'}
+                          </span>
+                          {inputItems.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setIsAddingProduct(false)}
+                              className="text-xs text-slate-400 hover:text-white"
+                            >
+                              ✕ Cerrar Formulario
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Input Fields */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                          {/* SKU */}
+                          <div className="sm:col-span-4 relative">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
+                            <input
+                              type="text"
+                              placeholder="Ej. PROD-001"
+                              value={singleProductForm.sku}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSingleProductForm({ ...singleProductForm, sku: val });
+                                const cleanTyped = val.trim().toUpperCase();
+                                if (cleanTyped.length >= 1) {
+                                  setOpenSkuDropdownIndex(-1);
+                                } else {
+                                  setOpenSkuDropdownIndex(null);
+                                }
+                                const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
+                                if (match) {
+                                  setSingleProductForm(prev => ({
+                                    ...prev,
+                                    productName: match.name,
+                                    image: match.image || prev.image,
+                                    unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
+                                  }));
+                                }
+                              }}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
+                            />
+
+                            {/* Sku Dropdown Suggestions */}
+                            {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
+                              <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
+                                {inventoryList
+                                  .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
+                                  .map(inv => (
+                                    <div
+                                      key={inv.id}
+                                      onClick={() => {
+                                        setSingleProductForm(prev => ({
+                                          ...prev,
+                                          sku: inv.sku,
+                                          productName: inv.name,
+                                          image: inv.image || prev.image,
+                                          unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
+                                        }));
+                                        setOpenSkuDropdownIndex(null);
+                                      }}
+                                      className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
+                                    >
+                                      <div className="flex items-center space-x-2">
+                                        {inv.image ? (
+                                          <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover" />
+                                        ) : (
+                                          <div className="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-[10px]">📦</div>
+                                        )}
+                                        <div>
+                                          <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
+                                          <span className="text-[11px] text-slate-200">{inv.name}</span>
+                                        </div>
+                                      </div>
+                                      <span className="text-[10px] text-emerald-400">Stock: {inv.stock}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Nombre Producto */}
+                          <div className="sm:col-span-8">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto *</label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Ej. Smartwatch Ultra L5"
+                              value={singleProductForm.productName}
+                              onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+
+                          {/* Cantidad */}
+                          <div className="sm:col-span-4">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              required
+                              placeholder="1"
+                              value={singleProductForm.quantity}
+                              onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+
+                          {/* Costo FOB */}
+                          <div className="sm:col-span-4">
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD) *</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              required
+                              placeholder="0.00"
+                              value={singleProductForm.unitCostFob}
+                              onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+
+                          {/* Total FOB Preview */}
+                          <div className="sm:col-span-4 bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
+                            <span className="text-[10px] text-slate-400 block">Total FOB Estimado</span>
+                            <span className="text-xs font-mono font-bold text-blue-400">
+                              ${((parseInt(singleProductForm.quantity) || 0) * (parseFloat(singleProductForm.unitCostFob) || 0)).toFixed(2)} USD
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Foto Dropzone */}
+                        <ImagePicker
+                          value={singleProductForm.image || ''}
+                          onChange={(img) => setSingleProductForm({ ...singleProductForm, image: img })}
+                          label="Añadir Foto del Producto"
+                        />
+
+                        {/* Confirmation Button */}
+                        <div className="pt-2 flex justify-end space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingProduct(false)}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleConfirmSingleProduct}
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-emerald-600/20 cursor-pointer"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span>{editingItemIndex !== null ? 'Guardar Cambios' : 'Confirmar e Incluir en el Lote'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Empty State when no products added */}
+                    {inputItems.length === 0 && !isAddingProduct && (
+                      <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-slate-400 text-xs space-y-2">
+                        <p>Aún no has agregado productos a este lote.</p>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSingleProductForm(null)}
+                          className="inline-flex items-center space-x-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Haz clic aquí para ingresar el primer producto</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Confirmed Products Summary List */}
+                    {inputItems.length > 0 && (
+                      <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
+                        <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-300">
+                          <span>Lista de Productos Confirmados ({inputItems.length})</span>
+                          {!isAddingProduct && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSingleProductForm(null)}
+                              className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                            >
+                              + Agregar Otro Producto
+                            </button>
+                          )}
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-slate-900/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800">
+                              <tr>
+                                <th className="py-2.5 px-3">Foto</th>
+                                <th className="py-2.5 px-3">SKU</th>
+                                <th className="py-2.5 px-3">Producto</th>
+                                <th className="py-2.5 px-3 text-center">Cantidad</th>
+                                <th className="py-2.5 px-3 text-right">Costo FOB</th>
+                                <th className="py-2.5 px-3 text-right">Total FOB</th>
+                                <th className="py-2.5 px-3 text-center">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/60">
+                              {inputItems.map((item, index) => {
+                                const qty = parseInt(item.quantity) || 0;
+                                const cost = parseFloat(item.unitCostFob) || 0;
+                                const totalFob = qty * cost;
+
+                                return (
+                                  <tr key={index} className="hover:bg-slate-900/40 transition">
+                                    <td className="py-2 px-3">
+                                      {item.image ? (
+                                        <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700" />
+                                      ) : (
+                                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px]">📦</div>
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-3 font-mono font-bold text-blue-400">{item.sku}</td>
+                                    <td className="py-2 px-3 font-semibold text-white">{item.productName}</td>
+                                    <td className="py-2 px-3 text-center font-medium text-slate-300">{item.quantity} uds</td>
+                                    <td className="py-2 px-3 text-right font-mono text-slate-300">${cost.toFixed(2)}</td>
+                                    <td className="py-2 px-3 text-right font-mono font-bold text-blue-400">${totalFob.toFixed(2)}</td>
+                                    <td className="py-2 px-3 text-center space-x-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenSingleProductForm(index)}
+                                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20"
+                                      >
+                                        Editar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveConfirmedItem(index)}
+                                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20"
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 2 Actions Footer */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-700/80">
+                    <button
+                      type="button"
+                      onClick={() => setAddBatchStep(1)}
+                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+                    >
+                      ← Volver al Paso 1
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={previewItems.length === 0}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center space-x-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Guardar y Finalizar Lote Completo ({previewItems.length})</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </form>
           </div>
         </div>
