@@ -11,7 +11,7 @@ import { AnalyticsView } from './components/AnalyticsView';
 import { ImportBatchesView } from './components/ImportBatchesView';
 import { InventoryView } from './components/InventoryView';
 import { LoginView } from './components/LoginView';
-import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, DashboardStats, User } from './services/api';
+import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, DashboardStats, User } from './services/api';
 import { exportViewPdf } from './utils/pdfExport';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
@@ -41,6 +41,27 @@ export default function App() {
     shippingPaid: 0,
     totalBatchesCount: 0
   });
+
+  // Strict Security Session Guard: Check if profile exists and is active in SQLite
+  useEffect(() => {
+    const checkSecuritySession = async () => {
+      if (!currentUser) return;
+      const res = await verifySessionApi(currentUser.id, currentUser.email);
+      if (!res.valid) {
+        localStorage.removeItem('nexus_user');
+        setCurrentUser(null);
+        setToastMessage(res.error || 'Tu perfil no existe o ha sido desactivado. Sesión cerrada.');
+        setShowToast(true);
+      } else if (res.user) {
+        if (JSON.stringify(res.user) !== JSON.stringify(currentUser)) {
+          setCurrentUser(res.user);
+          localStorage.setItem('nexus_user', JSON.stringify(res.user));
+        }
+      }
+    };
+
+    checkSecuritySession();
+  }, [activeTab]);
 
   const loadDashboardStats = async () => {
     try {

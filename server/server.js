@@ -40,6 +40,27 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// API Auth Session Verification Endpoint (Strict Security Check)
+app.post('/api/auth/verify', (req, res) => {
+  const { id, email } = req.body;
+  if (!id && !email) {
+    return res.status(400).json({ valid: false, error: 'ID o correo requerido para verificación.' });
+  }
+
+  const query = id ? 'SELECT * FROM users WHERE id = ?' : 'SELECT * FROM users WHERE LOWER(email) = ?';
+  const param = id || String(email).trim().toLowerCase();
+
+  db.get(query, [param], (err, user) => {
+    if (err || !user) {
+      return res.status(404).json({ valid: false, error: 'El perfil de usuario ya no existe en la base de datos.' });
+    }
+    if (user.status !== 'Activo') {
+      return res.status(403).json({ valid: false, error: 'El usuario se encuentra inactivo. Sesión cerrada.' });
+    }
+    res.json({ valid: true, user });
+  });
+});
+
 // API Auth Register Endpoint
 app.post('/api/auth/register', (req, res) => {
   const { name, email, role, avatar, password } = req.body;

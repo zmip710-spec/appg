@@ -120,6 +120,23 @@ export const registerApi = async (data: { name: string; email: string; password?
   return resData.user || resData;
 };
 
+export const verifySessionApi = async (id?: string | number, email?: string): Promise<{ valid: boolean; user?: User; error?: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, email }),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({ error: 'Perfil no encontrado o inactivo' }));
+      return { valid: false, error: errJson.error || 'Sesión cerrada por seguridad' };
+    }
+    return await response.json().catch(() => ({ valid: false }));
+  } catch {
+    return { valid: true };
+  }
+};
+
 export const updateUserProfileApi = async (
   id: string | number,
   data: { name: string; email: string; avatar?: string }
