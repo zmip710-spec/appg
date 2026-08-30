@@ -100,44 +100,38 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/users', (req, res) => {
-  const { name, email, role, avatar, password } = req.body;
-  if (!name || !email) return res.status(400).json({ error: 'Nombre y email son requeridos.' });
+  const { name, role, avatar, password } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nombre de usuario es requerido.' });
 
-  const cleanEmail = email.trim().toLowerCase();
   const cleanName = name.trim();
-  const userAvatar = avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80';
+  const cleanEmail = req.body.email ? req.body.email.trim().toLowerCase() : `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}@empresa.com`;
+  const userAvatar = avatar || '';
   const userPassword = password && password.trim() !== '' ? password.trim() : '123456';
   const lastLogin = 'Ahora mismo';
   const status = 'Activo';
 
-  // Check if Email already exists
-  db.get('SELECT id FROM users WHERE LOWER(email) = ?', [cleanEmail], (err, existing) => {
-    if (existing) {
-      return res.status(400).json({ error: `El correo "${cleanEmail}" ya está registrado.` });
-    }
-
-    const query = 'INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    db.run(query, [cleanName, cleanEmail, role || 'Desarrollador', status, userAvatar, lastLogin, userPassword], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, name: cleanName, email: cleanEmail, role: role || 'Desarrollador', status, avatar: userAvatar, lastLogin });
-    });
+  const query = 'INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  db.run(query, [cleanName, cleanEmail, role || 'Desarrollador', status, userAvatar, lastLogin, userPassword], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, name: cleanName, email: cleanEmail, role: role || 'Desarrollador', status, avatar: userAvatar, lastLogin });
   });
 });
 
 // Update Profile Info for Logged-In User in SQLite
 app.put('/api/users/:id', (req, res) => {
   const { id } = req.params;
-  const { name, email, avatar } = req.body;
-  if (!name || !email) return res.status(400).json({ error: 'Nombre y email son requeridos.' });
+  const { name, avatar } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nombre de usuario es requerido.' });
 
   db.get('SELECT * FROM users WHERE id = ?', [id], (err, existing) => {
     if (err || !existing) return res.status(404).json({ error: 'Usuario no encontrado.' });
 
-    const newAvatar = avatar || existing.avatar;
+    const newEmail = req.body.email ? req.body.email.trim().toLowerCase() : (existing.email || `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}@empresa.com`);
+    const newAvatar = avatar !== undefined ? avatar : existing.avatar;
     const query = 'UPDATE users SET name = ?, email = ?, avatar = ? WHERE id = ?';
-    db.run(query, [name.trim(), email.trim(), newAvatar, id], function (err) {
+    db.run(query, [name.trim(), newEmail, newAvatar, id], function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ ...existing, name: name.trim(), email: email.trim(), avatar: newAvatar });
+      res.json({ ...existing, name: name.trim(), email: newEmail, avatar: newAvatar });
     });
   });
 });

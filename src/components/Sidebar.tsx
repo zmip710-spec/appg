@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { User } from '../services/api';
+import { UserAvatar } from './UserAvatar';
 
 interface SidebarProps {
   darkMode: boolean;
@@ -139,11 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title={isCollapsed ? `${currentUser.name} (${currentUser.role})` : undefined}
             >
               <div className="flex items-center space-x-2.5 overflow-hidden">
-                <img
-                  src={currentUser.avatar || defaultAvatar}
-                  alt={currentUser.name}
-                  className="w-8 h-8 rounded-full object-cover border border-blue-500 shrink-0"
-                />
+                <UserAvatar name={currentUser.name} size="w-8 h-8 text-xs" />
                 {!isCollapsed && (
                   <div className="truncate">
                     <span className="text-xs font-bold text-white block truncate">{currentUser.name}</span>
@@ -154,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed && onLogout && (
                 <button
                   onClick={onLogout}
-                  className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                  className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
                   title="Cerrar Sesión"
                 >
                   <LogOut className="w-4 h-4" />
@@ -198,11 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="flex items-center space-x-2">
           {currentUser && (
-            <img
-              src={currentUser.avatar || defaultAvatar}
-              alt={currentUser.name}
-              className="w-7 h-7 rounded-full object-cover border border-blue-500"
-            />
+            <UserAvatar name={currentUser.name} size="w-7 h-7 text-[10px]" />
           )}
           <button
             onClick={() => setDarkMode(!darkMode)}

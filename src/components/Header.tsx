@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { User } from '../services/api';
+import { UserAvatar } from './UserAvatar';
 
 interface HeaderProps {
   searchTerm: string;
@@ -84,27 +85,18 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center space-x-2 bg-slate-900/90 hover:bg-slate-700/60 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-700 transition cursor-pointer"
           >
-            <img
-              src={currentUser?.avatar || defaultAvatar}
-              alt={currentUser?.name || 'Usuario'}
-              className="w-7 h-7 rounded-full object-cover border border-slate-700 shrink-0"
-            />
+            <UserAvatar name={currentUser?.name} size="w-7 h-7 text-[10px]" />
             <span className="text-xs font-bold text-white hidden sm:inline">{firstName}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
 
           {/* Profile Dropdown Popover */}
           {showProfileMenu && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 p-3 space-y-3 ring-4 ring-blue-500/10">
+            <div className="absolute right-0 top-full mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 p-3 space-y-3 ring-4 ring-blue-500/10">
               <div className="flex items-center space-x-3 p-1">
-                <img
-                  src={currentUser?.avatar || defaultAvatar}
-                  alt={currentUser?.name || 'Usuario'}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-500 shrink-0"
-                />
+                <UserAvatar name={currentUser?.name} size="w-9 h-9 text-xs" />
                 <div className="min-w-0 flex-1">
                   <h4 className="text-xs font-bold text-white truncate">{currentUser?.name || 'Usuario'}</h4>
-                  <p className="text-[10px] text-slate-400 truncate">{currentUser?.email || 'usuario@empresa.com'}</p>
                   <span className="inline-block mt-0.5 text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded font-semibold">
                     {currentUser?.role || 'Administrador'}
                   </span>

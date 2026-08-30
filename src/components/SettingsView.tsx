@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Bell, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users } from 'lucide-react';
+import { Save, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users, Eye, EyeOff } from 'lucide-react';
 import { updateUserProfileApi, changePasswordApi, User } from '../services/api';
-import { ImagePicker } from './ImagePicker';
 import { UsersView } from './UsersView';
+import { UserAvatar } from './UserAvatar';
 
 interface SettingsViewProps {
   currentUser?: User | null;
@@ -10,34 +10,25 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'team'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'security'>('profile');
 
-  // Form State bound EXCLUSIVELY to currentUser
+  // Profile Form State (Username & Password)
   const [name, setName] = useState(currentUser?.name || '');
-  const [email, setEmail] = useState(currentUser?.email || '');
-  const [avatar, setAvatar] = useState(currentUser?.avatar || '');
   const [role, setRole] = useState(currentUser?.role || 'Usuario');
-  
-  // Security Form State
-  const [currentPass, setCurrentPass] = useState('');
+
+  // Password fields
   const [newPass, setNewPass] = useState('');
-  
+  const [confirmPass, setConfirmPass] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [notifications, setNotifications] = useState({
-    emailAlerts: true,
-    weeklyReport: true,
-    securityAlerts: true,
-    marketing: false,
-  });
-
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || '');
-      setEmail(currentUser.email || '');
-      setAvatar(currentUser.avatar || '');
       setRole(currentUser.role || 'Usuario');
     }
   }, [currentUser]);
@@ -45,33 +36,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
-    if (!name || !email) {
-      setErrorMsg('Nombre y Correo son requeridos.');
+    if (!name.trim()) {
+      setErrorMsg('El Nombre de Usuario es obligatorio.');
       return;
+    }
+
+    if (newPass || confirmPass) {
+      if (newPass !== confirmPass) {
+        setErrorMsg('Las contraseñas no coinciden.');
+        return;
+      }
     }
 
     setErrorMsg('');
     setLoading(true);
 
     try {
+      // 1. Update Name in SQLite Profile
       const updated = await updateUserProfileApi(currentUser.id, {
-        name,
-        email,
-        avatar
+        name: name.trim(),
+        email: currentUser.email || `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}@empresa.com`,
+        avatar: currentUser.avatar || ''
       });
+
+      // 2. Update Password if provided
+      if (newPass && newPass.trim() !== '') {
+        await changePasswordApi(currentUser.id, '', newPass.trim());
+      }
 
       if (onUpdateUser) {
         onUpdateUser(updated);
       }
 
+      setNewPass('');
+      setConfirmPass('');
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 4000);
     } catch (err: any) {
       const updatedLocal: User = {
         ...currentUser,
-        name,
-        email,
-        avatar
+        name: name.trim()
       };
       if (onUpdateUser) {
         onUpdateUser(updatedLocal);
@@ -83,244 +87,242 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     }
   };
 
-  const handleSavePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-    if (!newPass) {
-      setErrorMsg('Ingresa tu nueva contraseña.');
-      return;
-    }
-
-    setErrorMsg('');
-    setLoading(true);
-
-    try {
-      await changePasswordApi(currentUser.id, currentPass, newPass);
-      setCurrentPass('');
-      setNewPass('');
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 4000);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error al cambiar la contraseña.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 max-w-4xl mx-auto">
+      {/* Header Banner */}
+      <div className="bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+          <h2 className="text-lg sm:text-xl font-extrabold text-white flex items-center space-x-2">
             <UserIcon className="w-5 h-5 text-blue-400" />
-            <span>Configuración de Cuenta & Gestión de Equipo</span>
+            <span>Configuración de Cuenta</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Modifica la información de tu perfil, seguridad y administra los miembros del equipo registrado en la base de datos
+          <p className="text-xs text-slate-400 mt-0.5">
+            Administra tu nombre de usuario, contraseña y usuarios del equipo
           </p>
         </div>
 
         {savedSuccess && (
-          <div className="flex items-center space-x-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold animate-bounce">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>¡Cambios guardados con éxito en SQLite!</span>
+          <div className="w-full sm:w-auto flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold animate-bounce">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>¡Cambios guardados con éxito!</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Settings Navigation Sidebar */}
-        <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-1 h-fit">
-          <button
-            onClick={() => { setActiveTab('profile'); setErrorMsg(''); }}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-              activeTab === 'profile' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
-            }`}
-          >
-            <UserIcon className="w-4 h-4" />
-            <span>Mi Perfil ({currentUser?.name?.split(' ')[0]})</span>
-          </button>
-          {currentUser?.role !== 'Vendedor' && (
-            <button
-              onClick={() => { setActiveTab('team'); setErrorMsg(''); }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                activeTab === 'team' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Gestión de Equipo</span>
-            </button>
-          )}
-          <button
-            onClick={() => { setActiveTab('security'); setErrorMsg(''); }}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-              activeTab === 'security' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
-            }`}
-          >
-            <Lock className="w-4 h-4" />
-            <span>Seguridad y Contraseña</span>
-          </button>
-          <button
-            onClick={() => { setActiveTab('notifications'); setErrorMsg(''); }}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-              activeTab === 'notifications' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-700'
-            }`}
-          >
-            <Bell className="w-4 h-4" />
-            <span>Notificaciones</span>
-          </button>
-        </div>
+      {/* Sub-Navigation Tabs (Vertical Stack / Horizontal Pills for Mobile) */}
+      <div className="flex overflow-x-auto gap-2 p-1.5 bg-slate-900/60 border border-slate-800 rounded-2xl scrollbar-none">
+        <button
+          type="button"
+          onClick={() => { setActiveTab('profile'); setErrorMsg(''); }}
+          className={`flex-1 min-w-[120px] flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+            activeTab === 'profile'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          }`}
+        >
+          <UserIcon className="w-4 h-4 shrink-0" />
+          <span>Mi Perfil</span>
+        </button>
 
-        {/* Settings Form Container */}
-        <div className="md:col-span-3 bg-slate-800 p-6 rounded-xl border border-slate-700">
-          {errorMsg && (
-            <div className="bg-rose-500/10 border border-rose-500/30 p-3 rounded-lg text-xs text-rose-400 mb-4 flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
+        {currentUser?.role !== 'Vendedor' && (
+          <button
+            type="button"
+            onClick={() => { setActiveTab('team'); setErrorMsg(''); }}
+            className={`flex-1 min-w-[140px] flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+              activeTab === 'team'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4 shrink-0" />
+            <span>Gestión de Equipo</span>
+          </button>
+        )}
 
-          {activeTab === 'profile' && (
-            <form onSubmit={handleSaveProfile} className="space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 className="text-base font-bold text-white">Editar Mi Perfil Logueado</h3>
-                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-700 text-blue-400 border border-slate-600">
-                  <Shield className="w-3 h-3" />
+        <button
+          type="button"
+          onClick={() => { setActiveTab('security'); setErrorMsg(''); }}
+          className={`flex-1 min-w-[140px] flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+            activeTab === 'security'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          }`}
+        >
+          <Lock className="w-4 h-4 shrink-0" />
+          <span>Seguridad</span>
+        </button>
+      </div>
+
+      {/* Main Settings Content */}
+      <div className="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-700/80 shadow-lg">
+        {errorMsg && (
+          <div className="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl text-xs text-rose-400 mb-4 flex items-center space-x-2 font-medium">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* TAB 1: PROFILE REDESIGN (MOBILE RESPONSIVE, NO EMAIL, NO PHOTO BUTTONS) */}
+        {activeTab === 'profile' && (
+          <form onSubmit={handleSaveProfile} className="space-y-5">
+            {/* Header: Centered Large Avatar + Role Badge */}
+            <div className="flex flex-col items-center justify-center py-2 space-y-2.5 border-b border-slate-700/80 pb-5">
+              <UserAvatar name={name || currentUser?.name} size="w-20 h-20 text-3xl" />
+              <div className="text-center">
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Shield className="w-3.5 h-3.5" />
                   <span>Rol: {role}</span>
                 </span>
               </div>
+            </div>
 
-              {/* Photo ImagePicker (File Upload or Camera) */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-slate-400 uppercase">Foto de Perfil</label>
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'}
-                    alt="Avatar"
-                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md shrink-0"
-                  />
-                  <div className="flex-1">
-                    <ImagePicker
-                      value={avatar}
-                      onChange={(newImg) => setAvatar(newImg)}
-                      label="Cambiar Foto (Subir Archivo o Tomar con Cámara)"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nombre Completo</label>
+            {/* Field 1: Nombre de Usuario */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wide">
+                Nombre de Usuario
+              </label>
+              <div className="relative">
+                <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top.1/2 top-3 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Ej. Admin"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Correo Electrónico</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="pt-4 flex justify-end border-t border-slate-700">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition shadow-lg shadow-blue-600/20"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Guardando...' : 'Guardar Cambios en Mi Perfil'}</span>
-                </button>
-              </div>
-            </form>
-          )}
-
-          {activeTab === 'team' && <UsersView />}
-
-          {activeTab === 'notifications' && (
-            <div className="space-y-5">
-              <h3 className="text-base font-bold text-white mb-2">Preferencias de Notificación</h3>
-
-              <div className="space-y-4 divide-y divide-slate-700">
-                <div className="flex items-center justify-between pt-2">
-                  <div>
-                    <span className="text-sm font-semibold text-white block">Alertas por Correo</span>
-                    <span className="text-xs text-slate-400">Recibir avisos cuando haya actividad inusual o ventas importantes.</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.emailAlerts}
-                    onChange={(e) => setNotifications({ ...notifications, emailAlerts: e.target.checked })}
-                    className="w-5 h-5 accent-blue-600 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between pt-4">
-                  <div>
-                    <span className="text-sm font-semibold text-white block">Reportes Semanales</span>
-                    <span className="text-xs text-slate-400">Resumen consolidado de analítica cada lunes por la mañana.</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.weeklyReport}
-                    onChange={(e) => setNotifications({ ...notifications, weeklyReport: e.target.checked })}
-                    className="w-5 h-5 accent-blue-600 cursor-pointer"
-                  />
-                </div>
               </div>
             </div>
-          )}
 
-          {activeTab === 'security' && (
-            <form onSubmit={handleSavePassword} className="space-y-4">
-              <h3 className="text-base font-bold text-white mb-2">Cambiar Contraseña de Cuenta en SQLite</h3>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña Actual (Predeterminada: 123456)</label>
+            {/* Field 2: Nueva Contraseña (Opcional) */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wide">
+                Nueva Contraseña <span className="text-slate-400 font-normal lowercase">(opcional)</span>
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 -translate-y-1/2" />
                 <input
-                  type="password"
-                  value={currentPass}
-                  onChange={(e) => setCurrentPass(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                  type={showNewPass ? 'text' : 'password'}
+                  value={newPass}
+                  onChange={(e) => setNewPass(e.target.value)}
+                  placeholder="Ingresa la nueva contraseña..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-3 top-3.5 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nueva Contraseña</label>
+            {/* Field 3: Confirmar Contraseña */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wide">
+                Confirmar Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showConfirmPass ? 'text' : 'password'}
+                  value={confirmPass}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  placeholder="Confirma la nueva contraseña..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                  className="absolute right-3 top-3.5 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Full-width Main Button */}
+            <div className="pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-blue-600/30 active:scale-[0.98] cursor-pointer"
+              >
+                <Save className="w-4 h-4 shrink-0" />
+                <span>{loading ? 'Guardando...' : 'Guardar Cambios'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* TAB 2: TEAM MANAGEMENT INTEGRATION */}
+        {activeTab === 'team' && <UsersView />}
+
+        {/* TAB 3: SECURITY */}
+        {activeTab === 'security' && (
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <h3 className="text-sm font-bold text-white mb-1">Seguridad de la Cuenta</h3>
+            <p className="text-xs text-slate-400">
+              Actualiza la contraseña de tu usuario en la base de datos local SQLite.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-300 uppercase">Nueva Contraseña</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 -translate-y-1/2" />
+                <input
+                  type={showNewPass ? 'text' : 'password'}
                   required
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="Ingresa tu nueva contraseña"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Ingresa la nueva contraseña"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold"
                 />
-              </div>
-
-              <div className="pt-4 flex justify-end">
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2 rounded-lg text-sm transition shadow-lg shadow-blue-600/20"
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-3 top-3.5 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Actualizando...' : 'Actualizar Contraseña en SQLite'}</span>
+                  {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-            </form>
-          )}
-        </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-300 uppercase">Confirmar Contraseña</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 -translate-y-1/2" />
+                <input
+                  type={showConfirmPass ? 'text' : 'password'}
+                  required
+                  value={confirmPass}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  placeholder="Confirma la nueva contraseña"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                  className="absolute right-3 top-3.5 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-blue-600/30 active:scale-[0.98] cursor-pointer"
+              >
+                <Save className="w-4 h-4 shrink-0" />
+                <span>{loading ? 'Actualizando...' : 'Actualizar Contraseña'}</span>
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
