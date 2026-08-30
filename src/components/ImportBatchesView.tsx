@@ -490,78 +490,169 @@ export const ImportBatchesView: React.FC = () => {
               <div key={batch.id} className={`bg-slate-800 border rounded-xl overflow-hidden shadow-sm transition ${
                 index === 0 ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-slate-700/80'
               }`}>
-                {/* Batch Header Bar */}
+                {/* Batch Header Bar (Compact Accordion ~70px height) */}
                 <div
                   onClick={() => setExpandedBatchId(isExpanded ? null : batch.id)}
-                  className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-slate-700/30 transition"
+                  className="p-3.5 sm:p-5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-700/30 transition min-h-[70px]"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
-                      <Layers className="w-5 h-5" />
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="p-2 sm:p-2.5 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30 shrink-0">
+                      <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-2 flex-wrap gap-1">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center space-x-1.5 flex-wrap gap-1">
                         {index === 0 && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-extrabold flex items-center space-x-1 shadow-sm">
-                            <span>✨ ÚLTIMO LOTE</span>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[9px] font-extrabold shrink-0">
+                            ÚLTIMO LOTE
                           </span>
                         )}
-                        <span className="font-mono text-xs font-semibold text-blue-400">{batch.id}</span>
-                        <h4 className="text-base font-bold text-white">{batch.name}</h4>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                          +{marginPct}% Margen Venta
+                        <span className="font-mono text-xs font-bold text-blue-400">{batch.id}</span>
+                        <h4 className="text-xs sm:text-base font-bold text-white truncate">{batch.name}</h4>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] sm:text-[10px] font-bold shrink-0">
+                          +{marginPct}%
                         </span>
                       </div>
-                      <span className="text-xs text-slate-400">Fecha: {batch.importDate} • {batch.items.length} Productos • Tasa: Q {rate.toFixed(2)} / USD</span>
+                      <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                        {batch.importDate} • {batch.items.length} prods • Q {rate.toFixed(2)} / USD
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
                     <div className="text-right text-xs">
-                      <span className="block text-slate-400 font-semibold uppercase">Gastos Importación</span>
-                      <span className="text-sm font-bold text-white">${totalBatchLandedExpenses.toFixed(2)} USD</span>
-                      <span className="block text-emerald-400 font-mono font-extrabold text-xs">Q {totalGtqExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ</span>
+                      <span className="text-[10px] text-slate-400 uppercase hidden sm:block font-semibold">Gastos Importación</span>
+                      <span className="text-xs sm:text-sm font-bold text-white block">${totalBatchLandedExpenses.toFixed(2)}</span>
+                      <span className="font-mono font-extrabold text-emerald-400 text-[10px] sm:text-xs block">
+                        Q {totalGtqExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
                     </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteBatch(batch.id);
                       }}
-                      className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition"
-                      title="Eliminar lote de SQLite"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition"
+                      title="Eliminar lote"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                   </div>
                 </div>
 
-                {/* Batch Items Breakdown: Clean Multi-Product Matrix Table */}
+                {/* Batch Items Breakdown */}
                 {isExpanded && (
-                  <div className="border-t border-slate-700 bg-slate-900/90 p-4 space-y-4">
+                  <div className="border-t border-slate-700 bg-slate-900/90 p-3 sm:p-4 space-y-3">
                     {/* Summary Header Bar */}
                     {(() => {
                       const batchCustomsPct = batchFobTotal > 0 ? ((batch.totalCustomsTax || 0) / batchFobTotal) * 100 : 0;
                       return (
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-semibold text-slate-300 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
                           <div className="flex items-center space-x-2">
-                            <span className="font-bold text-white text-sm">Productos en este Lote ({batch.items.length})</span>
-                            <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono font-semibold">
-                              Tasa: Q {rate.toFixed(2)} GTQ / USD
+                            <span className="font-bold text-white text-xs sm:text-sm">Productos en este Lote ({batch.items.length})</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-semibold">
+                              Tasa: Q {rate.toFixed(2)}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-4 text-[11px] flex-wrap gap-1">
+                          <div className="flex items-center space-x-3 text-[10px] sm:text-[11px] flex-wrap gap-1">
                             <span className="text-slate-400">Total FOB: <strong className="text-white">${batchFobTotal.toFixed(2)} USD</strong></span>
-                            <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD ({batchCustomsPct.toFixed(1)}% FOB)</strong></span>
+                            <span className="text-amber-400">Aduana: <strong>${batch.totalCustomsTax?.toFixed(2)} USD ({batchCustomsPct.toFixed(1)}%)</strong></span>
                             <span className="text-indigo-400">Flete: <strong>${batch.totalShippingCost?.toFixed(2)} USD</strong></span>
-                            <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Margen: +{marginPct}%</span>
                           </div>
                         </div>
                       );
                     })()}
 
-                    {/* Multi-Product Optimized Table with Exact Tax % & Total Payment Allocation */}
-                    <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    {/* MOBILE STACKED PRODUCT BLOCKS VIEW (Visible on small screens md:hidden) */}
+                    <div className="md:hidden space-y-3">
+                      {batch.items.map((item, idx) => {
+                        const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
+                        const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : ((item.sharePercentage || 0) / 100) * (batch.totalShippingCost || 0);
+                        const totalAllocatedExpenseForItem = itemCustoms + itemShipping;
+                        const customsPerUnit = item.quantity > 0 ? itemCustoms / item.quantity : 0;
+                        const shippingPerUnit = item.quantity > 0 ? itemShipping / item.quantity : 0;
+                        const totalTaxPerUnit = customsPerUnit + shippingPerUnit;
+                        
+                        const valFobNoTax = item.unitCostFob;
+                        const valLandedFull = item.finalUnitCost || (item.unitCostFob + totalTaxPerUnit);
+                        const itemMargin = item.profitMarginPct || marginPct;
+                        const valFinalSellingUsd = item.finalSellingPrice || (valLandedFull * (1 + itemMargin / 100));
+                        const valFinalSellingGtq = valFinalSellingUsd * rate;
+                        
+                        const taxSurchargePct = valFobNoTax > 0 ? (totalTaxPerUnit / valFobNoTax) * 100 : 0;
+                        const sharePct = item.sharePercentage !== undefined ? item.sharePercentage : (batchFobTotal > 0 ? ((item.quantity * item.unitCostFob) / batchFobTotal) * 100 : 0);
+
+                        return (
+                          <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2.5 shadow-md">
+                            {/* Header: Photo, Name, SKU, Units */}
+                            <div className="flex items-center space-x-3">
+                              {item.image ? (
+                                <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0 bg-slate-800" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                  <ImageIcon className="w-5 h-5" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-mono text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                    {item.sku || `PROD-00${idx+1}`}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    {sharePct.toFixed(1)}% del lote
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-white text-xs truncate mt-0.5">{item.productName}</h4>
+                                <span className="text-[10px] text-slate-400 font-semibold">{item.quantity} unidades</span>
+                              </div>
+                            </div>
+
+                            {/* Cost Row: FOB Base vs Landed Cost */}
+                            <div className="grid grid-cols-2 gap-2 bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs">
+                              <div>
+                                <span className="text-slate-400 block text-[10px]">Precio FOB Base</span>
+                                <span className="font-bold text-white text-xs">${valFobNoTax.toFixed(2)} USD</span>
+                                <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
+                              </div>
+
+                              <div>
+                                <span className="text-blue-400 block text-[10px] font-bold">= Costo Landed</span>
+                                <span className="font-bold text-white text-xs">${valLandedFull.toFixed(2)} USD</span>
+                                <span className="font-mono text-[10px] font-extrabold text-blue-400 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
+                              </div>
+                            </div>
+
+                            {/* Expenses Row: Prorated Tax & Freight */}
+                            <div className="bg-amber-950/20 p-2.5 rounded-lg border border-amber-500/30 flex justify-between items-center text-xs">
+                              <div>
+                                <span className="text-amber-400 block text-[10px] font-bold uppercase">🏛️ Recargo Impuesto/Flete</span>
+                                <span className="text-[11px] text-amber-300 font-bold">+${totalTaxPerUnit.toFixed(2)} USD/u</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="inline-block px-2 py-0.5 rounded font-mono font-extrabold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px]">
+                                  +{taxSurchargePct.toFixed(1)}% Recargo FOB
+                                </span>
+                                <span className="text-[10px] text-slate-400 block">Total: ${totalAllocatedExpenseForItem.toFixed(2)}</span>
+                              </div>
+                            </div>
+
+                            {/* Highlighted Block: Suggested Final Selling Price (GTQ) */}
+                            <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/30 flex justify-between items-center">
+                              <div>
+                                <span className="text-emerald-400 block text-[10px] font-extrabold uppercase">🏷️ Precio Venta (+{itemMargin}%)</span>
+                                <span className="font-bold text-slate-300 text-xs">${valFinalSellingUsd.toFixed(2)} USD</span>
+                              </div>
+                              <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">
+                                Q {valFinalSellingGtq.toFixed(2)} GTQ
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* DESKTOP TABLE VIEW (Visible only on md and larger) */}
+                    <div className="hidden md:block bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                           <thead className="bg-slate-900/90 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-800">
