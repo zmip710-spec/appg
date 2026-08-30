@@ -347,19 +347,31 @@ app.get('/api/batches', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!batches || batches.length === 0) return res.json([]);
 
-    db.all('SELECT * FROM batch_items', [], (err, items) => {
-      if (err) return res.status(500).json({ error: err.message });
+    db.all(
+      `SELECT bi.*, i.brand as invBrand, i.model as invModel
+       FROM batch_items bi
+       LEFT JOIN inventory i ON UPPER(bi.sku) = UPPER(i.sku)`,
+      [],
+      (err, items) => {
+        if (err) return res.status(500).json({ error: err.message });
 
-      const result = batches.map(batch => ({
-        ...batch,
-        totalCustomsTax: batch.totalCustomsTax || 0,
-        totalShippingCost: batch.totalShippingCost || 0,
-        exchangeRateGtq: batch.exchangeRateGtq || 7.80,
-        profitMarginPct: batch.profitMarginPct || 15.0,
-        items: items.filter(item => item.batchId === batch.id)
-      }));
-      res.json(result);
-    });
+        const result = batches.map(batch => ({
+          ...batch,
+          totalCustomsTax: batch.totalCustomsTax || 0,
+          totalShippingCost: batch.totalShippingCost || 0,
+          exchangeRateGtq: batch.exchangeRateGtq || 7.80,
+          profitMarginPct: batch.profitMarginPct || 15.0,
+          items: items
+            .filter(item => item.batchId === batch.id)
+            .map(item => ({
+              ...item,
+              brand: item.brand || item.invBrand || '',
+              model: item.model || item.invModel || ''
+            }))
+        }));
+        res.json(result);
+      }
+    );
   });
 });
 
