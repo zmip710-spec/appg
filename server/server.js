@@ -37,7 +37,7 @@ app.post('/api/auth/login', (req, res) => {
           if (err) return res.status(500).json({ error: err.message });
           
           if (password && password.trim() !== defaultAdminPass) {
-            return res.status(401).json({ error: 'Contraseña incorrecta. La contraseña por defecto del usuario admin es: admin123' });
+            return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
           }
 
           const newAdmin = { id: this.lastID, name: 'admin', email: 'admin@appg.com', role: 'Administrador', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80', lastLogin: 'Ahora mismo' };
@@ -45,7 +45,7 @@ app.post('/api/auth/login', (req, res) => {
         });
         return;
       }
-      return res.status(404).json({ error: `El usuario "${inputUser}" no existe en el sistema.` });
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
 
     if (user.status !== 'Activo') {
@@ -55,7 +55,7 @@ app.post('/api/auth/login', (req, res) => {
     // Validate Password
     const expectedPass = user.password || 'admin123';
     if (password && password.trim() !== '' && password.trim() !== expectedPass) {
-      return res.status(401).json({ error: 'Contraseña incorrecta.' });
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
 
     const nowStr = 'Ahora mismo';
