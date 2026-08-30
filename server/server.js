@@ -432,8 +432,27 @@ app.post('/api/batches', (req, res) => {
 
         finalItems.forEach(item => {
           stmt.run(batchId, item.sku, item.productName, item.quantity, item.unitCostFob, item.totalFobValue, item.sharePercentage, item.allocatedCustoms, item.allocatedShipping, item.allocatedTax, item.unitTax, item.finalUnitCost, marginFloat, item.finalSellingPrice, item.image);
+        });
 
-          // Consolidated Inventory Upsert Logic - Match by SKU or Product Name
+        // Sequential Inventory Upsert Logic to prevent async race conditions & UNIQUE SKU collisions
+        const processInventoryUpsert = (index) => {
+          if (index >= finalItems.length) {
+            stmt.finalize(() => {
+              res.json({
+                id: batchId,
+                name,
+                importDate,
+                totalCustomsTax: taxFloat,
+                totalShippingCost: shippingFloat,
+                exchangeRateGtq: gtqFloat,
+                status: 'Procesado',
+                items: finalItems
+              });
+            });
+            return;
+          }
+
+          const item = finalItems[index];
           const cleanSku = item.sku.trim().toUpperCase();
           const cleanName = item.productName.trim().toUpperCase();
 
@@ -458,42 +477,36 @@ app.post('/api/batches', (req, res) => {
 
               db.run(
                 'UPDATE inventory SET name = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
-                [item.productName, newStock, newCost, oldCost, delta, pct, updatedImage, importDate, targetSku]
-              );
-
-              // Record in price_history timeline with exact oldCost, new batch cost (item.finalUnitCost), delta, pct, and batchId
-              db.run(
-                'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [targetSku, batchId, oldCost, item.finalUnitCost, delta, pct, importDate]
+                [item.productName, newStock, newCost, oldCost, delta, pct, updatedImage, importDate, targetSku],
+                () => {
+                  db.run(
+                    'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [targetSku, batchId, oldCost, item.finalUnitCost, delta, pct, importDate],
+                    () => processInventoryUpsert(index + 1)
+                  );
+                }
               );
             } else {
               // Insert New Product in Inventory
               db.run(
                 'INSERT INTO inventory (sku, name, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, item.productName, 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, item.image, importDate]
-              );
-
-              // Record initial price entry in price_history timeline
-              db.run(
-                'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, batchId, item.finalUnitCost, item.finalUnitCost, 0, 0, importDate]
+                [cleanSku, item.productName, 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, item.image, importDate],
+                (err) => {
+                  if (err) {
+                    console.error('Error al insertar en inventario SQLite:', err.message);
+                  }
+                  db.run(
+                    'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [cleanSku, batchId, item.finalUnitCost, item.finalUnitCost, 0, 0, importDate],
+                    () => processInventoryUpsert(index + 1)
+                  );
+                }
               );
             }
           });
-        });
+        };
 
-        stmt.finalize(() => {
-          res.json({
-            id: batchId,
-            name,
-            importDate,
-            totalCustomsTax: taxFloat,
-            totalShippingCost: shippingFloat,
-            exchangeRateGtq: gtqFloat,
-            status: 'Procesado',
-            items: finalItems
-          });
-        });
+        processInventoryUpsert(0);
       }
     );
   });
