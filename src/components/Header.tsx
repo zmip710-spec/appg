@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExport,
   currentUser,
   onLogout,
-  activeTab = 'dashboard'
+  activeTab = 'inventory'
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -38,9 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
       case 'inventory': return 'Exportar PDF Inventario';
       case 'sales': return 'Exportar PDF Ventas';
       case 'batches': return 'Exportar PDF Lotes & Aduana';
-      case 'analytics': return 'Exportar PDF Analíticas';
       case 'users': return 'Exportar PDF Usuarios';
-      default: return 'Exportar PDF Dashboard';
+      default: return 'Exportar PDF Inventario';
     }
   };
 

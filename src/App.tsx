@@ -26,10 +26,17 @@ export default function App() {
   });
 
   const [darkMode, setDarkMode] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Temporarily redirect dashboard and analytics to inventory
+  useEffect(() => {
+    if (activeTab === 'dashboard' || activeTab === 'analytics') {
+      setActiveTab('inventory');
+    }
+  }, [activeTab]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalSales: 0,
     completedSalesCount: 0,
