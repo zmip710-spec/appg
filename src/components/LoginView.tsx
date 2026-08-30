@@ -1,38 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Lock, Mail, UserCheck, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
-import { loginApi, fetchUsers, User } from '../services/api';
+import React, { useState } from 'react';
+import { BarChart3, Lock, User as UserIcon, AlertCircle, ArrowRight, ShieldCheck, Key } from 'lucide-react';
+import { loginApi, User } from '../services/api';
 
 interface LoginViewProps {
   onLoginSuccess: (user: User) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin123');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
-
-  const loadAvailableUsers = async () => {
-    try {
-      const users = await fetchUsers();
-      if (Array.isArray(users)) {
-        const activeUsers = users.filter(u => u.status === 'Activo');
-        setAvailableUsers(activeUsers);
-      }
-    } catch {
-      // offline
-    }
-  };
-
-  useEffect(() => {
-    loadAvailableUsers();
-  }, []);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      setErrorMsg('Por favor ingresa tu correo electrónico.');
+    if (!username) {
+      setErrorMsg('Por favor ingresa tu nombre de usuario.');
       return;
     }
 
@@ -40,24 +23,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      const loggedUser = await loginApi(email, password);
+      const loggedUser = await loginApi(username, password);
       onLoginSuccess(loggedUser);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Credenciales inválidas. Verifica tu correo y contraseña.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (user: User) => {
-    setErrorMsg('');
-    setLoading(true);
-
-    try {
-      const loggedUser = await loginApi(user.email, '123456');
-      onLoginSuccess(loggedUser);
-    } catch {
-      onLoginSuccess(user);
+      setErrorMsg(err.message || 'Credenciales inválidas. Verifica tu usuario y contraseña.');
     } finally {
       setLoading(false);
     }
@@ -76,13 +45,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <p className="text-xs text-slate-400">Sistema de Gestión de Inventario & Ventas</p>
         </div>
 
-        {/* Security Alert Banner */}
-        <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-center space-y-1">
-          <div className="flex items-center justify-center space-x-1.5 text-xs font-bold text-emerald-400">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Acceso Privado e Identificado</span>
+        {/* Credentials Info Box */}
+        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1.5">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Acceso Administrador Principal</span>
+            </span>
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase">
+              Activo
+            </span>
           </div>
-          <p className="text-[11px] text-slate-400">Ingresa con tu correo y contraseña registrados en el sistema.</p>
+          <div className="text-xs text-slate-300 font-mono bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Usuario:</span>
+              <span className="font-bold text-blue-400">admin</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Contraseña:</span>
+              <span className="font-bold text-amber-400">admin123</span>
+            </div>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -93,19 +76,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        {/* LOGIN FORM ONLY (Public Registration Disabled) */}
+        {/* LOGIN FORM */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Correo Electrónico</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nombre de Usuario</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <UserIcon className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu.correo@empresa.com"
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="ej. admin"
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
           </div>
@@ -120,7 +103,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
           </div>
@@ -134,36 +117,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Quick Login Avatar List (For existing registered active profiles in DB) */}
-        {availableUsers.length > 0 && (
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <span className="block text-[11px] font-semibold text-slate-400 text-center uppercase tracking-wider">
-              Perfiles Registrados en el Sistema
-            </span>
-            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
-              {availableUsers.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => handleQuickLogin(u)}
-                  className="flex items-center space-x-3 p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/80 transition text-left group"
-                >
-                  <img
-                    src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'}
-                    alt={u.name}
-                    className="w-9 h-9 rounded-full object-cover border border-blue-500/40 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition">{u.name}</h4>
-                    <p className="text-[10px] text-slate-400 truncate">{u.email} • {u.role}</p>
-                  </div>
-                  <UserCheck className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -15,24 +15,49 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(distPath));
 
-// API Auth Login with Password Checking
+// API Auth Login with Username & Password Checking
 app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  if (!email) return res.status(400).json({ error: 'El correo electrónico es requerido.' });
+  const { username, email, password } = req.body;
+  const inputUser = (username || email || '').trim().toLowerCase();
 
-  const cleanEmail = email.trim().toLowerCase();
-  db.get('SELECT * FROM users WHERE LOWER(email) = ?', [cleanEmail], (err, user) => {
+  if (!inputUser) {
+    return res.status(400).json({ error: 'El nombre de usuario es requerido.' });
+  }
+
+  // Find user by username, email, or name
+  db.get('SELECT * FROM users WHERE LOWER(email) = ? OR LOWER(name) = ?', [inputUser, inputUser], (err, user) => {
     if (err) return res.status(500).json({ error: err.message });
-    if (!user) return res.status(404).json({ error: 'Correo no registrado en el sistema.' });
-    if (user.status !== 'Activo') return res.status(403).json({ error: 'El usuario se encuentra inactivo. Contacta al administrador.' });
 
-    // Validate Password if provided
-    const userPass = user.password || '123456';
-    if (password && password.trim() !== '' && password.trim() !== userPass) {
+    if (!user) {
+      // Auto-create default admin user if logging in as admin
+      if (inputUser === 'admin') {
+        const defaultAdminPass = 'admin123';
+        const query = 'INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        db.run(query, ['admin', 'admin@appg.com', 'Administrador', 'Activo', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80', 'Ahora mismo', defaultAdminPass], function (err) {
+          if (err) return res.status(500).json({ error: err.message });
+          
+          if (password && password.trim() !== defaultAdminPass) {
+            return res.status(401).json({ error: 'Contraseña incorrecta. La contraseña por defecto del usuario admin es: admin123' });
+          }
+
+          const newAdmin = { id: this.lastID, name: 'admin', email: 'admin@appg.com', role: 'Administrador', status: 'Activo', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80', lastLogin: 'Ahora mismo' };
+          return res.json({ success: true, user: newAdmin });
+        });
+        return;
+      }
+      return res.status(404).json({ error: `El usuario "${inputUser}" no existe en el sistema.` });
+    }
+
+    if (user.status !== 'Activo') {
+      return res.status(403).json({ error: 'El usuario se encuentra inactivo. Contacta al administrador.' });
+    }
+
+    // Validate Password
+    const expectedPass = user.password || 'admin123';
+    if (password && password.trim() !== '' && password.trim() !== expectedPass) {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     }
 
-    // Update lastLogin timestamp
     const nowStr = 'Ahora mismo';
     db.run('UPDATE users SET lastLogin = ? WHERE id = ?', [nowStr, user.id]);
 
@@ -42,14 +67,14 @@ app.post('/api/auth/login', (req, res) => {
 
 // API Auth Session Verification Endpoint (Strict Security Check)
 app.post('/api/auth/verify', (req, res) => {
-  const { id, email } = req.body;
-  if (!id && !email) {
-    return res.json({ valid: false, error: 'ID o correo requerido para verificación.' });
+  const { id, username, email } = req.body;
+  const param = id || (username || email || '').trim().toLowerCase();
+
+  if (!param) {
+    return res.json({ valid: false, error: 'Usuario requerido para verificación.' });
   }
 
-  const query = id ? 'SELECT * FROM users WHERE id = ?' : 'SELECT * FROM users WHERE LOWER(email) = ?';
-  const param = id || String(email).trim().toLowerCase();
-
+  const query = id ? 'SELECT * FROM users WHERE id = ?' : 'SELECT * FROM users WHERE LOWER(email) = ? OR LOWER(name) = ?';
   db.get(query, [param], (err, user) => {
     if (err || !user) {
       return res.json({ valid: false, error: 'El perfil de usuario ya no existe en la base de datos.' });

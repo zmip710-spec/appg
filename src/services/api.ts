@@ -92,11 +92,11 @@ export interface DashboardStats {
   totalBatchesCount: number;
 }
 
-export const loginApi = async (email: string, password?: string): Promise<User> => {
+export const loginApi = async (username: string, password?: string): Promise<User> => {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
   if (!response.ok) {
     const errJson = await response.json().catch(() => ({ error: 'Error de respuesta en inicio de sesión' }));
@@ -120,12 +120,12 @@ export const registerApi = async (data: { name: string; email: string; password?
   return resData.user || resData;
 };
 
-export const verifySessionApi = async (id?: string | number, email?: string): Promise<{ valid: boolean; user?: User; error?: string }> => {
+export const verifySessionApi = async (id?: string | number, username?: string): Promise<{ valid: boolean; user?: User; error?: string }> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, email }),
+      body: JSON.stringify({ id, username }),
     });
 
     if (!response.ok) {
