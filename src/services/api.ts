@@ -73,11 +73,22 @@ export interface PriceHistoryEntry {
   id: number;
   sku: string;
   batchId?: string;
+  batchName?: string;
   oldCost: number;
   newCost: number;
   delta: number;
   pct: number;
   changeDate: string;
+  unitCostFob?: number;
+  quantity?: number;
+  sharePercentage?: number;
+  allocatedCustoms?: number;
+  allocatedShipping?: number;
+  allocatedTax?: number;
+  unitTax?: number;
+  finalUnitCost?: number;
+  profitMarginPct?: number;
+  finalSellingPrice?: number;
 }
 
 export interface DashboardStats {

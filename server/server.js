@@ -556,7 +556,7 @@ app.get('/api/inventory/history/:sku', (req, res) => {
             // Build full variation timeline across all batches
             const history = bRows.map((b, idx) => {
               const oldCost = idx === 0 ? b.unitCostFob : bRows[idx - 1].finalUnitCost;
-              const newCost = b.finalUnitCost;
+              const newCost = b.finalUnitCost || b.unitCostFob;
               const delta = parseFloat((newCost - oldCost).toFixed(2));
               const pct = oldCost > 0 ? parseFloat(((delta / oldCost) * 100).toFixed(2)) : 0;
 
@@ -569,7 +569,17 @@ app.get('/api/inventory/history/:sku', (req, res) => {
                 newCost,
                 delta,
                 pct,
-                changeDate: b.importDate || (invItem ? invItem.lastUpdated : '27 ago 2026')
+                changeDate: b.importDate || (invItem ? invItem.lastUpdated : '27 ago 2026'),
+                unitCostFob: b.unitCostFob,
+                quantity: b.quantity,
+                sharePercentage: b.sharePercentage,
+                allocatedCustoms: b.allocatedCustoms,
+                allocatedShipping: b.allocatedShipping,
+                allocatedTax: b.allocatedTax,
+                unitTax: b.unitTax,
+                finalUnitCost: b.finalUnitCost,
+                profitMarginPct: b.profitMarginPct,
+                finalSellingPrice: b.finalSellingPrice
               };
             });
 
