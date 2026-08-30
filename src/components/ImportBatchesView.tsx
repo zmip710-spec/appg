@@ -434,8 +434,8 @@ export const ImportBatchesView: React.FC = () => {
   return (
     <div className="space-y-4 min-h-[500px]">
       {/* Compact Minimal Header */}
-      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-800 shrink-0">
-        <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Lotes de Importación</h2>
+      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Lotes de Importación</h2>
         <button
           onClick={handleOpenAddModal}
           className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
@@ -447,37 +447,37 @@ export const ImportBatchesView: React.FC = () => {
 
       {/* Mini KPI Cards (~70px Height) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Lotes Procesados</span>
+        <div className="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Lotes Procesados</span>
           <div className="flex items-baseline justify-between">
-            <h3 className="text-base sm:text-lg font-extrabold text-white font-mono">{totalBatchesCount}</h3>
-            <span className="text-[10px] text-blue-400 font-medium">lotes BD</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white font-mono">{totalBatchesCount}</h3>
+            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">lotes BD</span>
           </div>
         </div>
 
-        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Gastos Importación</span>
+        <div className="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Gastos Importación</span>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-white font-mono">${totalImportExpenses.toFixed(2)} USD</h3>
-            <span className="text-[10px] font-mono text-emerald-400 font-semibold block">Q {(totalImportExpenses * 7.80).toFixed(2)}</span>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-mono">${totalImportExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</h3>
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold block">Q {(totalImportExpenses * 7.80).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
           </div>
         </div>
 
-        <div className="col-span-2 sm:col-span-1 bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Margen Aplicado</span>
+        <div className="col-span-2 sm:col-span-1 bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Margen Aplicado</span>
           <div className="flex items-baseline justify-between">
-            <h3 className="text-base sm:text-lg font-extrabold text-emerald-400 font-mono">+15%</h3>
-            <span className="text-[10px] text-slate-400">Precio Venta</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">+15%</h3>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">Precio Venta</span>
           </div>
         </div>
       </div>
 
       {/* Batches List */}
       <div className="space-y-4">
-        <h3 className="text-base font-bold text-white">Historial de Lotes de Importación</h3>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">Historial de Lotes de Importación</h3>
 
         {batches.length === 0 ? (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400">
             No hay lotes registrados. Haz clic en "+ Nuevo Lote de Importación" para agregar uno.
           </div>
         ) : (
@@ -490,27 +490,27 @@ export const ImportBatchesView: React.FC = () => {
             const totalGtqExpenses = totalBatchLandedExpenses * rate;
 
             return (
-              <div key={batch.id} className={`bg-slate-800 border rounded-xl overflow-hidden shadow-sm transition ${
-                index === 0 ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-slate-700/80'
+              <div key={batch.id} className={`bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm transition ${
+                index === 0 ? 'border-amber-400 dark:border-amber-500/50 ring-1 ring-amber-400/30 dark:ring-amber-500/20' : 'border-slate-200 dark:border-slate-700/80'
               }`}>
                 {/* Batch Header Bar (Responsive Stacked Layout) */}
                 <div
                   onClick={() => setExpandedBatchId(isExpanded ? null : batch.id)}
-                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-slate-700/30 transition min-h-[70px]"
+                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 transition min-h-[70px]"
                 >
                   <div className="flex-1 space-y-1.5 min-w-0">
                     {/* Line 1: Badges + Full Batch Name + Mobile Expand Chevron */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center flex-wrap gap-1.5 min-w-0">
                         {index === 0 && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[9px] font-extrabold shrink-0">
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/40 text-[9px] font-extrabold shrink-0">
                             ÚLTIMO LOTE
                           </span>
                         )}
-                        <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 shrink-0">
+                        <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 shrink-0">
                           {batch.id}
                         </span>
-                        <h4 className="text-xs sm:text-base font-bold text-white leading-snug break-words">
+                        <h4 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white leading-snug break-words">
                           {batch.name}
                         </h4>
                       </div>
@@ -520,22 +520,22 @@ export const ImportBatchesView: React.FC = () => {
                     </div>
 
                     {/* Line 2: Expenses, Margin, Date, Product Count */}
-                    <div className="flex items-center flex-wrap text-[11px] text-slate-300 gap-x-2 gap-y-1">
-                      <span className="text-slate-400">
-                        Gastos Importación: <strong className="text-white">${totalBatchLandedExpenses.toFixed(2)} USD</strong>{' '}
-                        <span className="text-emerald-400 font-mono font-bold">(Q {totalGtqExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ)</span>
+                    <div className="flex items-center flex-wrap text-[11px] text-slate-600 dark:text-slate-300 gap-x-2 gap-y-1">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Gastos Importación: <strong className="text-slate-900 dark:text-white">${totalBatchLandedExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</strong>{' '}
+                        <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">(Q {totalGtqExpenses.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
                       </span>
-                      <span className="text-slate-500">•</span>
-                      <span className="text-amber-400 font-bold">Margen: +{marginPct}%</span>
-                      <span className="text-slate-500">•</span>
-                      <span className="text-slate-400">{batch.importDate}</span>
-                      <span className="text-slate-500">•</span>
-                      <span className="text-blue-300 font-semibold">{batch.items.length} prods</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">Margen: +{marginPct}%</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-500 dark:text-slate-400">{batch.importDate}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-blue-700 dark:text-blue-300 font-semibold">{batch.items.length} prods</span>
                     </div>
                   </div>
 
                   {/* Line 3 / Desktop Action Buttons */}
-                  <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700/60 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200 dark:border-slate-700/60 shrink-0">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -553,7 +553,7 @@ export const ImportBatchesView: React.FC = () => {
                         e.stopPropagation();
                         handleDeleteBatch(batch.id);
                       }}
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-slate-700/80 transition cursor-pointer"
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 border border-slate-200 dark:border-slate-700/80 transition cursor-pointer"
                       title="Eliminar lote"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -566,53 +566,53 @@ export const ImportBatchesView: React.FC = () => {
 
                 {/* Batch Items Breakdown */}
                 {isExpanded && (
-                  <div className="border-t border-slate-700 bg-slate-900/90 p-3 sm:p-4 space-y-3">
+                  <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/90 p-3 sm:p-4 space-y-3">
                     {/* 2x2 Global Batch Parameters Matrix */}
                     {(() => {
                       const batchCustomsPct = batchFobTotal > 0 ? ((batch.totalCustomsTax || 0) / batchFobTotal) * 100 : 0;
                       const batchShippingPct = batchFobTotal > 0 ? ((batch.totalShippingCost || 0) / batchFobTotal) * 100 : 0;
                       return (
-                        <div className="bg-slate-950 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-2.5">
+                        <div className="bg-white dark:bg-slate-950 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 shadow-sm">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-white text-xs sm:text-sm">Parámetros Globales del Lote ({batch.items.length} SKUs)</span>
-                            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-semibold">
+                            <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Parámetros Globales del Lote ({batch.items.length} SKUs)</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[10px] font-mono font-semibold">
                               {batch.id}
                             </span>
                           </div>
 
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                             {/* Bloque 1: Total FOB */}
-                            <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                              <span className="text-[10px] text-slate-400 uppercase font-semibold block">Total FOB Base</span>
-                              <span className="font-extrabold text-white text-xs sm:text-sm font-mono block">${batchFobTotal.toFixed(2)} USD</span>
-                              <span className="text-[10px] font-mono text-slate-400 block">Q {(batchFobTotal * rate).toFixed(2)} GTQ</span>
+                            <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">Total FOB Base</span>
+                              <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm font-mono block">${batchFobTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">Q {(batchFobTotal * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                             </div>
 
                             {/* Bloque 2: Total Flete */}
-                            <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                            <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                               <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Flete</span>
-                                <span className="text-[9px] font-bold text-indigo-400 font-mono">+{batchShippingPct.toFixed(1)}%</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Total Flete</span>
+                                <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">+{batchShippingPct.toFixed(1)}%</span>
                               </div>
-                              <span className="font-extrabold text-indigo-300 text-xs sm:text-sm font-mono block">${batch.totalShippingCost?.toFixed(2)} USD</span>
-                              <span className="text-[10px] font-mono text-indigo-400 block">Q {((batch.totalShippingCost || 0) * rate).toFixed(2)} GTQ</span>
+                              <span className="font-extrabold text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm font-mono block">${(batch.totalShippingCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                              <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 block">Q {((batch.totalShippingCost || 0) * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                             </div>
 
                             {/* Bloque 3: Total Aduana */}
-                            <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                            <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
                               <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Aduana</span>
-                                <span className="text-[9px] font-bold text-amber-400 font-mono">+{batchCustomsPct.toFixed(1)}%</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Total Aduana</span>
+                                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 font-mono">+{batchCustomsPct.toFixed(1)}%</span>
                               </div>
-                              <span className="font-extrabold text-amber-300 text-xs sm:text-sm font-mono block">${batch.totalCustomsTax?.toFixed(2)} USD</span>
-                              <span className="text-[10px] font-mono text-amber-400 block">Q {((batch.totalCustomsTax || 0) * rate).toFixed(2)} GTQ</span>
+                              <span className="font-extrabold text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-mono block">${(batch.totalCustomsTax || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                              <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 block">Q {((batch.totalCustomsTax || 0) * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                             </div>
 
                             {/* Bloque 4: Tasa & Margen */}
-                            <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                              <span className="text-[10px] text-slate-400 uppercase font-semibold block">Tasa de Cambio</span>
-                              <span className="font-extrabold text-blue-400 text-xs sm:text-sm font-mono block">Q {rate.toFixed(2)} / USD</span>
-                              <span className="text-[10px] font-semibold text-emerald-400 block">Margen Venta: +{marginPct}%</span>
+                            <div className="bg-slate-50 dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">Tasa de Cambio</span>
+                              <span className="font-extrabold text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-mono block">Q {rate.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / USD</span>
+                              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 block">Margen Venta: +{marginPct}%</span>
                             </div>
                           </div>
                         </div>
@@ -671,31 +671,31 @@ export const ImportBatchesView: React.FC = () => {
                         return (
                           <div
                             key={idx}
-                            className={`bg-slate-950 border rounded-xl shadow-md transition overflow-hidden ${
-                              isItemExpanded ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-slate-800 hover:border-slate-700'
+                            className={`bg-white dark:bg-slate-950 border rounded-xl shadow-sm transition overflow-hidden ${
+                              isItemExpanded ? 'border-blue-400 dark:border-blue-500/50 ring-1 ring-blue-400/30 dark:ring-blue-500/20' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                           >
                             {/* VISTA CERRADA (Fila Resumen Compacta) */}
                             <div
                               onClick={() => setExpandedMobileItemKeys(prev => ({ ...prev, [itemKey]: !prev[itemKey] }))}
-                              className="p-3 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-slate-900/60 transition"
+                              className="p-3 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 transition"
                             >
                               {/* Izquierda: Foto + Título + SKU & Uds */}
                               <div className="flex items-center space-x-2.5 min-w-0 flex-1">
                                 {item.image ? (
-                                  <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700 shrink-0 bg-slate-800" />
+                                  <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800" />
                                 ) : (
-                                  <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                  <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
                                     <ImageIcon className="w-4 h-4" />
                                   </div>
                                 )}
                                 <div className="min-w-0 flex-1">
-                                  <h4 className="font-bold text-white text-xs leading-snug break-words">{displayTitle}</h4>
+                                  <h4 className="font-bold text-slate-900 dark:text-white text-xs leading-snug break-words">{displayTitle}</h4>
                                   <div className="flex items-center space-x-1.5 mt-0.5">
-                                    <span className="font-mono text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20">
+                                    <span className="font-mono text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-500/20">
                                       {itemSku}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-medium">• {item.quantity} uds</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">• {item.quantity} uds</span>
                                   </div>
                                 </div>
                               </div>
@@ -703,31 +703,31 @@ export const ImportBatchesView: React.FC = () => {
                               {/* Derecha: Precio Venta Sugerido (Verde) + Chevron */}
                               <div className="flex items-center space-x-2 shrink-0">
                                 <div className="text-right">
-                                  <span className="font-mono text-xs font-black text-emerald-400 block">Q {valFinalSellingGtq.toFixed(2)}</span>
-                                  <span className="text-[9px] font-mono text-slate-400 block">${valFinalSellingUsd.toFixed(2)}</span>
+                                  <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 block">Q {valFinalSellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                  <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 block">${valFinalSellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
-                                <div className="p-1 text-slate-400 hover:text-white">
-                                  {isItemExpanded ? <ChevronUp className="w-4 h-4 text-blue-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                <div className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                                  {isItemExpanded ? <ChevronUp className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                                 </div>
                               </div>
                             </div>
 
                             {/* VISTA DESPLEGADA (Al hacer tap/clic) */}
                             {isItemExpanded && (
-                              <div className="p-3 pt-0 border-t border-slate-800/80 space-y-2.5 bg-slate-900/40 text-xs animate-in fade-in duration-150">
+                              <div className="p-3 pt-0 border-t border-slate-200 dark:border-slate-800/80 space-y-2.5 bg-slate-50/50 dark:bg-slate-900/40 text-xs animate-in fade-in duration-150">
                                 {/* Badges de Participación & Metadatos */}
                                 <div className="flex items-center flex-wrap gap-1.5 pt-2">
                                   {cleanBrand && (
-                                    <span className="text-[10px] font-bold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                                       Marca: {cleanBrand}
                                     </span>
                                   )}
                                   {cleanModel && (
-                                    <span className="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                                       Modelo: {cleanModel}
                                     </span>
                                   )}
-                                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                  <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                                     % Part. Lote: {sharePct.toFixed(1)}%
                                   </span>
                                 </div>
@@ -735,55 +735,55 @@ export const ImportBatchesView: React.FC = () => {
                                 {/* Estructura de Costos Paso a Paso */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                   {/* 1. Costo FOB Base */}
-                                  <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">1. Costo FOB Base</span>
-                                    <span className="font-bold text-white text-xs block">${valFobNoTax.toFixed(2)} USD/u</span>
-                                    <span className="text-[10px] font-mono text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ/u</span>
+                                  <div className="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold block">1. Costo FOB Base</span>
+                                    <span className="font-bold text-slate-900 dark:text-white text-xs block">${valFobNoTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">Q {(valFobNoTax * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                                   </div>
 
                                   {/* 2. Recargo Aduana */}
-                                  <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                  <div className="bg-amber-50/70 dark:bg-slate-900/90 p-2.5 rounded-lg border border-amber-200 dark:border-slate-800 shadow-sm">
                                     <div className="flex justify-between items-center">
-                                      <span className="text-[10px] text-amber-400 font-semibold uppercase">2. Recargo Aduana</span>
-                                      <span className="text-[9px] font-bold text-amber-400 font-mono">+{customsPct.toFixed(1)}%</span>
+                                      <span className="text-[10px] text-amber-800 dark:text-amber-400 font-semibold uppercase">2. Recargo Aduana</span>
+                                      <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 font-mono">+{customsPct.toFixed(1)}%</span>
                                     </div>
-                                    <span className="font-bold text-amber-300 text-xs block">+$ {customsPerUnit.toFixed(2)} USD/u</span>
-                                    <span className="text-[10px] font-mono text-amber-400 block">+Q {(customsPerUnit * rate).toFixed(2)} GTQ/u</span>
+                                    <span className="font-bold text-amber-800 dark:text-amber-300 text-xs block">+$ {customsPerUnit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                                    <span className="text-[10px] font-mono text-amber-700 dark:text-amber-400 block">+Q {(customsPerUnit * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                                   </div>
 
                                   {/* 3. Recargo Flete */}
-                                  <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                  <div className="bg-indigo-50/70 dark:bg-slate-900/90 p-2.5 rounded-lg border border-indigo-200 dark:border-slate-800 shadow-sm">
                                     <div className="flex justify-between items-center">
-                                      <span className="text-[10px] text-indigo-400 font-semibold uppercase">3. Recargo Flete</span>
-                                      <span className="text-[9px] font-bold text-indigo-400 font-mono">+{shippingPct.toFixed(1)}%</span>
+                                      <span className="text-[10px] text-indigo-800 dark:text-indigo-400 font-semibold uppercase">3. Recargo Flete</span>
+                                      <span className="text-[9px] font-bold text-indigo-700 dark:text-indigo-400 font-mono">+{shippingPct.toFixed(1)}%</span>
                                     </div>
-                                    <span className="font-bold text-indigo-300 text-xs block">+$ {shippingPerUnit.toFixed(2)} USD/u</span>
-                                    <span className="text-[10px] font-mono text-indigo-400 block">+Q {(shippingPerUnit * rate).toFixed(2)} GTQ/u</span>
+                                    <span className="font-bold text-indigo-800 dark:text-indigo-300 text-xs block">+$ {shippingPerUnit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                                    <span className="text-[10px] font-mono text-indigo-700 dark:text-indigo-400 block">+Q {(shippingPerUnit * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                                   </div>
 
                                   {/* 4. Costo Landed Final */}
-                                  <div className="bg-blue-950/40 p-2.5 rounded-lg border border-blue-500/40">
+                                  <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-lg border border-blue-200 dark:border-blue-500/40 shadow-sm">
                                     <div className="flex justify-between items-center">
-                                      <span className="text-[10px] text-blue-300 font-bold uppercase">4. Costo Landed Final</span>
-                                      <span className="text-[9px] font-bold text-amber-400 font-mono">+{taxSurchargePct.toFixed(1)}% Recargo</span>
+                                      <span className="text-[10px] text-blue-800 dark:text-blue-300 font-bold uppercase">4. Costo Landed Final</span>
+                                      <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 font-mono">+{taxSurchargePct.toFixed(1)}% Recargo</span>
                                     </div>
-                                    <span className="font-bold text-white text-xs block">${valLandedFull.toFixed(2)} USD/u</span>
-                                    <span className="text-[10px] font-mono text-indigo-300 font-extrabold block">Q {(valLandedFull * rate).toFixed(2)} GTQ/u</span>
+                                    <span className="font-bold text-slate-900 dark:text-white text-xs block">${valLandedFull.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                                    <span className="text-[10px] font-mono text-indigo-700 dark:text-indigo-300 font-extrabold block">Q {(valLandedFull * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                                   </div>
                                 </div>
 
                                 {/* Bloque Inferior: Venta & Ganancia Estimada */}
-                                <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/30 space-y-1.5">
+                                <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-500/30 space-y-1.5 shadow-sm">
                                   <div className="flex justify-between items-center">
-                                    <span className="text-emerald-400 text-[10px] font-extrabold uppercase">🏷️ Precio Venta Final (+{itemMargin}%)</span>
-                                    <span className="font-mono text-xs font-black text-emerald-400">
-                                      Q {valFinalSellingGtq.toFixed(2)} GTQ <span className="text-slate-300 text-[10px] font-normal">(${valFinalSellingUsd.toFixed(2)} USD)</span>
+                                    <span className="text-emerald-800 dark:text-emerald-400 text-[10px] font-extrabold uppercase">🏷️ Precio Venta Final (+{itemMargin}%)</span>
+                                    <span className="font-mono text-xs font-black text-emerald-700 dark:text-emerald-400">
+                                      Q {valFinalSellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ <span className="text-slate-500 dark:text-slate-300 text-[10px] font-normal">(${valFinalSellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)</span>
                                     </span>
                                   </div>
-                                  <div className="flex justify-between items-center text-[10px] text-slate-300 border-t border-emerald-900/50 pt-1">
+                                  <div className="flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-300 border-t border-emerald-200 dark:border-emerald-900/50 pt-1">
                                     <span>Ganancia estimada:</span>
-                                    <span className="font-mono font-bold text-emerald-300">
-                                      +Q {totalProfitGtq.toFixed(2)} total <span className="text-slate-400 font-normal">(+Q {unitProfitGtq.toFixed(2)}/u)</span>
+                                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                                      +Q {totalProfitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total <span className="text-slate-500 dark:text-slate-400 font-normal">(+Q {unitProfitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/u)</span>
                                     </span>
                                   </div>
                                 </div>
@@ -795,23 +795,23 @@ export const ImportBatchesView: React.FC = () => {
                     </div>
 
                     {/* DESKTOP TABLE VIEW (Visible only on md and larger) */}
-                    <div className="hidden md:block bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <div className="hidden md:block bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-900/90 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-800">
+                          <thead className="bg-slate-50 dark:bg-slate-900/90 text-[11px] uppercase font-bold text-slate-700 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                             <tr>
                               <th className="py-3 px-4 font-semibold">Producto</th>
                               <th className="py-3 px-3 font-semibold text-right">Precio Inicial (FOB)</th>
-                              <th className="py-3 px-3 font-semibold text-center text-blue-400">% Part. Lote</th>
-                              <th className="py-3 px-3 font-semibold text-right text-amber-400">+ Impuesto & Flete</th>
-                              <th className="py-3 px-3 font-semibold text-right text-indigo-400">% Recargo Impuesto</th>
-                              <th className="py-3 px-3 font-semibold text-right text-blue-400">= Costo Landed</th>
-                              <th className="py-3 px-4 font-semibold text-right text-emerald-400 bg-emerald-950/40 border-l border-emerald-500/30">
+                              <th className="py-3 px-3 font-semibold text-center text-blue-700 dark:text-blue-400">% Part. Lote</th>
+                              <th className="py-3 px-3 font-semibold text-right text-amber-700 dark:text-amber-400">+ Impuesto & Flete</th>
+                              <th className="py-3 px-3 font-semibold text-right text-indigo-700 dark:text-indigo-400">% Recargo Impuesto</th>
+                              <th className="py-3 px-3 font-semibold text-right text-blue-700 dark:text-blue-400">= Costo Landed</th>
+                              <th className="py-3 px-4 font-semibold text-right text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
                                 Precio Final Venta (+{marginPct}%)
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-800/80 bg-slate-900/40">
+                          <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80 bg-white dark:bg-slate-900/40">
                             {batch.items.map((item, idx) => {
                               const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : ((item.sharePercentage || 0) / 100) * (batch.totalCustomsTax || 0);
                               const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : ((item.sharePercentage || 0) / 100) * (batch.totalShippingCost || 0);
@@ -856,27 +856,27 @@ export const ImportBatchesView: React.FC = () => {
                               ].filter(Boolean).join(' • ');
 
                               return (
-                                <tr key={idx} className="hover:bg-slate-800/60 transition">
+                                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                                   {/* Producto (Foto, SKU, Marca/Modelo - Nombre, Subtitulo, Cantidad) */}
                                   <td className="py-3 px-4">
                                     <div className="flex items-center space-x-3 min-w-[260px]">
                                       {item.image ? (
-                                        <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0 bg-slate-800" />
+                                        <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800" />
                                       ) : (
-                                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
                                           <ImageIcon className="w-5 h-5" />
                                         </div>
                                       )}
                                       <div className="min-w-0">
                                         <div className="flex items-center space-x-2 mb-0.5">
-                                          <span className="font-mono text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 inline-block">
+                                          <span className="font-mono text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 inline-block">
                                             {item.sku || `PROD-00${idx+1}`}
                                           </span>
-                                          <span className="text-[10px] text-slate-400 font-semibold">{item.quantity} unidades</span>
+                                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{item.quantity} unidades</span>
                                         </div>
-                                        <h4 className="font-bold text-white text-xs truncate" title={displayTitle}>{displayTitle}</h4>
+                                        <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate" title={displayTitle}>{displayTitle}</h4>
                                         {metadataSubtitle && (
-                                          <span className="text-[10px] text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
+                                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
                                         )}
                                       </div>
                                     </div>
@@ -884,42 +884,42 @@ export const ImportBatchesView: React.FC = () => {
 
                                   {/* Precio Inicial (FOB Base) */}
                                   <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-white block text-xs">${valFobNoTax.toFixed(2)} USD</span>
-                                    <span className="font-mono text-[10px] text-slate-400 block">Q {(valFobNoTax * rate).toFixed(2)} GTQ</span>
+                                    <span className="font-bold text-slate-900 dark:text-white block text-xs">${valFobNoTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {(valFobNoTax * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
 
                                   {/* % Participación en el Lote */}
                                   <td className="py-3 px-3 text-center">
-                                    <span className="font-bold font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-xs">
+                                    <span className="font-bold font-mono text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 text-xs">
                                       {sharePct.toFixed(1)}%
                                     </span>
-                                    <span className="text-[9px] text-slate-400 block mt-0.5">del Lote Total</span>
+                                    <span className="text-[9px] text-slate-500 dark:text-slate-400 block mt-0.5">del Lote Total</span>
                                   </td>
 
                                   {/* + Impuesto & Flete ($USD total e individual) */}
                                   <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-amber-300 block text-xs">+${totalTaxPerUnit.toFixed(2)} USD/u</span>
-                                    <span className="text-[10px] text-amber-400 font-mono block">Total: ${totalAllocatedExpenseForItem.toFixed(2)}</span>
+                                    <span className="font-bold text-amber-700 dark:text-amber-300 block text-xs">+${totalTaxPerUnit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono block">Total: ${totalAllocatedExpenseForItem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                   </td>
 
                                   {/* % Recargo de Impuestos sobre FOB */}
                                   <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-indigo-300 font-mono bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 text-xs inline-block">
+                                    <span className="font-bold text-indigo-700 dark:text-indigo-300 font-mono bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20 text-xs inline-block">
                                       +{taxSurchargePct.toFixed(1)}%
                                     </span>
-                                    <span className="text-[9px] text-indigo-400 block mt-0.5">Recargo sobre FOB</span>
+                                    <span className="text-[9px] text-indigo-600 dark:text-indigo-400 block mt-0.5">Recargo sobre FOB</span>
                                   </td>
 
                                   {/* = Costo Landed Unitario */}
                                   <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-blue-300 block text-xs">${valLandedFull.toFixed(2)} USD</span>
-                                    <span className="font-mono text-[10px] text-blue-400 block">Q {(valLandedFull * rate).toFixed(2)} GTQ</span>
+                                    <span className="font-bold text-slate-900 dark:text-white block text-xs">${valLandedFull.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                                    <span className="font-mono text-[10px] text-indigo-700 dark:text-indigo-400 block">Q {(valLandedFull * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
 
                                   {/* Precio Final Venta (+Margen) */}
-                                  <td className="py-3 px-4 text-right bg-emerald-950/40 border-l border-emerald-500/30">
-                                    <span className="font-black text-white text-xs block">${valFinalSellingUsd.toFixed(2)} USD</span>
-                                    <span className="font-mono font-black text-emerald-400 text-xs block">Q {valFinalSellingGtq.toFixed(2)} GTQ</span>
+                                  <td className="py-3 px-4 text-right bg-emerald-50/50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
+                                    <span className="font-black text-slate-900 dark:text-white text-xs block">${valFinalSellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                                    <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs block">Q {valFinalSellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
                                 </tr>
                               );

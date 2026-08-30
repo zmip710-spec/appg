@@ -273,19 +273,19 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
             <div className="bg-slate-800 border border-slate-700 rounded-xl h-20 w-full"></div>
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 text-sm">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
             No se encontraron ventas. Haz clic en "+ Registrar Nueva Venta" para realizar una.
           </div>
         ) : (
           filteredData.map((item) => {
-            let badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            if (item.status === 'Pendiente') badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-            if (item.status === 'Cancelado') badgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+            let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+            if (item.status === 'Pendiente') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+            if (item.status === 'Cancelado') badgeClass = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
 
             return (
-              <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3.5 shadow">
+              <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3.5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                  <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
                     {item.id}
                   </span>
                   <button
@@ -297,20 +297,20 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-white text-sm">{item.client}</h4>
-                  <p className="text-xs text-slate-300 font-medium">{item.service}</p>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">{item.client}</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">{item.service}</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Fecha</span>
-                    <span className="text-xs text-slate-300">{item.date}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Fecha</span>
+                    <span className="text-xs text-slate-700 dark:text-slate-300">{item.date}</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <span className="text-base font-extrabold text-emerald-400">{formatAmountInGtq(item.amount)}</span>
+                    <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{formatAmountInGtq(item.amount)}</span>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400"
+                      className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -324,8 +324,8 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
       {/* DESKTOP TABLE VIEW (Visible on md and larger) */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-300">
-          <thead className="bg-slate-900/60 text-xs uppercase text-slate-400 font-semibold border-b border-slate-700">
+        <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+          <thead className="bg-slate-50 dark:bg-slate-900/60 text-xs uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
             <tr>
               <th className="px-6 py-3.5">ID Transacción</th>
               <th className="px-6 py-3.5">Cliente</th>
@@ -336,26 +336,26 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
               <th className="px-6 py-3.5 text-right">Acción</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/60">
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-700/60">
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                   No se encontraron ventas registradas. Haz clic en "+ Registrar Nueva Venta" para realizar una.
                 </td>
               </tr>
             ) : (
               filteredData.map((item) => {
-                let badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                if (item.status === 'Pendiente') badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-                if (item.status === 'Cancelado') badgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+                if (item.status === 'Pendiente') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+                if (item.status === 'Cancelado') badgeClass = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-700/40 transition">
-                    <td className="px-6 py-4 font-mono font-medium text-blue-400">{item.id}</td>
-                    <td className="px-6 py-4 font-semibold text-white">{item.client}</td>
-                    <td className="px-6 py-4 text-slate-300 font-medium">{item.service}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">{item.date}</td>
-                    <td className="px-6 py-4 font-bold text-emerald-400 text-base">{formatAmountInGtq(item.amount)}</td>
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+                    <td className="px-6 py-4 font-mono font-medium text-blue-600 dark:text-blue-400">{item.id}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{item.client}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300 font-medium">{item.service}</td>
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">{item.date}</td>
+                    <td className="px-6 py-4 font-bold text-emerald-600 dark:text-emerald-400 text-base">{formatAmountInGtq(item.amount)}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleStatusChange(item.id, item.status)}
@@ -368,7 +368,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="p-1.5 rounded-lg bg-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition"
+                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition cursor-pointer"
                         title="Eliminar de SQLite"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -384,33 +384,33 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
       {/* Modal POS Add Multi-Product Transaction */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-700 pb-3 shrink-0">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <ShoppingCart className="w-5 h-5 text-blue-400" />
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <span>Punto de Venta - Registrar Venta en Quetzales (GTQ)</span>
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white font-bold text-base">✕</button>
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold text-base cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleAddTransaction} className="flex flex-col space-y-4 overflow-y-auto max-h-[calc(92vh-100px)] pr-1 text-xs">
               {/* Customer Name Input */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Nombre del Cliente</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">Nombre del Cliente</label>
                 <input
                   type="text"
                   required
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Ej. Empresa Beta S.A. / Juan Pérez"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-medium"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
                 />
               </div>
 
               {/* Searchable Product Input */}
               <div className="relative">
-                <label className="block text-xs font-semibold text-blue-400 uppercase mb-1">
+                <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase mb-1">
                   🔍 Buscar y Agregar Productos al Carrito
                 </label>
                 <div className="relative">
@@ -424,19 +424,19 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                       setProductSearch(e.target.value);
                       setShowSearchDropdown(true);
                     }}
-                    className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-blue-500/40 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-medium"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-500/40 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
                   />
                 </div>
 
                 {/* Search Results Dropdown Overlay */}
                 {showSearchDropdown && matchingProducts.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-56 overflow-y-auto divide-y divide-slate-800 ring-4 ring-blue-500/20">
-                    <div className="p-2 text-[10px] font-bold text-blue-400 uppercase bg-slate-950 flex justify-between items-center sticky top-0 z-10 border-b border-slate-800">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-56 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800 ring-4 ring-blue-500/20">
+                    <div className="p-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase bg-slate-50 dark:bg-slate-950 flex justify-between items-center sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
                       <span>Selecciona un producto para sumar al carrito ({matchingProducts.length})</span>
                       <button
                         type="button"
                         onClick={() => setShowSearchDropdown(false)}
-                        className="text-slate-400 hover:text-white font-bold"
+                        className="text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold"
                       >
                         ✕
                       </button>
@@ -448,17 +448,17 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                         <div
                           key={prod.id}
                           onClick={() => handleSelectProduct(prod)}
-                          className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
+                          className="p-2.5 hover:bg-blue-50 dark:hover:bg-blue-600/30 hover:text-slate-900 dark:hover:text-white cursor-pointer flex items-center justify-between transition"
                         >
                           <div className="flex items-center space-x-3">
                             {prod.image ? (
-                              <img src={prod.image} alt={prod.name} className="w-8 h-8 rounded-lg object-cover border border-slate-700 shadow" />
+                              <img src={prod.image} alt={prod.name} className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
                             ) : (
-                              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs">📦</div>
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs">📦</div>
                             )}
                           <div>
-                            <span className="font-mono font-bold text-blue-400 block">{prod.sku} {prod.brand ? `| ${prod.brand}` : ''}</span>
-                            <span className="text-xs text-slate-200 font-semibold">
+                            <span className="font-mono font-bold text-blue-700 dark:text-blue-400 block">{prod.sku} {prod.brand ? `| ${prod.brand}` : ''}</span>
+                            <span className="text-xs text-slate-800 dark:text-slate-200 font-semibold">
                               {[prod.brand, prod.model].filter(Boolean).join(' ')
                                 ? `${[prod.brand, prod.model].filter(Boolean).join(' ')} - ${prod.name}`
                                 : prod.name}
@@ -467,9 +467,9 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                           </div>
 
                           <div className="text-right">
-                            <span className="text-xs font-bold text-emerald-400 block">Q {sellingGtq.toFixed(2)} GTQ</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                              prod.stock > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                              prod.stock > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'
                             }`}>
                               Stock: {prod.stock}
                             </span>
@@ -484,15 +484,15 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
               {/* Multi-Product Cart Section */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-slate-300 uppercase flex items-center space-x-1.5">
-                    <ShoppingCart className="w-4 h-4 text-emerald-400" />
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase flex items-center space-x-1.5">
+                    <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Carrito de la Venta ({cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'})</span>
                   </label>
                   {cartItems.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setCartItems([])}
-                      className="text-[11px] text-rose-400 hover:underline font-semibold"
+                      className="text-[11px] text-rose-600 dark:text-rose-400 hover:underline font-semibold cursor-pointer"
                     >
                       Vaciar Carrito
                     </button>
@@ -500,9 +500,9 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                 </div>
 
                 {cartItems.length === 0 ? (
-                  <div className="bg-slate-900/50 border border-dashed border-slate-700 p-6 rounded-2xl text-center space-y-2">
+                  <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-700 p-6 rounded-2xl text-center space-y-2">
                     <div className="text-2xl">🛒</div>
-                    <p className="text-slate-400 text-xs font-medium">
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
                       El carrito de ventas está vacío. Usa el buscador de arriba para agregar uno o varios productos a esta venta.
                     </p>
                   </div>
@@ -515,20 +515,20 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
                       return (
                         <div key={item.sku} className={`p-3 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                          isOverStock ? 'bg-rose-950/20 border-rose-500/40' : 'bg-slate-900/90 border-slate-700/80'
+                          isOverStock ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-500/40' : 'bg-slate-50 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700/80 shadow-sm'
                         }`}>
                           <div className="flex items-center space-x-3 flex-1 min-w-0">
                             {item.image ? (
-                              <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shadow shrink-0" />
+                              <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" />
                             ) : (
-                              <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-base shrink-0">📦</div>
+                              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-base shrink-0">📦</div>
                             )}
                             <div className="min-w-0">
-                              <span className="font-mono text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                              <span className="font-mono text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
                                 {item.sku}
                               </span>
-                              <h4 className="font-bold text-white text-xs truncate mt-0.5">{item.name}</h4>
-                              <span className={`text-[10px] font-mono font-bold ${isOverStock ? 'text-rose-400' : 'text-slate-400'}`}>
+                              <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate mt-0.5">{item.name}</h4>
+                              <span className={`text-[10px] font-mono font-bold ${isOverStock ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>
                                 Stock Disponible: {item.stock} uds
                               </span>
                             </div>
@@ -536,11 +536,11 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
                           <div className="flex items-center justify-between sm:justify-end space-x-3 shrink-0">
                             {/* Quantity Controls */}
-                            <div className="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+                            <div className="flex items-center space-x-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
                               <button
                                 type="button"
                                 onClick={() => updateCartQuantity(item.sku, item.quantity - 1)}
-                                className="w-6 h-6 flex items-center justify-center text-slate-300 hover:bg-slate-700 rounded font-bold"
+                                className="w-6 h-6 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded font-bold cursor-pointer"
                               >
                                 -
                               </button>
@@ -549,12 +549,12 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                                 min="1"
                                 value={item.quantity}
                                 onChange={(e) => updateCartQuantity(item.sku, parseInt(e.target.value) || 1)}
-                                className="w-12 text-center bg-slate-900 text-white font-bold text-xs py-0.5 rounded border border-slate-700 focus:outline-none"
+                                className="w-12 text-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-xs py-0.5 rounded border border-slate-200 dark:border-slate-700 focus:outline-none"
                               />
                               <button
                                 type="button"
                                 onClick={() => updateCartQuantity(item.sku, item.quantity + 1)}
-                                className="w-6 h-6 flex items-center justify-center text-slate-300 hover:bg-slate-700 rounded font-bold"
+                                className="w-6 h-6 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded font-bold cursor-pointer"
                               >
                                 +
                               </button>
@@ -562,28 +562,28 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
                             {/* Unit Price Input (GTQ Quetzales) */}
                             <div className="w-28">
-                              <label className="block text-[9px] text-emerald-400 uppercase font-bold">Precio Unit. (Q)</label>
+                              <label className="block text-[9px] text-emerald-700 dark:text-emerald-400 uppercase font-bold">Precio Unit. (Q)</label>
                               <input
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 value={item.unitPriceGtq}
                                 onChange={(e) => updateCartUnitPriceGtq(item.sku, parseFloat(e.target.value) || 0)}
-                                className="w-full bg-slate-800 border border-emerald-500/50 text-emerald-400 font-bold text-xs px-2 py-1 rounded text-right focus:outline-none focus:border-emerald-500"
+                                className="w-full bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-2 py-1 rounded text-right focus:outline-none focus:border-emerald-500"
                               />
                             </div>
 
                             {/* Subtotal Display in Quetzales */}
                             <div className="text-right min-w-[80px]">
-                              <span className="font-extrabold text-emerald-400 text-xs block">Q {subtotalGtq.toFixed(2)}</span>
-                              <span className="font-mono text-[10px] text-slate-400 block">${subtotalUsd.toFixed(2)} USD</span>
+                              <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block">Q {subtotalGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">${subtotalUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                             </div>
 
                             {/* Remove Item Button */}
                             <button
                               type="button"
                               onClick={() => removeCartItem(item.sku)}
-                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 transition"
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
                               title="Remover del Carrito"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -598,26 +598,26 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
               {/* Stock Warning Banner if insufficient stock */}
               {hasInsufficientStock && (
-                <div className="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl text-xs text-rose-400 flex items-center space-x-2">
+                <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 p-3 rounded-xl text-xs text-rose-700 dark:text-rose-400 flex items-center space-x-2 font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>¡Atención! Uno o más productos en el carrito superan las existencias disponibles en inventario.</span>
                 </div>
               )}
 
               {/* Total Calculation Banner in Quetzales */}
-              <div className="bg-slate-900/90 p-4 rounded-xl border border-emerald-500/50 flex justify-between items-center">
+              <div className="bg-emerald-50/70 dark:bg-slate-900/90 p-4 rounded-xl border border-emerald-200 dark:border-emerald-500/50 flex justify-between items-center shadow-sm">
                 <div>
-                  <span className="text-xs font-bold text-slate-300 block">MONTO TOTAL DE LA VENTA (QUETZALES)</span>
-                  <span className="font-mono text-xs text-slate-400 block">${grandTotalUsd.toFixed(2)} USD</span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">MONTO TOTAL DE LA VENTA (QUETZALES)</span>
+                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 block">${grandTotalUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                 </div>
-                <span className="text-2xl font-extrabold text-emerald-400">Q {grandTotalGtq.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">Q {grandTotalGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-700">
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-700 transition font-medium"
+                  className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium cursor-pointer"
                 >
                   Cancelar
                 </button>

@@ -339,8 +339,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   return (
     <div className="space-y-4 min-h-[500px]">
       {/* Compact Minimal Header */}
-      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-800 shrink-0">
-        <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Stock e Inventario</h2>
+      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Stock e Inventario</h2>
         {!isVendedor && (
           <button
             onClick={() => {
@@ -357,33 +357,33 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
       {/* Mini KPI Cards (~70px Height) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">SKUs Únicos</span>
+        <div className="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">SKUs Únicos</span>
           <div className="flex items-baseline justify-between">
-            <h3 className="text-base sm:text-lg font-extrabold text-white font-mono">{totalUniqueSkus}</h3>
-            <span className="text-[10px] text-blue-400 font-medium">catálogos</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white font-mono">{totalUniqueSkus}</h3>
+            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">catálogos</span>
           </div>
         </div>
 
-        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Stock Total</span>
+        <div className="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Stock Total</span>
           <div className="flex items-baseline justify-between">
-            <h3 className="text-base sm:text-lg font-extrabold text-indigo-300 font-mono">{totalStockUnits}</h3>
-            <span className="text-[10px] text-indigo-400 font-medium">unidades</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-indigo-600 dark:text-indigo-300 font-mono">{totalStockUnits}</h3>
+            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">unidades</span>
           </div>
         </div>
 
-        <div className="col-span-2 sm:col-span-1 bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Valoración Total</span>
+        <div className="col-span-2 sm:col-span-1 bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between h-[72px] shadow-sm">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">Valoración Total</span>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-white font-mono">${totalInventoryValue.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD</h3>
-            <span className="text-[10px] font-mono text-emerald-400 font-semibold block">Q {totalInventoryValueGtq.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-mono">${totalInventoryValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</h3>
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold block">Q {totalInventoryValueGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
           </div>
         </div>
       </div>
 
       {/* Sticky Header Search & Quick Filter Chips */}
-      <div className="sticky top-0 sm:top-[57px] z-30 bg-slate-900/95 backdrop-blur py-3 px-3 rounded-xl border border-slate-800 space-y-3 shadow-md">
+      <div className="sticky top-0 sm:top-[57px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur py-3 px-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
         <div className="relative w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -394,7 +394,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               setCurrentPage(1);
             }}
             placeholder="Buscar por SKU o Nombre de Producto en tiempo real..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-semibold"
           />
         </div>
 
@@ -408,7 +408,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
               filterStatus === 'all'
                 ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             Todos ({inventory.length})
@@ -422,7 +422,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
               filterStatus === 'in_stock'
                 ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-slate-800 text-emerald-400 hover:text-white border border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             En Stock ({inventory.filter((i) => i.stock > 10).length})
@@ -436,7 +436,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
               filterStatus === 'low_stock'
                 ? 'bg-amber-600 text-white shadow-md'
-                : 'bg-slate-800 text-amber-400 hover:text-white border border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             Stock Bajo ({inventory.filter((i) => i.stock > 0 && i.stock <= 10).length})
@@ -450,7 +450,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
               filterStatus === 'out_of_stock'
                 ? 'bg-rose-600 text-white shadow-md'
-                : 'bg-slate-800 text-rose-400 hover:text-white border border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-rose-700 dark:text-rose-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
             }`}
           >
             Agotados ({inventory.filter((i) => i.stock === 0).length})
@@ -489,13 +489,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <div
                 key={item.id}
                 onClick={() => setSelectedDetailProduct(item)}
-                className="bg-slate-800 border border-slate-700/80 rounded-xl p-2.5 flex items-center justify-between gap-3 h-[65px] active:bg-slate-700/60 cursor-pointer shadow-sm transition"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl p-2.5 flex items-center justify-between gap-3 h-[65px] active:bg-slate-100 dark:active:bg-slate-700/60 cursor-pointer shadow-sm transition"
               >
                 {/* Left: 40x40 Thumbnail */}
                 <img
                   src={item.image || defaultImg}
                   alt={item.name}
-                  className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0"
+                  className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                 />
 
                 {/* Center: Name in Bold + SKU & Brand */}
@@ -504,9 +504,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const fullTitle = brandModelStr ? `${brandModelStr} - ${item.name}` : item.name;
                   return (
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-white text-xs truncate leading-tight">{fullTitle}</h4>
-                      <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 truncate mt-0.5">
-                        <span className="font-mono text-slate-300 font-semibold">{item.sku} {item.brand ? `| ${item.brand}` : ''}</span>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate leading-tight">{fullTitle}</h4>
+                      <div className="flex items-center space-x-1.5 text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.sku} {item.brand ? `| ${item.brand}` : ''}</span>
                         <span>•</span>
                         <span className="truncate">{item.category || 'General'}</span>
                       </div>
@@ -519,8 +519,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold border ${stockBadge}`}>
                     {stockText}
                   </span>
-                  <span className="block text-xs font-mono font-extrabold text-emerald-400 mt-0.5">
-                    Q {sellingPriceGtq}
+                  <span className="block text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    Q {(item.unitCost * 1.15 * 7.80).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -530,14 +530,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       </div>
 
       {/* DESKTOP TABLE VIEW (Visible on md and larger) */}
-      <div className="hidden md:block bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-          <h3 className="font-bold text-white text-base">Catálogo de Productos ({filteredInventory.length})</h3>
+      <div className="hidden md:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+          <h3 className="font-bold text-slate-900 dark:text-white text-base">Catálogo de Productos ({filteredInventory.length})</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/80 text-xs uppercase text-slate-400 font-semibold border-b border-slate-700">
+          <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-50 dark:bg-slate-900/80 text-xs uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="px-5 py-3">Foto</th>
                 <th className="px-5 py-3">SKU</th>
@@ -545,26 +545,26 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 <th className="px-5 py-3">Categoría</th>
                 <th className="px-5 py-3">Stock</th>
                 <th className="px-5 py-3">Costo Landed</th>
-                <th className="px-5 py-3 bg-emerald-950/30 border-l border-emerald-500/20 text-emerald-400">Precio Venta (+15%)</th>
+                <th className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Precio Venta (+15%)</th>
                 <th className="px-5 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-slate-400">
+                  <td colSpan={8} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
               ) : (
                 paginatedInventory.map((item) => {
-                  let stockBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                  let stockBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
                   let stockLabel = 'Disponible';
                   if (item.stock === 0) {
-                    stockBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                    stockBadge = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
                     stockLabel = 'Agotado';
                   } else if (item.stock <= 10) {
-                    stockBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    stockBadge = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
                     stockLabel = 'Bajo Stock';
                   }
 
@@ -574,27 +574,27 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80';
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
+                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
                       <td className="px-5 py-3">
                         <img
                           src={item.image || defaultImg}
                           alt={item.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-600 shadow"
+                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
                         />
                       </td>
-                      <td className="px-5 py-3 font-mono font-bold text-blue-400">{item.sku}</td>
-                      <td className="px-5 py-3 font-semibold text-white">
+                      <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{item.sku}</td>
+                      <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
                         <span className="block truncate">
                           {[item.brand, item.model].filter(Boolean).join(' ')
                             ? `${[item.brand, item.model].filter(Boolean).join(' ')} - ${item.name}`
                             : item.name}
                         </span>
                         {item.brand && (
-                          <span className="text-[11px] text-slate-400 block font-normal">Marca: {item.brand} {item.model ? `• Modelo: ${item.model}` : ''}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-normal">Marca: {item.brand} {item.model ? `• Modelo: ${item.model}` : ''}</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
-                        <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-md font-medium">
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-md font-medium border border-slate-200 dark:border-slate-600">
                           {item.category || 'General'}
                         </span>
                       </td>
@@ -603,18 +603,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                           {item.stock} uds ({stockLabel})
                         </span>
                       </td>
-                      <td className="px-5 py-3 font-semibold text-white">
-                        <span className="block text-xs">${item.unitCost.toFixed(2)} USD</span>
-                        <span className="font-mono text-xs font-bold text-emerald-400 block">Q {unitCostGtq.toFixed(2)} GTQ</span>
+                      <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
+                        <span className="block text-xs">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Q {unitCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </td>
-                      <td className="px-5 py-3 bg-emerald-950/20 border-l border-emerald-500/20">
-                        <span className="font-extrabold text-white text-xs block">${sellingPriceUsd.toFixed(2)} USD</span>
-                        <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {sellingPriceGtq.toFixed(2)} GTQ</span>
+                      <td className="px-5 py-3 bg-emerald-50/50 dark:bg-emerald-950/20 border-l border-emerald-200 dark:border-emerald-500/20">
+                        <span className="font-extrabold text-slate-900 dark:text-white text-xs block">${sellingPriceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block">Q {sellingPriceGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </td>
                       <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setSelectedDetailProduct(item)}
-                          className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/40 rounded-lg text-xs font-bold transition"
+                          className="px-3 py-1.5 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
                         >
                           Ver Detalle
                         </button>
@@ -657,15 +657,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
       {/* Detail Bottom Sheet / Modal */}
       {selectedDetailProduct && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             {/* Sheet Header */}
-            <div className="flex justify-between items-start border-b border-slate-700 pb-3 shrink-0">
+            <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
               <div className="flex items-center space-x-3">
                 <img
                   src={selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80'}
                   alt={selectedDetailProduct.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-slate-600 shadow shrink-0"
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-600 shadow-sm shrink-0"
                 />
                 {(() => {
                   const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
@@ -691,30 +691,30 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   return (
                     <div className="min-w-0">
                       <div className="flex items-center flex-wrap gap-1.5 mb-1">
-                        <span className="font-mono text-[10px] sm:text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
                           {selectedDetailProduct.sku}
                         </span>
                         {cleanBrand && (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                             {cleanBrand}
                           </span>
                         )}
                         {selectedProductImportDetails?.sharePercentage ? (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                             {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
                           </span>
                         ) : (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                             {selectedDetailProduct.stock} uds disponibles
                           </span>
                         )}
                       </div>
-                      <h3 className="font-bold text-white text-sm sm:text-base leading-snug break-words">{displayTitle}</h3>
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug break-words">{displayTitle}</h3>
                     </div>
                   );
                 })()}
               </div>
-              <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
+              <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
             </div>
 
             <div className="overflow-y-auto max-h-[calc(85vh-130px)] space-y-3 pt-3 pb-8 pr-1.5">
@@ -744,86 +744,86 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
                 return (
                   <div className="space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-700/80">
-                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">Estructura de Costos del Producto</span>
+                    <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200 dark:border-slate-700/80">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Estructura de Costos del Producto</span>
                       {selectedProductImportDetails?.batchName && (
-                        <span className="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+                        <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                           📦 {selectedProductImportDetails.batchName}
                         </span>
                       )}
                     </div>
 
                     {/* Step 1: Costo Base (Compra China / FOB) */}
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                    <div className="bg-slate-50 dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-200">1. Costo Base (Compra China / FOB)</span>
-                        <span className="text-[10px] text-slate-400 font-mono">Por Unidad</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-200">1. Costo Base (Compra China / FOB)</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Por Unidad</span>
                       </div>
                       <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-sm font-mono font-bold text-white">${fobUsd.toFixed(2)} USD</span>
-                        <span className="text-xs font-mono font-extrabold text-slate-300">Q {fobGtq.toFixed(2)} GTQ</span>
+                        <span className="text-sm font-mono font-bold text-slate-900 dark:text-white">${fobUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="text-xs font-mono font-extrabold text-slate-700 dark:text-slate-300">Q {fobGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800 flex justify-between">
                         <span>Total Lote ({stockQty} uds):</span>
-                        <span className="font-mono">${(fobUsd * stockQty).toFixed(2)} USD (Q {(fobGtq * stockQty).toFixed(2)} GTQ)</span>
+                        <span className="font-mono">${(fobUsd * stockQty).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {(fobGtq * stockQty).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
                       </div>
                     </div>
 
                     {/* Step 2: Recargo Aduana */}
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                    <div className="bg-amber-50/70 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-slate-700/80 space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-amber-300">2. Recargo Aduana</span>
-                        <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        <span className="font-bold text-amber-800 dark:text-amber-300">2. Recargo Aduana</span>
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 font-mono bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
                           +{customsPct.toFixed(1)}% s/FOB
                         </span>
                       </div>
                       <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-xs font-mono font-semibold text-amber-200">+$ {unitCustomsUsd.toFixed(2)} USD/u</span>
-                        <span className="text-xs font-mono font-bold text-amber-300">+Q {unitCustomsGtq.toFixed(2)} GTQ/u</span>
+                        <span className="text-xs font-mono font-semibold text-amber-800 dark:text-amber-200">+$ {unitCustomsUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                        <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300">+Q {unitCustomsGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                       </div>
                     </div>
 
                     {/* Step 3: Recargo Flete */}
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1">
+                    <div className="bg-indigo-50/70 dark:bg-slate-900/90 p-3 rounded-xl border border-indigo-200 dark:border-slate-700/80 space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-indigo-300">3. Recargo Flete</span>
-                        <span className="text-[10px] font-bold text-indigo-400 font-mono bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                        <span className="font-bold text-indigo-800 dark:text-indigo-300">3. Recargo Flete</span>
+                        <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 font-mono bg-indigo-100 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
                           +{shippingPct.toFixed(1)}% s/FOB
                         </span>
                       </div>
                       <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-xs font-mono font-semibold text-indigo-200">+$ {unitShippingUsd.toFixed(2)} USD/u</span>
-                        <span className="text-xs font-mono font-bold text-indigo-300">+Q {unitShippingGtq.toFixed(2)} GTQ/u</span>
+                        <span className="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-200">+$ {unitShippingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                        <span className="text-xs font-mono font-bold text-indigo-800 dark:text-indigo-300">+Q {unitShippingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
                       </div>
                     </div>
 
                     {/* Step 4: Costo Aquí (Landed Final) */}
-                    <div className="bg-blue-950/40 p-3 rounded-xl border border-blue-500/40 space-y-1.5 shadow-md">
+                    <div className="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-500/40 space-y-1.5 shadow-sm">
                       <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-blue-300 text-xs">4. Costo Aquí (Costo Base + Aduana + Flete = Landed Final)</span>
+                        <span className="font-extrabold text-blue-800 dark:text-blue-300 text-xs">4. Costo Aquí (Costo Base + Aduana + Flete = Landed Final)</span>
                       </div>
                       <div className="flex justify-between items-baseline">
-                        <span className="text-sm font-mono font-bold text-white">${landedUsd.toFixed(2)} USD</span>
-                        <span className="text-sm font-mono font-extrabold text-indigo-300">Q {landedGtq.toFixed(2)} GTQ</span>
+                        <span className="text-sm font-mono font-bold text-slate-900 dark:text-white">${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300">Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </div>
-                      <div className="text-[10px] text-blue-300/80 pt-1 border-t border-blue-900/50 flex justify-between">
+                      <div className="text-[10px] text-blue-700 dark:text-blue-300/80 pt-1 border-t border-blue-200 dark:border-blue-900/50 flex justify-between">
                         <span>Valoración Almacén ({stockQty} uds):</span>
-                        <span className="font-mono font-bold text-indigo-200">${totalValUsd.toFixed(2)} USD (Q {totalValGtq.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ)</span>
+                        <span className="font-mono font-bold text-indigo-700 dark:text-indigo-200">${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
                       </div>
                     </div>
 
                     {/* Step 5: Precio Venta Final */}
-                    <div className="bg-emerald-950/70 p-3.5 rounded-xl border border-emerald-500/50 space-y-2 shadow-lg">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/70 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-500/50 space-y-2 shadow-md">
                       <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Final (Costo Aquí + 15% Margen)</span>
+                        <span className="font-extrabold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Final (Costo Aquí + 15% Margen)</span>
                       </div>
                       <div className="flex justify-between items-baseline">
-                        <span className="text-base font-mono font-extrabold text-white">${sellingUsd.toFixed(2)} USD</span>
-                        <span className="text-base font-mono font-black text-emerald-400">Q {sellingGtq.toFixed(2)} GTQ</span>
+                        <span className="text-base font-mono font-extrabold text-slate-900 dark:text-white">${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="text-base font-mono font-black text-emerald-600 dark:text-emerald-400">Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </div>
-                      <div className="text-[10px] text-emerald-300 pt-1.5 border-t border-emerald-800/60 flex justify-between items-center">
+                      <div className="text-[10px] text-emerald-800 dark:text-emerald-300 pt-1.5 border-t border-emerald-200 dark:border-emerald-800/60 flex justify-between items-center">
                         <span>Ganancia Estimada por Unidad:</span>
-                        <span className="font-mono font-extrabold text-emerald-300 text-xs">+Q {profitGtq.toFixed(2)} GTQ (+${profitUsd.toFixed(2)})</span>
+                        <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-300 text-xs">+Q {profitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ (+${profitUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                       </div>
                     </div>
                   </div>
@@ -834,18 +834,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
                 <div className={`p-3 rounded-xl border text-xs font-semibold ${
                   selectedDetailProduct.priceChangeDelta > 0
-                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                 }`}>
                   {selectedDetailProduct.priceChangeDelta > 0
-                    ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toFixed(2)} USD (+${selectedDetailProduct.priceChangePct}%)`
-                    : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toFixed(2)} USD (${selectedDetailProduct.priceChangePct}%)`}
+                    ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
+                    : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
                 </div>
               )}
 
               {/* Quick Actions Grid */}
-              <div className="space-y-2 pt-2 border-t border-slate-700">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones Rápidas</span>
+              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Acciones Rápidas</span>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {!isVendedor && (
                     <button
@@ -853,7 +853,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                         setStockManageProduct(selectedDetailProduct);
                         setStockChangeAmount('1');
                       }}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
                     >
                       <Sliders className="w-4 h-4 shrink-0" />
                       <span>Ajustar Stock</span>
@@ -866,7 +866,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                         setEditingProduct(selectedDetailProduct);
                         setEditImageUrl(selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80');
                       }}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
                     >
                       <Camera className="w-4 h-4 shrink-0" />
                       <span>Editar Foto / Datos</span>
@@ -875,7 +875,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
                   <button
                     onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
-                    className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer ${isVendedor ? 'col-span-2' : ''}`}
+                    className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer ${isVendedor ? 'col-span-2' : ''}`}
                   >
                     <Eye className="w-4 h-4 shrink-0" />
                     <span>Histórico Precios</span>
@@ -884,7 +884,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   {!isVendedor && (
                     <button
                       onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4 shrink-0" />
                       <span>Eliminar SKU</span>
@@ -894,10 +894,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-700 shrink-0">
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-700 shrink-0">
               <button
                 onClick={() => setSelectedDetailProduct(null)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition"
+                className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition cursor-pointer"
               >
                 Cerrar
               </button>
