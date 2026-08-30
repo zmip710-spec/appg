@@ -22,7 +22,7 @@ export const UsersView: React.FC = () => {
       }
     } catch {
       setIsDbConnected(false);
-    } fontally {
+    } finally {
       setIsLoading(false);
     }
   };
