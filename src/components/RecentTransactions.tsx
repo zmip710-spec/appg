@@ -209,43 +209,43 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   }
 
   return (
-    <div className="bg-slate-800 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm space-y-0 min-h-[500px]">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden shadow-sm space-y-0 min-h-[500px]">
       {/* Header */}
-      <div className="p-5 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-bold text-white flex items-center space-x-2">
-              <ShoppingCart className="w-5 h-5 text-blue-400" />
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+              <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <span>Ventas & Transacciones en Punto de Venta</span>
             </h3>
             {isDbConnected && (
-              <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
                 <Database className="w-3 h-3" />
                 <span>SQLite</span>
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1">Buscador inteligente con vista previa de productos e imágenes en tiempo real</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Buscador inteligente con vista previa de productos e imágenes en tiempo real</p>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
           {/* Status Filters */}
-          <div className="flex items-center space-x-1 text-xs bg-slate-900/60 p-1 rounded-xl border border-slate-700 overflow-x-auto whitespace-nowrap">
+          <div className="flex items-center space-x-1 text-xs bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto whitespace-nowrap">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'all' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'all' ? 'bg-white text-slate-900 shadow border border-slate-200 dark:bg-slate-700 dark:text-white dark:border-transparent' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Todos
             </button>
             <button
               onClick={() => setFilterStatus('Completado')}
-              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Completado' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Completado' ? 'bg-white text-slate-900 shadow border border-slate-200 dark:bg-slate-700 dark:text-white dark:border-transparent' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Completados
             </button>
             <button
               onClick={() => setFilterStatus('Pendiente')}
-              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Pendiente' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-lg transition text-xs font-semibold ${filterStatus === 'Pendiente' ? 'bg-white text-slate-900 shadow border border-slate-200 dark:bg-slate-700 dark:text-white dark:border-transparent' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Pendientes
             </button>
@@ -257,7 +257,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
               setCartItems([]);
               setShowAddModal(true);
             }}
-            className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-600/20 shrink-0 w-full sm:w-auto"
+            className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-600/20 shrink-0 w-full sm:w-auto active:scale-95"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span>+ Registrar Nueva Venta</span>
