@@ -15,9 +15,11 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowRight,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
+import { exportSingleBatchPdf } from '../utils/pdfExport';
 import { ImagePicker } from './ImagePicker';
 
 const fallbackBatches: ImportBatch[] = [
@@ -538,13 +540,13 @@ export const ImportBatchesView: React.FC = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedBatchForFullDetails(batch);
+                        exportSingleBatchPdf(batch);
                       }}
-                      className="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95 cursor-pointer"
-                      title="Ver Informe Completo del Lote"
+                      className="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95 cursor-pointer"
+                      title="Descargar Informe Oficial del Lote en PDF"
                     >
-                      <FileText className="w-4 h-4" />
-                      <span>📄 Ver Informe Completo</span>
+                      <Download className="w-4 h-4" />
+                      <span>Descargar Informe</span>
                     </button>
                     <button
                       onClick={(e) => {
@@ -2042,7 +2044,15 @@ export const ImportBatchesView: React.FC = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex justify-end pt-3 border-t border-slate-700 shrink-0">
+            <div className="flex justify-between items-center pt-3 border-t border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => exportSingleBatchPdf(selectedBatchForFullDetails)}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition cursor-pointer flex items-center space-x-1.5 active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                <span>Descargar PDF</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setSelectedBatchForFullDetails(null)}

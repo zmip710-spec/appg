@@ -486,3 +486,176 @@ export const exportViewPdf = ({ activeTab, user, stats, inventory, transactions,
   printWindow.document.write(fullHtml);
   printWindow.document.close();
 };
+
+export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => {
+  const currentDate = new Date().toLocaleString('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
+
+  const rate = batch.exchangeRateGtq || 7.80;
+  const margin = batch.profitMarginPct || 15.0;
+
+  let grandTotalFob = 0;
+  let grandTotalLanded = 0;
+  let grandTotalSelling = 0;
+  let totalUnits = 0;
+
+  const itemsDetailed = (batch.items || []).map(item => {
+    const qty = item.quantity || 0;
+    totalUnits += qty;
+    const fobCost = item.unitCostFob || 0;
+    const totalFob = item.totalFobValue || (qty * fobCost);
+    grandTotalFob += totalFob;
+
+    const sharePct = item.sharePercentage || 0;
+    const itemCustoms = item.allocatedCustoms !== undefined ? item.allocatedCustoms : (sharePct / 100) * (batch.totalCustomsTax || 0);
+    const itemShipping = item.allocatedShipping !== undefined ? item.allocatedShipping : (sharePct / 100) * (batch.totalShippingCost || 0);
+    const itemTotalExpense = itemCustoms + itemShipping;
+
+    const unitTax = qty > 0 ? itemTotalExpense / qty : 0;
+    const landedCost = item.finalUnitCost || (fobCost + unitTax);
+    const totalLanded = landedCost * qty;
+    grandTotalLanded += totalLanded;
+
+    const sellingPrice = item.finalSellingPrice || (landedCost * (1 + margin / 100));
+    const totalSelling = sellingPrice * qty;
+    grandTotalSelling += totalSelling;
+
+    const cleanBrand = item.brand ? item.brand.trim() : '';
+    const cleanModel = item.model ? item.model.trim() : '';
+    let brandModelCombined = '';
+    if (cleanBrand && cleanModel) {
+      if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
+        brandModelCombined = cleanModel;
+      } else {
+        brandModelCombined = `${cleanBrand} ${cleanModel}`;
+      }
+    } else if (cleanModel) {
+      brandModelCombined = cleanModel;
+    } else if (cleanBrand) {
+      brandModelCombined = cleanBrand;
+    }
+
+    const displayTitle = brandModelCombined
+      ? `${brandModelCombined} - ${item.productName.trim()}`
+      : item.productName.trim();
+
+    return {
+      ...item,
+      qty,
+      fobCost,
+      totalFob,
+      sharePct,
+      unitTax,
+      landedCost,
+      totalLanded,
+      sellingPrice,
+      totalSelling,
+      displayTitle
+    };
+  });
+
+  const totalCustomsTax = batch.totalCustomsTax || 0;
+  const totalShippingCost = batch.totalShippingCost || 0;
+  const totalLandedExpenses = totalCustomsTax + totalShippingCost;
+  const grandTotalProfit = grandTotalSelling - grandTotalLanded;
+
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <title>AppG - Informe Oficial de Lote ${batch.id} - ${batch.name}</title>
+      <style>${getBaseStyles()}</style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="brand">AppG</div>
+          <div class="subbrand">Informe Oficial de Lote: ${batch.name} (${batch.id})</div>
+        </div>
+        <div class="meta">
+          <div><strong>Fecha Lote:</strong> ${batch.importDate}</div>
+          <div><strong>Fecha Emisión:</strong> ${currentDate}</div>
+          <div><strong>Generado Por:</strong> ${user?.name || 'Administrador'} (${user?.role || 'Admin'})</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Total FOB (Compra)</div>
+          <div class="kpi-val">$${grandTotalFob.toFixed(2)} USD</div>
+          <div class="kpi-sub">Q ${(grandTotalFob * rate).toFixed(2)} GTQ</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Gastos Aduana + Flete</div>
+          <div class="kpi-val">$${totalLandedExpenses.toFixed(2)} USD</div>
+          <div class="kpi-sub">Aduana: $${totalCustomsTax.toFixed(2)} | Flete: $${totalShippingCost.toFixed(2)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Costo Landed Total</div>
+          <div class="kpi-val">$${grandTotalLanded.toFixed(2)} USD</div>
+          <div class="kpi-sub">Q ${(grandTotalLanded * rate).toFixed(2)} GTQ</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Ganancia Estimada</div>
+          <div class="kpi-val">+Q ${(grandTotalProfit * rate).toFixed(2)} GTQ</div>
+          <div class="kpi-sub">+${margin.toFixed(1)}% Venta ($${grandTotalProfit.toFixed(2)} USD)</div>
+        </div>
+      </div>
+
+      <div class="section-title">Detalle Completo de Productos del Lote (${itemsDetailed.length} SKUs • ${totalUnits} Unidades • Tasa Q ${rate.toFixed(2)})</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 35px;">Foto</th>
+            <th>SKU</th>
+            <th>Producto (Marca Modelo - Nombre)</th>
+            <th style="text-align: center;">Cantidad</th>
+            <th style="text-align: right;">Precio FOB Unit.</th>
+            <th style="text-align: right;">% Part.</th>
+            <th style="text-align: right;">+ Recargo Unit.</th>
+            <th style="text-align: right;">= Costo Landed Unit.</th>
+            <th style="text-align: right;">Precio Venta Sugerido</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsDetailed.map(item => `
+            <tr>
+              <td><img src="${item.image || fallbackImage}" class="thumb-img" alt="${item.productName}" /></td>
+              <td><strong>${item.sku}</strong></td>
+              <td><strong>${item.displayTitle}</strong></td>
+              <td style="text-align: center;"><strong>${item.qty} uds</strong></td>
+              <td style="text-align: right;">$${item.fobCost.toFixed(2)} USD</td>
+              <td style="text-align: right;">${item.sharePct.toFixed(1)}%</td>
+              <td style="text-align: right;">+$${item.unitTax.toFixed(2)} USD</td>
+              <td style="text-align: right;"><strong>$${item.landedCost.toFixed(2)} USD</strong><br/><span style="font-size: 8px; color: #475569;">Q ${(item.landedCost * rate).toFixed(2)}</span></td>
+              <td style="text-align: right;"><strong style="color: #15803d;">Q ${(item.sellingPrice * rate).toFixed(2)} GTQ</strong><br/><span style="font-size: 8px; color: #64748b;">($${item.sellingPrice.toFixed(2)} USD)</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="footer">
+        Este documento es un informe oficial de importación generado por <strong>AppG v0.1 (beta)</strong>.
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() { window.print(); }, 300);
+        }
+      </script>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(fullHtml);
+  printWindow.document.close();
+};
