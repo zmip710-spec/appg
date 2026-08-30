@@ -80,6 +80,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       return;
     }
 
+    // Reset import details immediately so previous product metrics never linger
+    setSelectedProductImportDetails(null);
+
     let isMounted = true;
     const loadDetailImportMetrics = async () => {
       try {
@@ -87,13 +90,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         if (!isMounted) return;
 
         if (history && history.length > 0) {
-          // history[0] is the most recent batch item entry (since API returns reverse-chronological)
+          // history[0] is the most recent batch item entry
           const latest = history[0];
           const landed = latest.finalUnitCost !== undefined && latest.finalUnitCost > 0 ? latest.finalUnitCost : selectedDetailProduct.unitCost;
           const fob = latest.unitCostFob !== undefined && latest.unitCostFob >= 0 ? latest.unitCostFob : landed;
           const qty = latest.quantity && latest.quantity > 0 ? latest.quantity : (selectedDetailProduct.stock || 1);
 
-          // Strictly read allocatedCustoms and allocatedShipping (0.00 if 0)
           const uCustoms = latest.allocatedCustoms !== undefined && qty > 0 ? latest.allocatedCustoms / qty : 0;
           const uShipping = latest.allocatedShipping !== undefined && qty > 0 ? latest.allocatedShipping / qty : (latest.unitTax !== undefined ? Math.max(0, latest.unitTax - uCustoms) : 0);
           const uTax = latest.unitTax !== undefined ? latest.unitTax : (uCustoms + uShipping);
@@ -159,7 +161,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
     loadDetailImportMetrics();
     return () => { isMounted = false; };
-  }, [selectedDetailProduct]);
+  }, [selectedDetailProduct?.sku]);
 
   // Form State for new SKU/Product
   const [sku, setSku] = useState('');
@@ -656,7 +658,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       {/* Detail Bottom Sheet / Modal */}
       {selectedDetailProduct && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             {/* Sheet Header */}
             <div className="flex justify-between items-start border-b border-slate-700 pb-3 shrink-0">
               <div className="flex items-center space-x-3">
@@ -666,11 +668,25 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   className="w-12 h-12 rounded-xl object-cover border border-slate-600 shadow shrink-0"
                 />
                 {(() => {
-                  const displayTitle = selectedDetailProduct.model && selectedDetailProduct.model.trim()
-                    ? `${selectedDetailProduct.model.trim()} - ${selectedDetailProduct.name.trim()}`
-                    : (selectedDetailProduct.brand && selectedDetailProduct.brand.trim()
-                        ? `${selectedDetailProduct.brand.trim()} - ${selectedDetailProduct.name.trim()}`
-                        : selectedDetailProduct.name);
+                  const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
+                  const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
+
+                  let brandModelCombined = '';
+                  if (cleanBrand && cleanModel) {
+                    if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
+                      brandModelCombined = cleanModel;
+                    } else {
+                      brandModelCombined = `${cleanBrand} ${cleanModel}`;
+                    }
+                  } else if (cleanModel) {
+                    brandModelCombined = cleanModel;
+                  } else if (cleanBrand) {
+                    brandModelCombined = cleanBrand;
+                  }
+
+                  const displayTitle = brandModelCombined
+                    ? `${brandModelCombined} - ${selectedDetailProduct.name.trim()}`
+                    : selectedDetailProduct.name.trim();
 
                   return (
                     <div className="min-w-0">
@@ -678,9 +694,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                         <span className="font-mono text-[10px] sm:text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                           {selectedDetailProduct.sku}
                         </span>
-                        {selectedDetailProduct.brand && selectedDetailProduct.brand.trim() && (
+                        {cleanBrand && (
                           <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                            {selectedDetailProduct.brand.trim()}
+                            {cleanBrand}
                           </span>
                         )}
                         {selectedProductImportDetails?.sharePercentage ? (
@@ -693,7 +709,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                           </span>
                         )}
                       </div>
-                      <h3 className="font-bold text-white text-sm sm:text-base truncate leading-snug">{displayTitle}</h3>
+                      <h3 className="font-bold text-white text-sm sm:text-base leading-snug break-words">{displayTitle}</h3>
                     </div>
                   );
                 })()}
@@ -701,7 +717,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(92vh-140px)] space-y-3 pt-3 pr-1">
+            <div className="overflow-y-auto max-h-[calc(85vh-130px)] space-y-3 pt-3 pb-8 pr-1.5">
               {/* Step-by-Step Vertical Financial Receipt */}
               {(() => {
                 const stockQty = selectedDetailProduct.stock;
