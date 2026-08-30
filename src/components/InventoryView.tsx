@@ -90,11 +90,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           // history[0] is the most recent batch item entry (since API returns reverse-chronological)
           const latest = history[0];
           const landed = latest.finalUnitCost !== undefined && latest.finalUnitCost > 0 ? latest.finalUnitCost : selectedDetailProduct.unitCost;
-          const fob = latest.unitCostFob !== undefined && latest.unitCostFob > 0 ? latest.unitCostFob : (landed > 0 ? landed * 0.8 : 0);
+          const fob = latest.unitCostFob !== undefined && latest.unitCostFob >= 0 ? latest.unitCostFob : landed;
           const qty = latest.quantity && latest.quantity > 0 ? latest.quantity : (selectedDetailProduct.stock || 1);
 
-          const uCustoms = latest.allocatedCustoms !== undefined && qty > 0 ? latest.allocatedCustoms / qty : (landed - fob) * 0.5;
-          const uShipping = latest.allocatedShipping !== undefined && qty > 0 ? latest.allocatedShipping / qty : (landed - fob) * 0.5;
+          // Strictly read allocatedCustoms and allocatedShipping (0.00 if 0)
+          const uCustoms = latest.allocatedCustoms !== undefined && qty > 0 ? latest.allocatedCustoms / qty : 0;
+          const uShipping = latest.allocatedShipping !== undefined && qty > 0 ? latest.allocatedShipping / qty : (latest.unitTax !== undefined ? Math.max(0, latest.unitTax - uCustoms) : 0);
           const uTax = latest.unitTax !== undefined ? latest.unitTax : (uCustoms + uShipping);
 
           const customsPct = fob > 0 ? (uCustoms / fob) * 100 : 0;
@@ -113,7 +114,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             unitTaxUsd: uTax,
             landedUsd: landed,
             finalSellingPriceUsd: sellingPrice,
-            totalExpensesUsd: latest.allocatedTax || (uTax * selectedDetailProduct.stock),
+            totalExpensesUsd: latest.allocatedTax !== undefined ? latest.allocatedTax : (uTax * selectedDetailProduct.stock),
             customsPct,
             shippingPct,
             recargoPct: recargo,
@@ -121,43 +122,37 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           });
         } else {
           const landed = selectedDetailProduct.unitCost;
-          const fob = landed * 0.8;
-          const uCustoms = (landed - fob) * 0.5;
-          const uShipping = (landed - fob) * 0.5;
-          const uTax = uCustoms + uShipping;
+          const fob = landed;
           setSelectedProductImportDetails({
             fobUsd: fob,
             sharePercentage: 0,
-            unitCustomsUsd: uCustoms,
-            unitShippingUsd: uShipping,
-            unitTaxUsd: uTax,
+            unitCustomsUsd: 0,
+            unitShippingUsd: 0,
+            unitTaxUsd: 0,
             landedUsd: landed,
             finalSellingPriceUsd: landed * 1.15,
-            totalExpensesUsd: uTax * selectedDetailProduct.stock,
-            customsPct: fob > 0 ? (uCustoms / fob) * 100 : 0,
-            shippingPct: fob > 0 ? (uShipping / fob) * 100 : 0,
-            recargoPct: fob > 0 ? ((landed - fob) / fob) * 100 : 0
+            totalExpensesUsd: 0,
+            customsPct: 0,
+            shippingPct: 0,
+            recargoPct: 0
           });
         }
       } catch {
         if (!isMounted) return;
         const landed = selectedDetailProduct.unitCost;
-        const fob = landed * 0.8;
-        const uCustoms = (landed - fob) * 0.5;
-        const uShipping = (landed - fob) * 0.5;
-        const uTax = uCustoms + uShipping;
+        const fob = landed;
         setSelectedProductImportDetails({
           fobUsd: fob,
           sharePercentage: 0,
-          unitCustomsUsd: uCustoms,
-          unitShippingUsd: uShipping,
-          unitTaxUsd: uTax,
+          unitCustomsUsd: 0,
+          unitShippingUsd: 0,
+          unitTaxUsd: 0,
           landedUsd: landed,
           finalSellingPriceUsd: landed * 1.15,
-          totalExpensesUsd: uTax * selectedDetailProduct.stock,
-          customsPct: fob > 0 ? (uCustoms / fob) * 100 : 0,
-          shippingPct: fob > 0 ? (uShipping / fob) * 100 : 0,
-          recargoPct: fob > 0 ? ((landed - fob) / fob) * 100 : 0
+          totalExpensesUsd: 0,
+          customsPct: 0,
+          shippingPct: 0,
+          recargoPct: 0
         });
       }
     };
@@ -700,16 +695,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 const totalValUsd = stockQty * landedUsd;
                 const totalValGtq = stockQty * landedGtq;
 
-                const fobUsd = selectedProductImportDetails?.fobUsd || (landedUsd > 0 ? landedUsd * 0.8 : 0);
+                const fobUsd = selectedProductImportDetails?.fobUsd ?? landedUsd;
                 const fobGtq = fobUsd * 7.80;
 
-                const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd || (landedUsd - fobUsd) * 0.5;
+                const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd ?? 0;
                 const unitCustomsGtq = unitCustomsUsd * 7.80;
-                const customsPct = selectedProductImportDetails?.customsPct || (fobUsd > 0 ? (unitCustomsUsd / fobUsd) * 100 : 0);
+                const customsPct = selectedProductImportDetails?.customsPct ?? 0;
 
-                const unitShippingUsd = selectedProductImportDetails?.unitShippingUsd || (landedUsd - fobUsd) * 0.5;
+                const unitShippingUsd = selectedProductImportDetails?.unitShippingUsd ?? 0;
                 const unitShippingGtq = unitShippingUsd * 7.80;
-                const shippingPct = selectedProductImportDetails?.shippingPct || (fobUsd > 0 ? (unitShippingUsd / fobUsd) * 100 : 0);
+                const shippingPct = selectedProductImportDetails?.shippingPct ?? 0;
 
                 const sellingUsd = selectedProductImportDetails?.finalSellingPriceUsd || (landedUsd * 1.15);
                 const sellingGtq = sellingUsd * 7.80;
