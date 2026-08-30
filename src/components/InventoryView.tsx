@@ -666,19 +666,34 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   className="w-12 h-12 rounded-xl object-cover border border-slate-600 shadow shrink-0"
                 />
                 {(() => {
-                  const brandModelStr = [selectedDetailProduct.brand, selectedDetailProduct.model].filter(Boolean).join(' ');
-                  const fullTitle = brandModelStr ? `${brandModelStr} - ${selectedDetailProduct.name}` : selectedDetailProduct.name;
+                  const displayTitle = selectedDetailProduct.model && selectedDetailProduct.model.trim()
+                    ? `${selectedDetailProduct.model.trim()} - ${selectedDetailProduct.name.trim()}`
+                    : (selectedDetailProduct.brand && selectedDetailProduct.brand.trim()
+                        ? `${selectedDetailProduct.brand.trim()} - ${selectedDetailProduct.name.trim()}`
+                        : selectedDetailProduct.name);
+
                   return (
                     <div className="min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                          {selectedDetailProduct.sku} {selectedDetailProduct.brand ? `| ${selectedDetailProduct.brand}` : ''}
+                      <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                          {selectedDetailProduct.sku}
                         </span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-700 text-slate-200">
-                          {selectedDetailProduct.stock} uds disponibles
-                        </span>
+                        {selectedDetailProduct.brand && selectedDetailProduct.brand.trim() && (
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            {selectedDetailProduct.brand.trim()}
+                          </span>
+                        )}
+                        {selectedProductImportDetails?.sharePercentage ? (
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                            {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
+                          </span>
+                        ) : (
+                          <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            {selectedDetailProduct.stock} uds disponibles
+                          </span>
+                        )}
                       </div>
-                      <h3 className="font-bold text-white text-sm sm:text-base truncate mt-0.5">{fullTitle}</h3>
+                      <h3 className="font-bold text-white text-sm sm:text-base truncate leading-snug">{displayTitle}</h3>
                     </div>
                   );
                 })()}

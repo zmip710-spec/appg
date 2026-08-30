@@ -603,9 +603,13 @@ export const ImportBatchesView: React.FC = () => {
                         const taxSurchargePct = valFobNoTax > 0 ? (totalTaxPerUnit / valFobNoTax) * 100 : 0;
                         const sharePct = item.sharePercentage !== undefined ? item.sharePercentage : (batchFobTotal > 0 ? ((item.quantity * item.unitCostFob) / batchFobTotal) * 100 : 0);
 
+                        const displayTitle = item.model && item.model.trim()
+                          ? `${item.model.trim()} - ${item.productName.trim()}`
+                          : (item.brand && item.brand.trim() ? `${item.brand.trim()} - ${item.productName.trim()}` : item.productName);
+
                         return (
                           <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2.5 shadow-md">
-                            {/* Header: Photo, Name, SKU, Units */}
+                            {/* Header: Photo, Badges (SKU | Marca | % Part), Title, Quantity */}
                             <div className="flex items-center space-x-3">
                               {item.image ? (
                                 <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0 bg-slate-800" />
@@ -615,15 +619,20 @@ export const ImportBatchesView: React.FC = () => {
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center flex-wrap gap-1.5 mb-1">
                                   <span className="font-mono text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                                     {item.sku || `PROD-00${idx+1}`}
                                   </span>
-                                  <span className="text-[10px] font-bold text-slate-400">
+                                  {item.brand && item.brand.trim() && (
+                                    <span className="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                      {item.brand.trim()}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
                                     {sharePct.toFixed(1)}% del lote
                                   </span>
                                 </div>
-                                <h4 className="font-bold text-white text-xs truncate mt-0.5">{item.productName}</h4>
+                                <h4 className="font-bold text-white text-xs sm:text-sm truncate leading-snug">{displayTitle}</h4>
                                 <span className="text-[10px] text-slate-400 font-semibold">{item.quantity} unidades</span>
                               </div>
                             </div>
