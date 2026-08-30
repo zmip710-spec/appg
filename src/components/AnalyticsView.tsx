@@ -61,57 +61,39 @@ export const AnalyticsView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 min-h-[500px]">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800 p-5 rounded-xl border border-slate-700">
-        <div>
-          <div className="flex items-center space-x-2">
-            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-              <span>Analíticas del Negocio & Business Intelligence</span>
-            </h2>
-            {isDbConnected && (
-              <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <Database className="w-3 h-3" />
-                <span>SQLite Conectado</span>
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-slate-400 mt-1">Análisis de Landed Cost, distribución de gastos de importación y salud de stock por SKU</p>
+    <div className="space-y-4 min-h-[500px]">
+      {/* Compact Minimal Header */}
+      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-800 shrink-0">
+        <div className="flex items-center space-x-2">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
+          <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Analíticas del Negocio</h2>
         </div>
       </div>
 
-      {/* Top BI KPI Grid (Horizontal Scrollable Ribbon on Mobile) */}
-      <div className="flex overflow-x-auto gap-4 scrollbar-none pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible">
-        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Costo Promedio Landed</span>
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><DollarSign className="w-5 h-5" /></div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mt-3">${avgUnitCost} USD</h3>
-          <span className="text-xs text-blue-400">Por unidad en almacén</span>
-        </div>
-
-        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Gastos Aduana vs Flete</span>
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><Layers className="w-5 h-5" /></div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mt-3">${totalImportExpenses.toFixed(2)} USD</h3>
-          <div className="text-xs text-slate-400 mt-1 flex space-x-2">
-            <span>🏛️ Aduana: {customsTaxPercentage}%</span>
-            <span>•</span>
-            <span>🚚 Flete: {shippingPercentage}%</span>
+      {/* Mini KPI Cards (~70px Height) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Costo Promed. Landed</span>
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-base sm:text-lg font-extrabold text-white font-mono">${avgUnitCost}</h3>
+            <span className="text-[10px] text-blue-400 font-medium">USD/ud</span>
           </div>
         </div>
 
-        <div className="shrink-0 w-[270px] sm:w-auto snap-start bg-slate-800 p-5 rounded-xl border border-slate-700">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Valoración Total del Almacén</span>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><PackageCheck className="w-5 h-5" /></div>
+        <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Gastos Aduana / Flete</span>
+          <div>
+            <h3 className="text-xs sm:text-sm font-bold text-white font-mono">${totalImportExpenses.toFixed(2)} USD</h3>
+            <span className="text-[10px] text-amber-400 font-semibold block">{customsTaxPercentage}% Ad. / {shippingPercentage}% Fl.</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mt-3">${inventoryValue.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD</h3>
-          <span className="text-xs text-emerald-400 font-semibold">{totalStock} Unidades en Inventario</span>
+        </div>
+
+        <div className="col-span-2 sm:col-span-1 bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex flex-col justify-between h-[72px]">
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase truncate">Valor en Inventario</span>
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-base sm:text-lg font-extrabold text-emerald-400 font-mono">${inventoryValue.toLocaleString('en-US', { minimumFractionDigits: 0 })}</h3>
+            <span className="text-[10px] text-slate-400">{totalStock} uds</span>
+          </div>
         </div>
       </div>
 
