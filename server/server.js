@@ -457,10 +457,7 @@ app.post('/api/batches', (req, res) => {
           const item = finalItems[index];
           const cleanSku = item.sku.trim().toUpperCase();
           const cleanName = item.productName.trim().toUpperCase();
-          const cleanBrand = (item.brand || '').trim().toUpperCase();
-          const cleanModel = (item.model || '').trim().toUpperCase();
-
-          db.get('SELECT * FROM inventory WHERE UPPER(sku) = ? OR (UPPER(name) = ? AND UPPER(brand) = ? AND UPPER(model) = ?)', [cleanSku, cleanName, cleanBrand, cleanModel], (invErr, existing) => {
+          db.get('SELECT * FROM inventory WHERE UPPER(sku) = ?', [cleanSku], (invErr, existing) => {
             if (existing) {
               const targetSku = existing.sku.toUpperCase();
               const oldStock = existing.stock || 0;
