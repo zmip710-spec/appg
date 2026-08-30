@@ -551,15 +551,15 @@ app.get('/api/inventory/history/:sku', (req, res) => {
         `SELECT bi.*, b.name as batchName, b.importDate
          FROM batch_items bi
          LEFT JOIN batches b ON bi.batchId = b.id
-         WHERE UPPER(bi.sku) = ? OR UPPER(bi.sku) = ? OR UPPER(bi.productName) = ? OR UPPER(bi.productName) = ?
+         WHERE UPPER(bi.sku) = ?
          ORDER BY bi.id ASC`,
-        [cleanParam, targetSku, targetName, queryName],
+        [targetSku],
         (bErr, bRows) => {
           if (!bErr && Array.isArray(bRows) && bRows.length > 0) {
             // Build full variation timeline across all batches
             const history = bRows.map((b, idx) => {
-              const oldCost = idx === 0 ? b.unitCostFob : bRows[idx - 1].finalUnitCost;
               const newCost = b.finalUnitCost || b.unitCostFob;
+              const oldCost = idx === 0 ? newCost : bRows[idx - 1].finalUnitCost;
               const delta = parseFloat((newCost - oldCost).toFixed(2));
               const pct = oldCost > 0 ? parseFloat(((delta / oldCost) * 100).toFixed(2)) : 0;
 
