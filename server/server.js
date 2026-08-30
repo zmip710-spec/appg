@@ -61,31 +61,9 @@ app.post('/api/auth/verify', (req, res) => {
   });
 });
 
-// API Auth Register Endpoint
+// API Auth Register Endpoint (Disabled for Public Access)
 app.post('/api/auth/register', (req, res) => {
-  const { name, email, role, avatar, password } = req.body;
-  if (!name || !email) return res.status(400).json({ error: 'Nombre y email son requeridos.' });
-
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanName = name.trim();
-  const userAvatar = avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80';
-  const userPassword = password && password.trim() !== '' ? password.trim() : '123456';
-  const lastLogin = 'Ahora mismo';
-  const status = 'Activo';
-
-  db.get('SELECT id FROM users WHERE LOWER(email) = ?', [cleanEmail], (err, existing) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (existing) {
-      return res.status(400).json({ error: `El correo "${cleanEmail}" ya está registrado.` });
-    }
-
-    const query = 'INSERT INTO users (name, email, role, status, avatar, lastLogin, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    db.run(query, [cleanName, cleanEmail, role || 'Desarrollador', status, userAvatar, lastLogin, userPassword], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      const newUser = { id: this.lastID, name: cleanName, email: cleanEmail, role: role || 'Desarrollador', status, avatar: userAvatar, lastLogin };
-      res.json({ success: true, user: newUser });
-    });
-  });
+  return res.status(403).json({ error: 'El registro público de usuarios está deshabilitado por motivos de seguridad. Solicita al administrador registrar tu usuario desde el panel interno de la aplicación.' });
 });
 
 // API Users & Team Management (With Password Storage)
