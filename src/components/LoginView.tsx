@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Lock, User as UserIcon, AlertCircle, ArrowRight, ShieldCheck, Key } from 'lucide-react';
+import { BarChart3, Lock, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import { loginApi, User } from '../services/api';
 
 interface LoginViewProps {
@@ -7,8 +7,8 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,29 +45,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <p className="text-xs text-slate-400">Sistema de Gestión de Inventario & Ventas</p>
         </div>
 
-        {/* Credentials Info Box */}
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1.5">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Acceso Administrador Principal</span>
-            </span>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase">
-              Activo
-            </span>
-          </div>
-          <div className="text-xs text-slate-300 font-mono bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 space-y-1">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-400">Usuario:</span>
-              <span className="font-bold text-blue-400">admin</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-400">Contraseña:</span>
-              <span className="font-bold text-amber-400">admin123</span>
-            </div>
-          </div>
-        </div>
-
         {/* Error Alert */}
         {errorMsg && (
           <div className="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl text-xs text-rose-400 flex items-center space-x-2">
@@ -76,7 +53,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        {/* LOGIN FORM */}
+        {/* CLEAN PRIVATE LOGIN FORM */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nombre de Usuario</label>
@@ -87,8 +64,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="ej. admin"
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-mono"
+                placeholder="Ingresa tu usuario..."
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -103,7 +80,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
