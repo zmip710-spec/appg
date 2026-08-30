@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import {
-  LayoutDashboard,
   Boxes,
-  Users,
   Settings,
   ShoppingCart,
   BarChart3,
   LogOut,
   Sun,
   Moon,
-  TrendingUp,
   Layers,
   ChevronLeft,
   ChevronRight
@@ -56,7 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const allNavItems = [
     { id: 'inventory', label: 'Stock', icon: Boxes },
     { id: 'batches', label: 'Lotes', icon: Layers },
-    { id: 'users', label: 'Equipo', icon: Users },
     { id: 'sales', label: 'Ventas', icon: ShoppingCart },
     { id: 'settings', label: 'Config', icon: Settings },
   ];
