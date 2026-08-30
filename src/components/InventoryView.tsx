@@ -59,6 +59,71 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<InventoryProduct | null>(null);
   const [priceHistory, setPriceHistory] = useState<PriceHistoryEntry[]>([]);
   const [editImageUrl, setEditImageUrl] = useState<string>('');
+  const [selectedProductImportDetails, setSelectedProductImportDetails] = useState<{
+    fobUsd: number;
+    sharePercentage: number;
+    unitTaxUsd: number;
+    totalExpensesUsd: number;
+    recargoPct: number;
+    batchName?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!selectedDetailProduct) {
+      setSelectedProductImportDetails(null);
+      return;
+    }
+
+    let isMounted = true;
+    const loadDetailImportMetrics = async () => {
+      try {
+        const history = await fetchPriceHistoryApi(selectedDetailProduct.sku, selectedDetailProduct.name);
+        if (!isMounted) return;
+
+        if (history && history.length > 0) {
+          const latest = history[history.length - 1];
+          const fob = latest.unitCostFob && latest.unitCostFob > 0 ? latest.unitCostFob : selectedDetailProduct.unitCost * 0.8;
+          const landed = selectedDetailProduct.unitCost;
+          const uTax = latest.unitTax || (landed - fob);
+          const recargo = fob > 0 ? ((landed - fob) / fob) * 100 : 25.0;
+          setSelectedProductImportDetails({
+            fobUsd: fob,
+            sharePercentage: latest.sharePercentage || 0,
+            unitTaxUsd: uTax,
+            totalExpensesUsd: latest.allocatedTax || (uTax * selectedDetailProduct.stock),
+            recargoPct: recargo,
+            batchName: latest.batchName
+          });
+        } else {
+          const landed = selectedDetailProduct.unitCost;
+          const fob = landed * 0.8;
+          const uTax = landed - fob;
+          setSelectedProductImportDetails({
+            fobUsd: fob,
+            sharePercentage: 0,
+            unitTaxUsd: uTax,
+            totalExpensesUsd: uTax * selectedDetailProduct.stock,
+            recargoPct: 25.0
+          });
+        }
+      } catch {
+        if (!isMounted) return;
+        const landed = selectedDetailProduct.unitCost;
+        const fob = landed * 0.8;
+        const uTax = landed - fob;
+        setSelectedProductImportDetails({
+          fobUsd: fob,
+          sharePercentage: 0,
+          unitTaxUsd: uTax,
+          totalExpensesUsd: uTax * selectedDetailProduct.stock,
+          recargoPct: 25.0
+        });
+      }
+    };
+
+    loadDetailImportMetrics();
+    return () => { isMounted = false; };
+  }, [selectedDetailProduct]);
 
   // Form State for new SKU/Product
   const [sku, setSku] = useState('');
@@ -577,33 +642,88 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white p-1 text-base font-bold shrink-0">✕</button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(92vh-140px)] space-y-4 pt-3 pr-1">
-              {/* Metrics Matrix Grid */}
-              <div className="grid grid-cols-2 gap-2.5 text-xs">
-                <div className="bg-slate-900 p-3 rounded-xl border border-slate-700/80 space-y-1">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Existencias en Almacén</span>
-                  <span className="font-bold text-white text-sm sm:text-base">{selectedDetailProduct.stock} Unidades</span>
-                  <span className="text-[10px] text-emerald-400 block">✓ Disponible en inventario</span>
-                </div>
+            <div className="overflow-y-auto max-h-[calc(92vh-140px)] space-y-3.5 pt-3 pr-1">
+              {/* Organized 2-Column Mobile Financial Breakdown Matrix */}
+              {(() => {
+                const stockQty = selectedDetailProduct.stock;
+                const landedUsd = selectedDetailProduct.unitCost;
+                const landedGtq = landedUsd * 7.80;
+                const totalValUsd = stockQty * landedUsd;
+                const totalValGtq = stockQty * landedGtq;
 
-                <div className="bg-slate-900 p-3 rounded-xl border border-slate-700/80 space-y-1">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Valoración Total</span>
-                  <span className="font-bold text-white text-xs sm:text-sm block">${(selectedDetailProduct.stock * selectedDetailProduct.unitCost).toFixed(2)} USD</span>
-                  <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {(selectedDetailProduct.stock * selectedDetailProduct.unitCost * 7.80).toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ</span>
-                </div>
+                const fobUsd = selectedProductImportDetails?.fobUsd || landedUsd * 0.8;
+                const fobGtq = fobUsd * 7.80;
+                const sharePct = selectedProductImportDetails?.sharePercentage || 0;
+                const unitTaxUsd = selectedProductImportDetails?.unitTaxUsd || (landedUsd - fobUsd);
+                const unitTaxGtq = unitTaxUsd * 7.80;
+                const totalExpensesUsd = selectedProductImportDetails?.totalExpensesUsd || (unitTaxUsd * stockQty);
+                const recargoPct = selectedProductImportDetails?.recargoPct || (fobUsd > 0 ? ((landedUsd - fobUsd) / fobUsd) * 100 : 25.0);
 
-                <div className="bg-slate-900 p-3 rounded-xl border border-slate-700/80 space-y-1">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Costo Landed Unitario</span>
-                  <span className="font-bold text-white text-xs sm:text-sm block">${selectedDetailProduct.unitCost.toFixed(2)} USD</span>
-                  <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {(selectedDetailProduct.unitCost * 7.80).toFixed(2)} GTQ</span>
-                </div>
+                const sellingUsd = landedUsd * 1.15;
+                const sellingGtq = sellingUsd * 7.80;
 
-                <div className="bg-emerald-950/60 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                  <span className="text-emerald-400 block text-[10px] uppercase font-bold">🏷️ Precio Venta (+15%)</span>
-                  <span className="font-extrabold text-white text-xs sm:text-sm block">${(selectedDetailProduct.unitCost * 1.15).toFixed(2)} USD</span>
-                  <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {(selectedDetailProduct.unitCost * 1.15 * 7.80).toFixed(2)} GTQ</span>
-                </div>
-              </div>
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">📊 Desglose Financiero de Importación</span>
+                      {selectedProductImportDetails?.batchName && (
+                        <span className="text-[10px] font-mono text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+                          📦 {selectedProductImportDetails.batchName}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {/* 1. Existencias & Valoración */}
+                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Existencias</span>
+                        <span className="font-bold text-white text-xs sm:text-sm block">{stockQty} Unidades</span>
+                        <span className="text-[10px] text-slate-400 font-mono block">Val: ${totalValUsd.toFixed(2)} USD</span>
+                        <span className="text-[10px] text-emerald-400 font-mono font-semibold block">Q {totalValGtq.toLocaleString('en-US', { minimumFractionDigits: 2 })} GTQ</span>
+                      </div>
+
+                      {/* 2. Precio Inicial (FOB) */}
+                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Costo FOB Base</span>
+                        <span className="font-bold text-white text-xs sm:text-sm block">${fobUsd.toFixed(2)} USD</span>
+                        <span className="text-[10px] text-slate-400 font-mono block">Q {fobGtq.toFixed(2)} GTQ</span>
+                        <span className="text-[9px] text-blue-400 block font-medium">unitario proveedor</span>
+                      </div>
+
+                      {/* 3. Participación en Lote */}
+                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">% Part. Lote</span>
+                        <span className="font-bold text-blue-400 text-xs sm:text-sm font-mono block">{sharePct > 0 ? `${sharePct.toFixed(1)}%` : 'Sin lote'}</span>
+                        <span className="text-[10px] text-slate-400 block font-mono">de carga total</span>
+                      </div>
+
+                      {/* 4. Gastos Importación (Aduana + Flete) */}
+                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Aduana + Flete</span>
+                          <span className="text-[9px] font-bold text-amber-400 font-mono">+{recargoPct.toFixed(1)}%</span>
+                        </div>
+                        <span className="font-bold text-amber-300 text-xs block">+${unitTaxUsd.toFixed(2)} USD/u</span>
+                        <span className="text-[10px] text-indigo-300 font-mono block">+Q {unitTaxGtq.toFixed(2)} GTQ/u</span>
+                      </div>
+
+                      {/* 5. Costo Landed Final */}
+                      <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 space-y-0.5">
+                        <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider block">Costo Landed Final</span>
+                        <span className="font-bold text-indigo-200 text-xs sm:text-sm block">${landedUsd.toFixed(2)} USD</span>
+                        <span className="text-[10px] text-indigo-400 font-mono font-extrabold block">Q {landedGtq.toFixed(2)} GTQ</span>
+                      </div>
+
+                      {/* 6. Precio Venta Sugerido */}
+                      <div className="bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/40 space-y-0.5">
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">🏷️ Precio Venta (+15%)</span>
+                        <span className="font-extrabold text-white text-xs sm:text-sm block">${sellingUsd.toFixed(2)} USD</span>
+                        <span className="text-xs text-emerald-400 font-mono font-extrabold block">Q {sellingGtq.toFixed(2)} GTQ</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Price Delta Alert */}
               {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
