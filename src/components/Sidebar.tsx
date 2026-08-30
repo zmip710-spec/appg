@@ -31,7 +31,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   onLogout,
 }) => {
-  const navItems = [
+  const isVendedor = currentUser?.role === 'Vendedor';
+
+  const allNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Stock', icon: Boxes },
     { id: 'batches', label: 'Lotes', icon: Layers },
@@ -40,6 +42,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'sales', label: 'Ventas', icon: ShoppingCart },
     { id: 'settings', label: 'Config', icon: Settings },
   ];
+
+  const navItems = isVendedor
+    ? allNavItems.filter((item) => item.id === 'inventory' || item.id === 'sales')
+    : allNavItems;
 
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
 

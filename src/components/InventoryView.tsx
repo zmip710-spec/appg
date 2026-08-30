@@ -29,11 +29,18 @@ import {
   updateStockApi,
   updateProductImageApi,
   PriceHistoryEntry,
-  fetchPriceHistoryApi
+  fetchPriceHistoryApi,
+  User
 } from '../services/api';
 import { ImagePicker } from './ImagePicker';
 
-export const InventoryView: React.FC = () => {
+interface InventoryViewProps {
+  currentUser?: User | null;
+  readOnly?: boolean;
+}
+
+export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readOnly }) => {
+  const isVendedor = readOnly || currentUser?.role === 'Vendedor';
   const [inventory, setInventory] = useState<InventoryProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -613,43 +620,49 @@ export const InventoryView: React.FC = () => {
               <div className="space-y-2 pt-2 border-t border-slate-700">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones Rápidas</span>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <button
-                    onClick={() => {
-                      setStockManageProduct(selectedDetailProduct);
-                      setStockChangeAmount('1');
-                    }}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl font-bold transition active:scale-95"
-                  >
-                    <Sliders className="w-4 h-4 shrink-0" />
-                    <span>Ajustar Stock</span>
-                  </button>
+                  {!isVendedor && (
+                    <button
+                      onClick={() => {
+                        setStockManageProduct(selectedDetailProduct);
+                        setStockChangeAmount('1');
+                      }}
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      <Sliders className="w-4 h-4 shrink-0" />
+                      <span>Ajustar Stock</span>
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => {
-                      setEditingProduct(selectedDetailProduct);
-                      setEditImageUrl(selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80');
-                    }}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl font-bold transition active:scale-95"
-                  >
-                    <Camera className="w-4 h-4 shrink-0" />
-                    <span>Editar Foto / Datos</span>
-                  </button>
+                  {!isVendedor && (
+                    <button
+                      onClick={() => {
+                        setEditingProduct(selectedDetailProduct);
+                        setEditImageUrl(selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80');
+                      }}
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4 shrink-0" />
+                      <span>Editar Foto / Datos</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl font-bold transition active:scale-95"
+                    className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer ${isVendedor ? 'col-span-2' : ''}`}
                   >
                     <Eye className="w-4 h-4 shrink-0" />
                     <span>Histórico Precios</span>
                   </button>
 
-                  <button
-                    onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold transition active:scale-95"
-                  >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                    <span>Eliminar SKU</span>
-                  </button>
+                  {!isVendedor && (
+                    <button
+                      onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
+                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span>Eliminar SKU</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

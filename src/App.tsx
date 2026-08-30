@@ -88,10 +88,22 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Auto-switch Vendedor user to inventory if on an unauthorized tab
+  useEffect(() => {
+    if (currentUser?.role === 'Vendedor') {
+      if (activeTab !== 'inventory' && activeTab !== 'sales') {
+        setActiveTab('inventory');
+      }
+    }
+  }, [currentUser, activeTab]);
+
   const handleLoginSuccess = (user: User) => {
     setShowToast(false);
     setToastMessage('');
     setCurrentUser(user);
+    if (user.role === 'Vendedor') {
+      setActiveTab('inventory');
+    }
     try {
       localStorage.setItem('nexus_user', JSON.stringify(user));
     } catch {}
@@ -249,7 +261,7 @@ export default function App() {
           )}
 
           {/* TAB: INVENTARIO & STOCK */}
-          {activeTab === 'inventory' && <InventoryView />}
+          {activeTab === 'inventory' && <InventoryView currentUser={currentUser} />}
 
           {/* TAB: LOTES & ADUANA */}
           {activeTab === 'batches' && <ImportBatchesView />}
