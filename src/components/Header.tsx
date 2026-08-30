@@ -66,15 +66,17 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center space-x-2.5 shrink-0">
-        {/* Contextual Export Button */}
-        <button
-          onClick={onExport}
-          title={getExportLabel()}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-blue-600/20"
-        >
-          <Download className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">{getExportLabel()}</span>
-        </button>
+        {/* Contextual Export Button (Solo visible para Administradores) */}
+        {currentUser?.role !== 'Vendedor' && (
+          <button
+            onClick={onExport}
+            title={getExportLabel()}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-blue-600/20 cursor-pointer"
+          >
+            <Download className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">{getExportLabel()}</span>
+          </button>
+        )}
 
         {/* Profile Avatar Dropdown Button & Popover */}
         <div className="relative" ref={dropdownRef}>

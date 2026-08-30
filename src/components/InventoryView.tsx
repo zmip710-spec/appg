@@ -251,16 +251,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       {/* Compact Minimal Header */}
       <div className="flex items-center justify-between py-2 px-1 border-b border-slate-800 shrink-0">
         <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Stock e Inventario</h2>
-        <button
-          onClick={() => {
-            setErrorMessage('');
-            setShowAddModal(true);
-          }}
-          className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Nuevo SKU</span>
-        </button>
+        {!isVendedor && (
+          <button
+            onClick={() => {
+              setErrorMessage('');
+              setShowAddModal(true);
+            }}
+            className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Nuevo SKU</span>
+          </button>
+        )}
       </div>
 
       {/* Mini KPI Cards (~70px Height) */}
