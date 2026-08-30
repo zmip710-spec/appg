@@ -252,6 +252,7 @@ export const ImportBatchesView: React.FC = () => {
 
   // Single Product Form Entry State inside Modal
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [showImagePickerInForm, setShowImagePickerInForm] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [singleProductForm, setSingleProductForm] = useState<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>({
     sku: '',
@@ -265,9 +266,11 @@ export const ImportBatchesView: React.FC = () => {
     if (indexToEdit !== null && inputItems[indexToEdit]) {
       setEditingItemIndex(indexToEdit);
       setSingleProductForm({ ...inputItems[indexToEdit] });
+      setShowImagePickerInForm(!!inputItems[indexToEdit].image);
     } else {
       setEditingItemIndex(null);
       setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+      setShowImagePickerInForm(false);
     }
     setIsAddingProduct(true);
     setOpenSkuDropdownIndex(null);
@@ -298,6 +301,7 @@ export const ImportBatchesView: React.FC = () => {
 
     setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
     setIsAddingProduct(false);
+    setShowImagePickerInForm(false);
     setOpenSkuDropdownIndex(null);
   };
 
@@ -316,6 +320,7 @@ export const ImportBatchesView: React.FC = () => {
     setInputItems([]);
     setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
     setIsAddingProduct(false);
+    setShowImagePickerInForm(false);
     setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);
     setShowConfirmModal(false);
@@ -1109,21 +1114,141 @@ export const ImportBatchesView: React.FC = () => {
                             />
                           </div>
 
-                          {/* Total FOB Preview */}
-                          <div className="sm:col-span-4 bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
-                            <span className="text-[10px] text-slate-400 block">Total FOB Estimado</span>
-                            <span className="text-xs font-mono font-bold text-blue-400">
-                              ${((parseInt(singleProductForm.quantity) || 0) * (parseFloat(singleProductForm.unitCostFob) || 0)).toFixed(2)} USD
-                            </span>
+                          {/* Total FOB Preview & Live Financial Breakdown */}
+                          <div className="sm:col-span-12">
+                            {(() => {
+                              const liveQty = parseInt(singleProductForm.quantity) || 0;
+                              const liveFobUsd = parseFloat(singleProductForm.unitCostFob) || 0;
+                              if (liveQty <= 0 || liveFobUsd <= 0) return null;
+
+                              const liveTotalFobUsd = liveQty * liveFobUsd;
+                              const liveTotalFobGtq = liveTotalFobUsd * parsedGtqRate;
+
+                              const existingItemsFob = inputItems.reduce((sum, item, idx) => {
+                                if (editingItemIndex !== null && idx === editingItemIndex) return sum;
+                                return sum + ((parseInt(item.quantity) || 0) * (parseFloat(item.unitCostFob) || 0));
+                              }, 0);
+
+                              const estimatedBatchFob = existingItemsFob + liveTotalFobUsd;
+                              const liveSharePct = estimatedBatchFob > 0 ? (liveTotalFobUsd / estimatedBatchFob) * 100 : 100;
+
+                              const liveAllocatedTax = (liveSharePct / 100) * parsedTax;
+                              const liveAllocatedShipping = (liveSharePct / 100) * parsedShipping;
+
+                              const liveUnitTaxUsd = liveQty > 0 ? liveAllocatedTax / liveQty : 0;
+                              const liveUnitShippingUsd = liveQty > 0 ? liveAllocatedShipping / liveQty : 0;
+
+                              const liveCustomsIncrPct = liveFobUsd > 0 ? (liveUnitTaxUsd / liveFobUsd) * 100 : 0;
+                              const liveShippingIncrPct = liveFobUsd > 0 ? (liveUnitShippingUsd / liveFobUsd) * 100 : 0;
+                              const liveTotalRecargoPct = liveCustomsIncrPct + liveShippingIncrPct;
+
+                              const liveUnitLandedUsd = liveFobUsd + liveUnitTaxUsd + liveUnitShippingUsd;
+                              const liveUnitLandedGtq = liveUnitLandedUsd * parsedGtqRate;
+
+                              const liveUnitSellingUsd = liveUnitLandedUsd * (1 + parsedMargin / 100);
+                              const liveUnitSellingGtq = liveUnitSellingUsd * parsedGtqRate;
+
+                              const liveUnitGrossProfitUsd = liveUnitSellingUsd - liveUnitLandedUsd;
+                              const liveUnitGrossProfitGtq = liveUnitGrossProfitUsd * parsedGtqRate;
+
+                              const liveTotalGrossProfitUsd = liveUnitGrossProfitUsd * liveQty;
+                              const liveTotalGrossProfitGtq = liveTotalGrossProfitUsd * liveQty;
+
+                              return (
+                                <div className="bg-slate-950 border border-blue-500/40 rounded-xl p-3.5 space-y-3 shadow-inner mt-1">
+                                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">
+                                      📊 Desglose Financiero en Vivo
+                                    </span>
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                                      Recargo Total: +{liveTotalRecargoPct.toFixed(1)}%
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {/* Total FOB */}
+                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                      <span className="text-[10px] text-slate-400 block font-medium">Total FOB ({liveQty} uds)</span>
+                                      <span className="text-xs font-mono font-bold text-white block">${liveTotalFobUsd.toFixed(2)} USD</span>
+                                      <span className="text-[10px] font-mono text-slate-400 block">Q {liveTotalFobGtq.toFixed(2)} GTQ</span>
+                                    </div>
+
+                                    {/* Recargos Aduana / Flete */}
+                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                      <span className="text-[10px] text-slate-400 block font-medium">Recargos Estimados</span>
+                                      <span className="text-[11px] font-mono text-amber-400 block font-semibold">
+                                        🏛️ Ad: +{liveCustomsIncrPct.toFixed(1)}% (${liveUnitTaxUsd.toFixed(2)}/ud)
+                                      </span>
+                                      <span className="text-[11px] font-mono text-indigo-400 block font-semibold">
+                                        🚚 Fl: +{liveShippingIncrPct.toFixed(1)}% (${liveUnitShippingUsd.toFixed(2)}/ud)
+                                      </span>
+                                    </div>
+
+                                    {/* Costo Landed Final */}
+                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                      <span className="text-[10px] text-slate-400 block font-medium">Costo Landed Final Unit.</span>
+                                      <span className="text-xs font-mono font-bold text-indigo-300 block">${liveUnitLandedUsd.toFixed(2)} USD</span>
+                                      <span className="text-[11px] font-mono font-extrabold text-indigo-400 block">Q {liveUnitLandedGtq.toFixed(2)} GTQ</span>
+                                    </div>
+
+                                    {/* Precio Venta Sugerido */}
+                                    <div className="bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-500/30">
+                                      <span className="text-[10px] text-emerald-400 block font-medium">Precio Venta (+{parsedMargin}%)</span>
+                                      <span className="text-xs font-mono font-bold text-white block">${liveUnitSellingUsd.toFixed(2)} USD</span>
+                                      <span className="text-xs font-mono font-extrabold text-emerald-400 block">Q {liveUnitSellingGtq.toFixed(2)} GTQ</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Ganancia Bruta Estimada */}
+                                  <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                                    <span className="text-slate-300 font-semibold">Ganancia Bruta Estimada:</span>
+                                    <div className="text-right">
+                                      <span className="text-emerald-400 font-mono font-extrabold block">
+                                        +Q {liveUnitGrossProfitGtq.toFixed(2)} / ud (+${liveUnitGrossProfitUsd.toFixed(2)})
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 font-mono block">
+                                        Total Lote: +Q {liveTotalGrossProfitGtq.toFixed(2)} (+${liveTotalGrossProfitUsd.toFixed(2)} USD)
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        {/* Foto Dropzone */}
-                        <ImagePicker
-                          value={singleProductForm.image || ''}
-                          onChange={(img) => setSingleProductForm({ ...singleProductForm, image: img })}
-                          label="Añadir Foto del Producto"
-                        />
+                        {/* Collapsible Photo Section (Oculta por defecto) */}
+                        {showImagePickerInForm || singleProductForm.image ? (
+                          <div className="space-y-2 pt-1 border-t border-slate-800">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-semibold text-slate-300">Foto del Producto</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowImagePickerInForm(false);
+                                  setSingleProductForm({ ...singleProductForm, image: '' });
+                                }}
+                                className="text-[11px] text-rose-400 hover:text-rose-300 font-medium"
+                              >
+                                ✕ Quitar Foto
+                              </button>
+                            </div>
+                            <ImagePicker
+                              value={singleProductForm.image || ''}
+                              onChange={(img) => setSingleProductForm({ ...singleProductForm, image: img })}
+                              label="Foto del Producto"
+                            />
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowImagePickerInForm(true)}
+                            className="w-full py-2 px-3 bg-slate-800/80 hover:bg-slate-700 text-blue-400 border border-slate-700/80 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                            <span>+ Adjuntar Foto (Opcional)</span>
+                          </button>
+                        )}
 
                         {/* Sticky Action Button inside Card */}
                         <div className="sticky bottom-0 bg-slate-900 pt-2 pb-1 border-t border-slate-800 flex justify-end space-x-2 z-20">
@@ -1163,75 +1288,106 @@ export const ImportBatchesView: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Confirmed Products Summary List */}
+                    {/* Confirmed Products Summary List (Stacked Mobile Cards) */}
                     {inputItems.length > 0 && (
-                      <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
-                        <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex justify-between items-center text-xs font-bold text-slate-300">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center px-1 text-xs font-bold text-slate-300">
                           <span>Lista de Productos Confirmados ({inputItems.length})</span>
                           {!isAddingProduct && (
                             <button
                               type="button"
                               onClick={() => handleOpenSingleProductForm(null)}
-                              className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                              className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
                             >
                               + Agregar Otro Producto
                             </button>
                           )}
                         </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left text-xs">
-                            <thead className="bg-slate-900/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800">
-                              <tr>
-                                <th className="py-2.5 px-3">Foto</th>
-                                <th className="py-2.5 px-3">SKU</th>
-                                <th className="py-2.5 px-3">Producto</th>
-                                <th className="py-2.5 px-3 text-center">Cantidad</th>
-                                <th className="py-2.5 px-3 text-right">Costo FOB</th>
-                                <th className="py-2.5 px-3 text-right">Total FOB</th>
-                                <th className="py-2.5 px-3 text-center">Acciones</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/60">
-                              {inputItems.map((item, index) => {
-                                const qty = parseInt(item.quantity) || 0;
-                                const cost = parseFloat(item.unitCostFob) || 0;
-                                const totalFob = qty * cost;
 
-                                return (
-                                  <tr key={index} className="hover:bg-slate-900/40 transition">
-                                    <td className="py-2 px-3">
-                                      {item.image ? (
-                                        <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700" />
-                                      ) : (
-                                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[10px]">📦</div>
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-3 font-mono font-bold text-blue-400">{item.sku}</td>
-                                    <td className="py-2 px-3 font-semibold text-white">{item.productName}</td>
-                                    <td className="py-2 px-3 text-center font-medium text-slate-300">{item.quantity} uds</td>
-                                    <td className="py-2 px-3 text-right font-mono text-slate-300">${cost.toFixed(2)}</td>
-                                    <td className="py-2 px-3 text-right font-mono font-bold text-blue-400">${totalFob.toFixed(2)}</td>
-                                    <td className="py-2 px-3 text-center space-x-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleOpenSingleProductForm(index)}
-                                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20"
-                                      >
-                                        Editar
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveConfirmedItem(index)}
-                                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20"
-                                      >
-                                        Eliminar
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
+                        <div className="space-y-2.5">
+                          {inputItems.map((item, index) => {
+                            const qty = parseInt(item.quantity) || 0;
+                            const fobCost = parseFloat(item.unitCostFob) || 0;
+                            const totalFob = qty * fobCost;
+
+                            const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
+                            const itemTaxVal = (itemSharePct / 100) * parsedTax;
+                            const itemShipVal = (itemSharePct / 100) * parsedShipping;
+                            const itemUnitTax = qty > 0 ? itemTaxVal / qty : 0;
+                            const itemUnitShip = qty > 0 ? itemShipVal / qty : 0;
+                            const itemUnitLandedUsd = fobCost + itemUnitTax + itemUnitShip;
+                            const itemUnitLandedGtq = itemUnitLandedUsd * parsedGtqRate;
+                            const itemRecargoPct = fobCost > 0 ? ((itemUnitLandedUsd - fobCost) / fobCost) * 100 : 0;
+                            const itemSellingUsd = itemUnitLandedUsd * (1 + parsedMargin / 100);
+                            const itemSellingGtq = itemSellingUsd * parsedGtqRate;
+
+                            return (
+                              <div key={index} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-sm">
+                                {/* Header: Photo, SKU, Name & Qty */}
+                                <div className="flex items-center space-x-3 pb-2 border-b border-slate-800/80">
+                                  {item.image ? (
+                                    <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-sm shrink-0">📦</div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
+                                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">
+                                        {item.quantity} uds
+                                      </span>
+                                    </div>
+                                    <h4 className="text-xs font-semibold text-white truncate mt-0.5">{item.productName}</h4>
+                                  </div>
+                                </div>
+
+                                {/* Financial Comparison Row */}
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Costo FOB Unit.</span>
+                                    <span className="text-xs font-mono font-bold text-slate-200">${fobCost.toFixed(2)} USD</span>
+                                    <span className="text-[10px] font-mono text-slate-400 block">Q {(fobCost * parsedGtqRate).toFixed(2)} GTQ</span>
+                                  </div>
+
+                                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-[10px] text-slate-400 font-medium">Costo Landed</span>
+                                      <span className="text-[10px] font-bold text-amber-400 font-mono">+{itemRecargoPct.toFixed(1)}%</span>
+                                    </div>
+                                    <span className="text-xs font-mono font-bold text-indigo-300">${itemUnitLandedUsd.toFixed(2)} USD</span>
+                                    <span className="text-[10px] font-mono text-indigo-400 font-semibold block">Q {itemUnitLandedGtq.toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
+
+                                {/* Selling Price & Quick Action Buttons */}
+                                <div className="flex items-center justify-between pt-1">
+                                  <div>
+                                    <span className="text-[10px] text-emerald-400 font-bold block uppercase">Precio Venta Sugerido</span>
+                                    <span className="text-xs font-mono font-extrabold text-emerald-400">
+                                      Q {itemSellingGtq.toFixed(2)} GTQ <span className="text-slate-400 font-normal text-[10px]">(${itemSellingUsd.toFixed(2)} USD)</span>
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center space-x-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenSingleProductForm(index)}
+                                      className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveConfirmedItem(index)}
+                                      className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
+                                    >
+                                      Eliminar
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -1266,7 +1422,7 @@ export const ImportBatchesView: React.FC = () => {
       {/* Modal de Confirmación de Seguridad antes de Guardar Lote */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-4">
-          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-lg p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs">
+          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs">
             {/* Header */}
             <div className="flex items-center space-x-3 border-b border-slate-700 pb-3">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -1304,22 +1460,55 @@ export const ImportBatchesView: React.FC = () => {
               </div>
             </div>
 
-            {/* Item List Preview */}
-            <div className="space-y-1.5 max-h-36 overflow-y-auto bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block px-1">Productos Incluidos:</span>
-              {proratedPreview.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-slate-800/80 p-2 rounded-lg text-[11px]">
-                  <div>
-                    <span className="font-mono text-blue-400 font-bold mr-2">{item.sku}</span>
-                    <span className="text-white font-semibold">{item.productName}</span>
-                    <span className="text-slate-400 text-[10px] block">Cant: {item.quantity} uds | FOB: ${item.unitCostFob.toFixed(2)}</span>
+            {/* Item List Enriched Preview */}
+            <div className="space-y-2 max-h-56 overflow-y-auto bg-slate-900/80 p-2.5 rounded-xl border border-slate-700/80">
+              <span className="text-[11px] uppercase font-bold text-slate-300 block px-1 pb-1 border-b border-slate-800">
+                Detalle de Productos a Registrar ({proratedPreview.length}):
+              </span>
+              {proratedPreview.map((item, idx) => {
+                const qty = item.quantity;
+                const fobUsd = item.unitCostFob;
+                const fobGtq = fobUsd * parsedGtqRate;
+                const landedUsd = item.finalUnitCost;
+                const landedGtq = landedUsd * parsedGtqRate;
+                const recargoPct = fobUsd > 0 ? ((landedUsd - fobUsd) / fobUsd) * 100 : 0;
+                const sellingUsd = item.finalSellingPrice;
+                const sellingGtq = sellingUsd * parsedGtqRate;
+
+                return (
+                  <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        {item.image ? (
+                          <img src={item.image} alt={item.productName} className="w-6 h-6 rounded object-cover border border-slate-700 shrink-0" />
+                        ) : (
+                          <span className="text-xs shrink-0">📦</span>
+                        )}
+                        <div>
+                          <span className="font-mono text-blue-400 font-bold mr-1.5">{item.sku}</span>
+                          <span className="text-white font-semibold truncate max-w-[140px] sm:max-w-[180px] inline-block align-bottom">{item.productName}</span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                        {qty} uds
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-800/80">
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">FOB ➔ Landed (+{recargoPct.toFixed(1)}%):</span>
+                        <span className="font-mono font-medium text-slate-300 block">${fobUsd.toFixed(2)} ➔ ${landedUsd.toFixed(2)} USD</span>
+                        <span className="font-mono text-indigo-300 block">Q {fobGtq.toFixed(2)} ➔ Q {landedGtq.toFixed(2)} GTQ</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-emerald-400 font-bold block uppercase text-[10px]">Precio Venta GTQ</span>
+                        <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {sellingGtq.toFixed(2)} GTQ</span>
+                        <span className="font-mono text-slate-400 text-[10px] block">(${sellingUsd.toFixed(2)} USD)</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-indigo-400 font-bold block">${item.finalUnitCost.toFixed(2)} USD</span>
-                    <span className="text-emerald-400 font-mono text-[10px] block">Venta: ${item.finalSellingPrice.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Actions Buttons */}
@@ -1329,14 +1518,14 @@ export const ImportBatchesView: React.FC = () => {
                 onClick={() => setShowConfirmModal(false)}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold transition"
               >
-                ✏️ Revisar / Modificar Datos
+                ✏️ Modificar
               </button>
               <button
                 type="button"
                 onClick={processSaveBatch}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-600/20"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer"
               >
-                ✅ Sí, Confirmar y Procesar Lote
+                ✅ Confirmar y Guardar Lote
               </button>
             </div>
           </div>
