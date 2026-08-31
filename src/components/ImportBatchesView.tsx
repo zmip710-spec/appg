@@ -108,16 +108,46 @@ const fallbackBatches: ImportBatch[] = [
 ];
 
 export const ImportBatchesView: React.FC = () => {
-  const [batches, setBatches] = useState<ImportBatch[]>([]);
-  const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
-  const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
+  const [batches, setBatches] = useState<ImportBatch[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_batches');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [inventoryList, setInventoryList] = useState<InventoryProduct[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_inventory');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [expandedBatchId, setExpandedBatchId] = useState<string | null>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_batches');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0].id;
+      }
+    } catch {}
+    return null;
+  });
   const [expandedMobileItemKeys, setExpandedMobileItemKeys] = useState<Record<string, boolean>>({});
   const [selectedBatchForFullDetails, setSelectedBatchForFullDetails] = useState<ImportBatch | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addBatchStep, setAddBatchStep] = useState<1 | 2>(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_batches');
+      return !cached;
+    } catch {
+      return true;
+    }
+  });
 
   // Active dropdown open index for SKU selector
   const [openSkuDropdownIndex, setOpenSkuDropdownIndex] = useState<number | null>(null);

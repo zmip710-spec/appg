@@ -41,8 +41,22 @@ interface InventoryViewProps {
 
 export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readOnly }) => {
   const isVendedor = readOnly || currentUser?.role === 'Vendedor';
-  const [inventory, setInventory] = useState<InventoryProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [inventory, setInventory] = useState<InventoryProduct[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_inventory');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_inventory');
+      return !cached;
+    } catch {
+      return true;
+    }
+  });
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
   const [currentPage, setCurrentPage] = useState(1);

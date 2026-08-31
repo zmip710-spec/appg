@@ -25,11 +25,36 @@ export default function App() {
     }
   });
 
-  const [darkMode, setDarkMode] = useState(true);
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const savedTheme = localStorage.getItem('appg_theme') || localStorage.getItem('nexus_theme');
+      if (savedTheme) return savedTheme === 'dark';
+      return true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const savedTab = localStorage.getItem('appg_active_tab') || localStorage.getItem('nexus_active_tab');
+      if (savedTab && ['inventory', 'batches', 'sales', 'settings'].includes(savedTab)) {
+        return savedTab;
+      }
+    } catch {}
+    return 'inventory';
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Persist active tab changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('appg_active_tab', activeTab);
+    } catch {}
+  }, [activeTab]);
 
   // Temporarily redirect dashboard, analytics to inventory, and users to settings
   useEffect(() => {
@@ -39,16 +64,23 @@ export default function App() {
       setActiveTab('settings');
     }
   }, [activeTab]);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    totalSales: 0,
-    completedSalesCount: 0,
-    totalSkus: 0,
-    totalStock: 0,
-    inventoryValue: 0,
-    totalImportExpenses: 0,
-    customsTaxPaid: 0,
-    shippingPaid: 0,
-    totalBatchesCount: 0
+
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_stats');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return {
+      totalSales: 0,
+      completedSalesCount: 0,
+      totalSkus: 0,
+      totalStock: 0,
+      inventoryValue: 0,
+      totalImportExpenses: 0,
+      customsTaxPaid: 0,
+      shippingPaid: 0,
+      totalBatchesCount: 0
+    };
   });
 
   // Strict Security Session Guard: Check if profile exists and is active in SQLite
@@ -92,8 +124,10 @@ export default function App() {
     const root = document.documentElement;
     if (darkMode) {
       root.classList.add('dark');
+      try { localStorage.setItem('appg_theme', 'dark'); } catch {}
     } else {
       root.classList.remove('dark');
+      try { localStorage.setItem('appg_theme', 'light'); } catch {}
     }
   }, [darkMode]);
 

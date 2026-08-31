@@ -188,15 +188,35 @@ export const changePasswordApi = async (
 };
 
 export const fetchDashboardStatsApi = async (): Promise<DashboardStats> => {
-  const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
-  if (!response.ok) throw new Error('Error al cargar métricas del Dashboard');
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_stats', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_stats');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  throw new Error('Error al cargar métricas del Dashboard');
 };
 
 export const fetchUsers = async (): Promise<User[]> => {
-  const response = await fetch(`${API_BASE_URL}/users`);
-  if (!response.ok) throw new Error('Error al cargar usuarios desde la BD');
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_users', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_users');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  return [];
 };
 
 export const createUser = async (user: { name: string; email: string; role: string; avatar?: string; password?: string }): Promise<User> => {
@@ -229,9 +249,19 @@ export const deleteUserApi = async (id: string | number): Promise<{ success: boo
 };
 
 export const fetchTransactions = async (): Promise<Transaction[]> => {
-  const response = await fetch(`${API_BASE_URL}/transactions`);
-  if (!response.ok) throw new Error('Error al cargar transacciones desde la BD');
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_transactions', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_transactions');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  return [];
 };
 
 export const createTransaction = async (data: {
@@ -271,9 +301,19 @@ export const deleteTransactionApi = async (id: string): Promise<{ success: boole
 };
 
 export const fetchBatches = async (): Promise<ImportBatch[]> => {
-  const response = await fetch(`${API_BASE_URL}/batches`);
-  if (!response.ok) throw new Error('Error al cargar lotes desde la BD');
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/batches`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_batches', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_batches');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  return [];
 };
 
 export const createBatchApi = async (data: { name: string; totalCustomsTax: number; totalShippingCost: number; items: BatchItem[] }): Promise<ImportBatch> => {
@@ -295,9 +335,19 @@ export const deleteBatchApi = async (id: string): Promise<{ success: boolean }> 
 };
 
 export const fetchInventory = async (): Promise<InventoryProduct[]> => {
-  const response = await fetch(`${API_BASE_URL}/inventory`);
-  if (!response.ok) throw new Error('Error al cargar inventario desde la BD');
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/inventory`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_inventory', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_inventory');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  return [];
 };
 
 export const createInventoryProductApi = async (data: {

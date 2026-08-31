@@ -30,9 +30,30 @@ export const formatAmountInGtq = (amt: string) => {
 };
 
 export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTerm }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [inventoryList, setInventoryList] = useState<InventoryProduct[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_transactions');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_transactions');
+      return !cached;
+    } catch {
+      return true;
+    }
+  });
+  const [inventoryList, setInventoryList] = useState<InventoryProduct[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_inventory');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
