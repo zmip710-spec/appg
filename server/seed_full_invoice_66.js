@@ -88,7 +88,7 @@ db.serialize(() => {
 function sendBatchRequest() {
   const batchPayload = {
     name: "Lote Comercial #01 - Repuestos Teléfonos",
-    totalCustomsTax: 0.00,
+    totalCustomsTax: 810.64,
     totalShippingCost: 260.00,
     exchangeRateGtq: 7.80,
     profitMarginPct: 15.0,
@@ -112,7 +112,7 @@ function sendBatchRequest() {
 
   const options = {
     hostname: 'localhost',
-    port: 3000,
+    port: 4000,
     path: '/api/batches',
     method: 'POST',
     headers: {
@@ -121,7 +121,7 @@ function sendBatchRequest() {
     }
   };
 
-  console.log('🚀 Registrando Lote Completo de 66 Productos (510 Unidades) en SQLite...');
+  console.log('🚀 Registrando Lote Completo de 66 Productos (510 Unidades) con Costo Real de Aduana ($810.64 USD)...');
 
   const req = http.request(options, (res) => {
     let data = '';
