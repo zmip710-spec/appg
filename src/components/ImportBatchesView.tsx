@@ -459,12 +459,26 @@ export const ImportBatchesView: React.FC = () => {
     setShowConfirmModal(true);
   };
 
-  const processSaveBatch = async () => {
-    if (!batchName || previewItems.length === 0 || isSavingBatch) return;
+  const handleRetryOrSaveBatch = async () => {
+    if (isSavingBatch) return;
+
+    if (!batchName.trim()) {
+      alert('Por favor ingresa un nombre para el lote.');
+      return;
+    }
+
+    if (previewItems.length === 0) {
+      setBatchNetworkError(null);
+      setAddBatchStep(2);
+      setIsAddingProduct(true);
+      return;
+    }
+
     setIsSavingBatch(true);
+    setBatchNetworkError(null);
 
     const payload = {
-      name: batchName,
+      name: batchName.trim(),
       totalCustomsTax: parsedTax,
       totalShippingCost: parsedShipping,
       exchangeRateGtq: parsedGtqRate,
@@ -479,7 +493,10 @@ export const ImportBatchesView: React.FC = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/batches`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify(payload),
       });
 
@@ -495,23 +512,17 @@ export const ImportBatchesView: React.FC = () => {
         throw new Error(`HTTP ${response.status}: ${errorData}`);
       }
     } catch (err: any) {
-      console.error('Excepción de red o servidor al enviar POST /api/batches:', err);
-      // ONLY trigger visual network error on real fetch/network catch block or non-200 HTTP code
+      console.error('Excepción de red al enviar POST /api/batches:', err);
       setShowConfirmModal(false);
       setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
       setIsSavingBatch(false);
       return;
     }
 
-    // ON HTTP 200 / 201 OK -> UNDER NO CONDITION FALL INTO ERROR BLOCK
     if (responseOk) {
-      // 1. Reset visual error banner immediately
       setBatchNetworkError(null);
-
-      // 2. Remove draft from localStorage
       try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
 
-      // 3. Reset form fields & close modal / reset steps
       setBatchName('');
       setCustomsTax('');
       setShippingCost('');
@@ -523,7 +534,6 @@ export const ImportBatchesView: React.FC = () => {
       setAddBatchStep(1);
       setIsSavingBatch(false);
 
-      // 4. Safely refresh list in background
       try {
         await loadBatchesData();
         if (created && created.id) {
@@ -531,10 +541,12 @@ export const ImportBatchesView: React.FC = () => {
         }
         setIsDbConnected(true);
       } catch (loadErr) {
-        console.warn('Lote guardado con éxito, recarga en segundo plano omitida:', loadErr);
+        console.warn('Lote guardado correctamente, recarga en segundo plano omitida:', loadErr);
       }
     }
   };
+
+  const processSaveBatch = handleRetryOrSaveBatch;
 
   const handleDeleteBatch = async (id: string) => {
     if (!window.confirm(`¿Estás seguro de eliminar el lote ${id}? Esta acción eliminará los ítems asociados a este lote.`)) {
@@ -1122,9 +1134,9 @@ export const ImportBatchesView: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={processSaveBatch}
+                    onClick={handleRetryOrSaveBatch}
                     disabled={isSavingBatch}
-                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
+                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
                   >
                     <span>{isSavingBatch ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
                   </button>
