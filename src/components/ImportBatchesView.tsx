@@ -152,14 +152,92 @@ export const ImportBatchesView: React.FC = () => {
   // Active dropdown open index for SKU selector
   const [openSkuDropdownIndex, setOpenSkuDropdownIndex] = useState<number | null>(null);
 
-  // New batch form state
-  const [batchName, setBatchName] = useState('');
-  const [customsTax, setCustomsTax] = useState<string>('');
-  const [shippingCost, setShippingCost] = useState<string>('');
-  const [exchangeRateGtq, setExchangeRateGtq] = useState<string>('7.80');
-  const [profitMarginPct, setProfitMarginPct] = useState<string>('15.0');
-  const [costUpdateStrategy, setCostUpdateStrategy] = useState<'weighted' | 'latest'>('weighted');
-  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>>([]);
+  const DRAFT_BATCH_KEY = 'draft_form_batch';
+
+  // New batch form state with localStorage Draft Recovery
+  const [batchName, setBatchName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).batchName || '';
+    } catch {}
+    return '';
+  });
+  const [customsTax, setCustomsTax] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).customsTax || '';
+    } catch {}
+    return '';
+  });
+  const [shippingCost, setShippingCost] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).shippingCost || '';
+    } catch {}
+    return '';
+  });
+  const [exchangeRateGtq, setExchangeRateGtq] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).exchangeRateGtq || '7.80';
+    } catch {}
+    return '7.80';
+  });
+  const [profitMarginPct, setProfitMarginPct] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).profitMarginPct || '15.0';
+    } catch {}
+    return '15.0';
+  });
+  const [costUpdateStrategy, setCostUpdateStrategy] = useState<'weighted' | 'latest'>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).costUpdateStrategy || 'weighted';
+    } catch {}
+    return 'weighted';
+  });
+  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_batch');
+      if (saved) return JSON.parse(saved).inputItems || [];
+    } catch {}
+    return [];
+  });
+
+  const [batchNetworkError, setBatchNetworkError] = useState<string | null>(null);
+  const [isSavingBatch, setIsSavingBatch] = useState<boolean>(false);
+
+  // Autosave Debounced Effect (400ms)
+  useEffect(() => {
+    const hasContent = batchName.trim() !== '' || inputItems.length > 0 || customsTax !== '' || shippingCost !== '';
+    const timer = setTimeout(() => {
+      try {
+        if (hasContent) {
+          localStorage.setItem('draft_form_batch', JSON.stringify({
+            batchName, customsTax, shippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, inputItems
+          }));
+        } else {
+          localStorage.removeItem('draft_form_batch');
+        }
+      } catch {}
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [batchName, customsTax, shippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, inputItems]);
+
+  // Window beforeunload Accidental Navigation Protection
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = batchName.trim() !== '' || inputItems.length > 0;
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = 'Tienes cambios sin guardar en el formulario de Lote. ¿Estás seguro de salir?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [batchName, inputItems]);
 
   const loadBatchesData = async () => {
     setIsLoading(true);
@@ -383,6 +461,8 @@ export const ImportBatchesView: React.FC = () => {
 
   const processSaveBatch = async () => {
     if (!batchName || previewItems.length === 0) return;
+    setIsSavingBatch(true);
+    setBatchNetworkError(null);
 
     const payload = {
       name: batchName,
@@ -399,31 +479,25 @@ export const ImportBatchesView: React.FC = () => {
       await loadBatchesData();
       setExpandedBatchId(created.id);
       setIsDbConnected(true);
-    } catch (err) {
-      console.error('Error al guardar lote:', err);
-      const mockCreated: ImportBatch = {
-        id: `#LOT-2026-${Math.floor(10 + Math.random() * 90)}`,
-        name: batchName,
-        importDate: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
-        totalCustomsTax: parsedTax,
-        totalShippingCost: parsedShipping,
-        exchangeRateGtq: parsedGtqRate,
-        profitMarginPct: parsedMargin,
-        status: 'Procesado',
-        items: proratedPreview
-      };
-      setBatches([mockCreated, ...batches]);
-      setExpandedBatchId(mockCreated.id);
-    }
 
-    setBatchName('');
-    setCustomsTax('');
-    setShippingCost('');
-    setExchangeRateGtq('7.80');
-    setProfitMarginPct('15.0');
-    setInputItems([]);
-    setShowConfirmModal(false);
-    setShowAddModal(false);
+      // Successful HTTP 200/201 response -> CLEAR DRAFT & RESET FORM
+      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+      setBatchName('');
+      setCustomsTax('');
+      setShippingCost('');
+      setExchangeRateGtq('7.80');
+      setProfitMarginPct('15.0');
+      setInputItems([]);
+      setShowConfirmModal(false);
+      setShowAddModal(false);
+    } catch (err: any) {
+      console.error('Error de conexión o servidor al guardar lote:', err);
+      // DO NOT RESET FORM OR CLEAR STATE!
+      setShowConfirmModal(false);
+      setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
+    } finally {
+      setIsSavingBatch(false);
+    }
   };
 
   const handleDeleteBatch = async (id: string) => {
@@ -979,6 +1053,11 @@ export const ImportBatchesView: React.FC = () => {
                   <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                     Paso {addBatchStep} de 2
                   </span>
+                  {(batchName.trim() !== '' || inputItems.length > 0) && (
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      📝 Borrador autoguardado
+                    </span>
+                  )}
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
                   {addBatchStep === 1
@@ -997,6 +1076,24 @@ export const ImportBatchesView: React.FC = () => {
 
             {/* Modal Form Container with Touch Pan Y Scroll */}
             <form onSubmit={handleFormSubmit} className="p-3 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain touch-pan-y max-h-[calc(92vh-120px)]">
+              
+              {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
+              {batchNetworkError && (
+                <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+                  <div className="flex items-center space-x-2.5">
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                    <span className="font-semibold">{batchNetworkError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={processSaveBatch}
+                    disabled={isSavingBatch}
+                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
+                  >
+                    <span>{isSavingBatch ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
+                  </button>
+                </div>
+              )}
               
               {/* PASO 1: Parámetros Generales del Lote */}
               {addBatchStep === 1 && (

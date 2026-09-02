@@ -177,16 +177,99 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     return () => { isMounted = false; };
   }, [selectedDetailProduct?.sku]);
 
-  // Form State for new SKU/Product
-  const [sku, setSku] = useState('');
-  const [name, setName] = useState('');
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
-  const [category, setCategory] = useState('General');
-  const [stock, setStock] = useState<string>('10');
-  const [unitCost, setUnitCost] = useState<string>('10.0');
-  const [image, setImage] = useState<string>('');
+  const DRAFT_INVENTORY_KEY = 'draft_form_inventory';
+
+  // Form State for new SKU/Product with localStorage Draft Recovery
+  const [sku, setSku] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).sku || '';
+    } catch {}
+    return '';
+  });
+  const [name, setName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).name || '';
+    } catch {}
+    return '';
+  });
+  const [brand, setBrand] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).brand || '';
+    } catch {}
+    return '';
+  });
+  const [model, setModel] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).model || '';
+    } catch {}
+    return '';
+  });
+  const [category, setCategory] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).category || 'General';
+    } catch {}
+    return 'General';
+  });
+  const [stock, setStock] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).stock || '10';
+    } catch {}
+    return '10';
+  });
+  const [unitCost, setUnitCost] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).unitCost || '10.0';
+    } catch {}
+    return '10.0';
+  });
+  const [image, setImage] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_form_inventory');
+      if (saved) return JSON.parse(saved).image || '';
+    } catch {}
+    return '';
+  });
   const [errorMessage, setErrorMessage] = useState('');
+  const [invNetworkError, setInvNetworkError] = useState<string | null>(null);
+  const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
+
+  // Autosave Debounced Effect (400ms)
+  useEffect(() => {
+    const hasContent = name.trim() !== '' || sku.trim() !== '' || brand.trim() !== '';
+    const timer = setTimeout(() => {
+      try {
+        if (hasContent) {
+          localStorage.setItem('draft_form_inventory', JSON.stringify({
+            sku, name, brand, model, category, stock, unitCost, image
+          }));
+        } else {
+          localStorage.removeItem('draft_form_inventory');
+        }
+      } catch {}
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [sku, name, brand, model, category, stock, unitCost, image]);
+
+  // Window beforeunload Accidental Navigation Protection
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = name.trim() !== '' || sku.trim() !== '';
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = 'Tienes datos sin guardar en el formulario de producto. ¿Estás seguro de salir?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [sku, name]);
 
   const loadInventory = async () => {
     setIsLoading(true);
@@ -218,15 +301,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     }
   };
 
-  const handleCreateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateProduct = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMessage('');
+    setInvNetworkError(null);
 
     if (!sku.trim() || !name.trim()) {
       setErrorMessage('Código SKU y Nombre de producto son requeridos.');
       return;
     }
 
+    setIsSavingProduct(true);
     try {
       await createInventoryApi({
         sku: sku.trim().toUpperCase(),
@@ -239,11 +324,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         image: image || ''
       });
 
+      // Clear draft ONLY on HTTP 200/201 success
+      try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
       setShowAddModal(false);
       resetForm();
       await loadInventory();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Error al guardar el producto.');
+      console.error('Error de conexión o servidor al crear producto:', err);
+      // DO NOT RESET FORM OR CLEAR STATE!
+      setInvNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
+    } finally {
+      setIsSavingProduct(false);
     }
   };
 
@@ -303,6 +394,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     setUnitCost('10.0');
     setImage('');
     setErrorMessage('');
+    setInvNetworkError(null);
+    try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
   };
 
   // Real-time Search & Filter Chips (Includes match by Brand & Model)
@@ -925,13 +1018,37 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
           <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden space-y-4">
             <div className="flex justify-between items-center border-b border-slate-700 pb-3 shrink-0">
-              <h3 className="font-bold text-white text-base">Registrar Nuevo Producto / SKU</h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="font-bold text-white text-base">Registrar Nuevo Producto / SKU</h3>
+                {(name.trim() !== '' || sku.trim() !== '') && (
+                  <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    📝 Borrador autoguardado
+                  </span>
+                )}
+              </div>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white text-base font-bold">✕</button>
             </div>
 
             {errorMessage && (
               <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-lg font-medium shrink-0">
                 {errorMessage}
+              </div>
+            )}
+
+            {invNetworkError && (
+              <div className="p-3 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-2.5 animate-in fade-in shrink-0">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                  <span className="font-semibold">{invNetworkError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCreateProduct()}
+                  disabled={isSavingProduct}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
+                >
+                  <span>{isSavingProduct ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
+                </button>
               </div>
             )}
 

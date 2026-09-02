@@ -58,12 +58,57 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   const [showAddModal, setShowAddModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
 
-  // Multi-Product Cart & Customer Form State
-  const [clientName, setClientName] = useState<string>('');
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const DRAFT_SALES_KEY = 'draft_sales_form';
+
+  // Multi-Product Cart & Customer Form State with localStorage Draft Recovery
+  const [clientName, setClientName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('draft_sales_form');
+      if (saved) return JSON.parse(saved).clientName || '';
+    } catch {}
+    return '';
+  });
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('draft_sales_form');
+      if (saved) return JSON.parse(saved).cartItems || [];
+    } catch {}
+    return [];
+  });
   const [productSearch, setProductSearch] = useState<string>('');
   const [showSearchDropdown, setShowSearchDropdown] = useState<boolean>(false);
   const [saleStatus, setSaleStatus] = useState<string>('Completado');
+  const [posNetworkError, setPosNetworkError] = useState<string | null>(null);
+  const [isSavingTransaction, setIsSavingTransaction] = useState<boolean>(false);
+
+  // Autosave Debounced Effect (400ms)
+  useEffect(() => {
+    const hasContent = clientName.trim() !== '' || cartItems.length > 0;
+    const timer = setTimeout(() => {
+      try {
+        if (hasContent) {
+          localStorage.setItem('draft_sales_form', JSON.stringify({ clientName, cartItems }));
+        } else {
+          localStorage.removeItem('draft_sales_form');
+        }
+      } catch {}
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [clientName, cartItems]);
+
+  // Window beforeunload Accidental Navigation Protection
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = clientName.trim() !== '' || cartItems.length > 0;
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = 'Tienes una venta en proceso en el Punto de Venta. ¿Estás seguro de salir?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [clientName, cartItems]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -146,9 +191,12 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
   const hasInsufficientStock = cartItems.some(item => item.quantity > item.stock);
 
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddTransaction = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!clientName.trim() || cartItems.length === 0) return;
+
+    setPosNetworkError(null);
+    setIsSavingTransaction(true);
 
     const formattedService = cartItems
       .map(item => `${item.name} (${item.quantity} ${item.quantity > 1 ? 'unidades' : 'unidad'})`)
@@ -170,23 +218,20 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
       await createTransaction(payload);
       await loadData();
       setIsDbConnected(true);
-    } catch {
-      const localCreated: Transaction = {
-        id: `#TRX-${Math.floor(1000 + Math.random() * 9000)}`,
-        client: clientName.trim(),
-        service: formattedService,
-        date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
-        amount: `Q ${grandTotalGtq.toFixed(2)} GTQ`,
-        status: saleStatus as any,
-      };
-      setTransactions([localCreated, ...transactions]);
-    }
 
-    // Reset Form & Cart
-    setCartItems([]);
-    setClientName('');
-    setProductSearch('');
-    setShowAddModal(false);
+      // Successful HTTP 200/201 response -> CLEAR DRAFT & RESET FORM
+      try { localStorage.removeItem(DRAFT_SALES_KEY); } catch {}
+      setCartItems([]);
+      setClientName('');
+      setProductSearch('');
+      setShowAddModal(false);
+    } catch (err: any) {
+      console.error('Error de conexión o servidor al registrar venta:', err);
+      // DO NOT RESET FORM OR CLEAR STATE!
+      setPosNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
+    } finally {
+      setIsSavingTransaction(false);
+    }
   };
 
   const handleStatusChange = async (id: string, currentStatus: string) => {
@@ -408,14 +453,38 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden space-y-4">
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <span>Punto de Venta - Registrar Venta en Quetzales (GTQ)</span>
-              </h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                  <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <span>Punto de Venta - Registrar Venta en Quetzales (GTQ)</span>
+                </h3>
+                {(clientName.trim() !== '' || cartItems.length > 0) && (
+                  <span className="text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    📝 Borrador autoguardado
+                  </span>
+                )}
+              </div>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold text-base cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleAddTransaction} className="flex flex-col space-y-4 overflow-y-auto max-h-[calc(92vh-100px)] pr-1 text-xs">
+              {/* Notificación de Error de Red / Conexión en POS */}
+              {posNetworkError && (
+                <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-600 dark:text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in shrink-0">
+                  <div className="flex items-center space-x-2.5">
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 dark:text-rose-400" />
+                    <span className="font-semibold">{posNetworkError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddTransaction()}
+                    disabled={isSavingTransaction}
+                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
+                  >
+                    <span>{isSavingTransaction ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
+                  </button>
+                </div>
+              )}
               {/* Customer Name Input */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">Nombre del Cliente</label>
