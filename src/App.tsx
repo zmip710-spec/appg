@@ -12,7 +12,7 @@ import { ImportBatchesView } from './components/ImportBatchesView';
 import { InventoryView } from './components/InventoryView';
 import { LoginView } from './components/LoginView';
 import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, DashboardStats, User } from './services/api';
-import { exportViewPdf } from './utils/pdfExport';
+import { ConnectionOverlay } from './components/ConnectionOverlay';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
 export default function App() {
@@ -203,11 +203,17 @@ export default function App() {
 
   // Render Login Screen if No User Logged In
   if (!currentUser) {
-    return <LoginView onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <ConnectionOverlay />
+        <LoginView onLoginSuccess={handleLoginSuccess} />
+      </>
+    );
   }
 
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
+      <ConnectionOverlay />
       
       {/* Sidebar Navigation */}
       <Sidebar

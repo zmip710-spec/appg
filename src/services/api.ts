@@ -418,3 +418,15 @@ export const fetchPriceHistoryApi = async (sku: string, productName?: string): P
     return [];
   }
 };
+
+export const checkHealthApi = async (): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const response = await fetch(`${API_BASE_URL}/health`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    return false;
+  }
+};

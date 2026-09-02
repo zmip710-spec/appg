@@ -15,6 +15,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(distPath));
 
+// Health check endpoint for connection monitoring
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
 // API Auth Login with Username & Password Checking
 app.post('/api/auth/login', (req, res) => {
   const { username, email, password } = req.body;
