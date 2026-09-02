@@ -21,6 +21,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   currentUser?: User | null;
   onLogout?: () => void;
+  isOffline?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   currentUser,
   onLogout,
+  isOffline = false,
 }) => {
   const isVendedor = currentUser?.role === 'Vendedor';
 
@@ -81,7 +83,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <BarChart3 className="w-6 h-6 text-white" />
                 </div>
                 <div className="truncate">
-                  <h1 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">AppG</h1>
+                  <div className="flex items-center space-x-1.5">
+                    <h1 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">AppG</h1>
+                    {isOffline && (
+                      <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 shrink-0 animate-pulse">
+                        ⚠️ Desconectado
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">v0.1 (beta)</span>
                 </div>
               </div>
@@ -188,7 +197,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <BarChart3 className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-base text-slate-900 dark:text-white leading-none">AppG</h1>
+            <div className="flex items-center space-x-1.5">
+              <h1 className="font-bold text-base text-slate-900 dark:text-white leading-none">AppG</h1>
+              {isOffline && (
+                <span className="text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 shrink-0 animate-pulse">
+                  ⚠️ Desconectado
+                </span>
+              )}
+            </div>
             <span className="text-[10px] text-slate-500 dark:text-slate-400">v0.1 (beta)</span>
           </div>
         </div>

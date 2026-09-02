@@ -11,8 +11,7 @@ import { AnalyticsView } from './components/AnalyticsView';
 import { ImportBatchesView } from './components/ImportBatchesView';
 import { InventoryView } from './components/InventoryView';
 import { LoginView } from './components/LoginView';
-import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, DashboardStats, User } from './services/api';
-import { ConnectionOverlay } from './components/ConnectionOverlay';
+import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, checkHealthApi, DashboardStats, User } from './services/api';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
 export default function App() {
@@ -48,6 +47,30 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isOffline, setIsOffline] = useState(false);
+
+  // Silent Background Health Check (No auto reloads, no overlays)
+  useEffect(() => {
+    const checkConnection = async () => {
+      const healthy = await checkHealthApi();
+      setIsOffline(!healthy);
+    };
+
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => checkConnection();
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    const interval = setInterval(checkConnection, 10000);
+    checkConnection();
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Persist active tab changes to localStorage
   useEffect(() => {
@@ -203,18 +226,11 @@ export default function App() {
 
   // Render Login Screen if No User Logged In
   if (!currentUser) {
-    return (
-      <>
-        <ConnectionOverlay />
-        <LoginView onLoginSuccess={handleLoginSuccess} />
-      </>
-    );
+    return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-[#F8FAFC] text-slate-900'}`}>
-      <ConnectionOverlay />
-      
       {/* Sidebar Navigation */}
       <Sidebar
         darkMode={darkMode}
@@ -223,6 +239,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         currentUser={currentUser}
         onLogout={handleLogout}
+        isOffline={isOffline}
       />
 
       {/* Main Content Area */}
@@ -234,6 +251,7 @@ export default function App() {
           currentUser={currentUser}
           onLogout={handleLogout}
           activeTab={activeTab}
+          isOffline={isOffline}
         />
 
         {/* Global Toast Notification */}
