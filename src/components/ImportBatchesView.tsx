@@ -498,24 +498,36 @@ export const ImportBatchesView: React.FC = () => {
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        setBatchNetworkError(null);
-        try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
-        setBatchName('');
-        setCustomsTax('');
-        setShippingCost('');
-        setExchangeRateGtq('7.80');
-        setProfitMarginPct('15.0');
-        setInputItems([]);
+      if (!response.ok) {
         setShowConfirmModal(false);
-        setShowAddModal(false);
-        setAddBatchStep(1);
-        await loadBatchesData();
-      } else {
-        const errText = await response.text();
-        setShowConfirmModal(false);
-        setBatchNetworkError(errText || 'Error en el servidor al guardar el lote.');
+        let errorMsg = "El servidor aún se está reconectando. Espera unos segundos y vuelve a presionar Reintentar.";
+        try {
+          const text = await response.text();
+          if (text && !text.trim().startsWith('<') && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            try {
+              const parsed = JSON.parse(text);
+              if (parsed.error) errorMsg = parsed.error;
+            } catch {
+              if (text.length < 150) errorMsg = text;
+            }
+          }
+        } catch {}
+        setBatchNetworkError(errorMsg);
+        return;
       }
+
+      setBatchNetworkError(null);
+      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+      setBatchName('');
+      setCustomsTax('');
+      setShippingCost('');
+      setExchangeRateGtq('7.80');
+      setProfitMarginPct('15.0');
+      setInputItems([]);
+      setShowConfirmModal(false);
+      setShowAddModal(false);
+      setAddBatchStep(1);
+      await loadBatchesData();
     } catch (error: any) {
       console.error('Error de conexión al guardar lote:', error);
       setShowConfirmModal(false);
