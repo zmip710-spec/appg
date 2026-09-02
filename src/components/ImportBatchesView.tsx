@@ -461,17 +461,13 @@ export const ImportBatchesView: React.FC = () => {
 
   const handleRetryOrSaveBatch = async () => {
     try {
-      alert("1. Leyendo datos...");
-      
       // Obtener productos desde cualquier origen disponible
       const itemsList = (previewItems && previewItems.length > 0) 
         ? previewItems 
         : ((inputItems && inputItems.length > 0) ? inputItems : []);
 
-      alert(`2. Productos detectados: ${itemsList.length}`);
-
       if (itemsList.length === 0) {
-        alert("Error: No hay productos en memoria para guardar.");
+        setBatchNetworkError("No hay productos cargados en el lote para guardar.");
         return;
       }
 
@@ -491,7 +487,6 @@ export const ImportBatchesView: React.FC = () => {
         }))
       };
 
-      alert("3. Enviando POST a /api/batches...");
       setIsSavingBatch(true);
 
       const response = await fetch('/api/batches', {
@@ -503,22 +498,28 @@ export const ImportBatchesView: React.FC = () => {
         body: JSON.stringify(payload)
       });
 
-      alert(`4. Respuesta servidor: Código ${response.status}`);
-
       if (response.ok) {
         setBatchNetworkError(null);
         try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+        setBatchName('');
+        setCustomsTax('');
+        setShippingCost('');
+        setExchangeRateGtq('7.80');
+        setProfitMarginPct('15.0');
+        setInputItems([]);
         setShowConfirmModal(false);
         setShowAddModal(false);
         setAddBatchStep(1);
         await loadBatchesData();
-        alert("¡ÉXITO: Lote guardado!");
       } else {
         const errText = await response.text();
-        alert(`Fallo en backend: ${errText}`);
+        setShowConfirmModal(false);
+        setBatchNetworkError(errText || 'Error en el servidor al guardar el lote.');
       }
     } catch (error: any) {
-      alert(`ERROR ATRAPADO: ${error?.message || error}`);
+      console.error('Error de conexión al guardar lote:', error);
+      setShowConfirmModal(false);
+      setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
     } finally {
       setIsSavingBatch(false);
     }
