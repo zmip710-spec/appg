@@ -460,96 +460,67 @@ export const ImportBatchesView: React.FC = () => {
   };
 
   const handleRetryOrSaveBatch = async () => {
-    try { alert("Disparando reintento..."); } catch {}
-
-    if (!batchName.trim()) {
-      alert('Por favor ingresa un nombre para el lote.');
-      return;
-    }
-
-    // 1. Unificar lectura de productos (previewItems o inputItems)
-    const itemsToSend = (previewItems && previewItems.length > 0) ? previewItems : inputItems;
-
-    if (itemsToSend.length === 0) {
-      alert('Por favor agrega al menos un producto al lote antes de guardar.');
-      return;
-    }
-
-    setIsSavingBatch(true);
-    setBatchNetworkError(null);
-
-    const payload = {
-      name: batchName.trim(),
-      totalCustomsTax: parsedTax,
-      totalShippingCost: parsedShipping,
-      exchangeRateGtq: parsedGtqRate,
-      profitMarginPct: parsedMargin,
-      costUpdateStrategy: costUpdateStrategy,
-      items: itemsToSend.map((i: any) => ({
-        sku: i.sku ? String(i.sku).trim().toUpperCase() : `PROD-${Math.floor(100 + Math.random() * 900)}`,
-        productName: i.productName ? String(i.productName).trim() : 'Producto Importado',
-        quantity: typeof i.quantity === 'number' ? i.quantity : (parseInt(i.quantity) || 1),
-        unitCostFob: typeof i.unitCostFob === 'number' ? i.unitCostFob : (parseFloat(i.unitCostFob) || 0),
-        image: i.image || ''
-      }))
-    };
-
-    let responseOk = false;
-    let created: ImportBatch | null = null;
-
     try {
+      alert("1. Leyendo datos...");
+      
+      // Obtener productos desde cualquier origen disponible
+      const itemsList = (previewItems && previewItems.length > 0) 
+        ? previewItems 
+        : ((inputItems && inputItems.length > 0) ? inputItems : []);
+
+      alert(`2. Productos detectados: ${itemsList.length}`);
+
+      if (itemsList.length === 0) {
+        alert("Error: No hay productos en memoria para guardar.");
+        return;
+      }
+
+      const payload = {
+        name: (batchName || 'Lote Sin Nombre').trim(),
+        totalCustomsTax: Number(customsTax) || 0,
+        totalShippingCost: Number(shippingCost) || 0,
+        exchangeRateGtq: Number(exchangeRateGtq) || 7.80,
+        profitMarginPct: Number(profitMarginPct) || 15.0,
+        costUpdateStrategy: costUpdateStrategy || 'weighted',
+        items: itemsList.map((i: any) => ({
+          sku: i.sku || '',
+          productName: i.productName || 'Producto',
+          quantity: Number(i.quantity) || 1,
+          unitCostFob: Number(i.unitCostFob) || 0,
+          image: i.image || ''
+        }))
+      };
+
+      alert("3. Enviando POST a /api/batches...");
+      setIsSavingBatch(true);
+
       const response = await fetch(`${API_BASE_URL}/batches`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
-      if (response.ok || response.status === 200 || response.status === 201) {
-        responseOk = true;
-        try {
-          created = await response.json();
-        } catch {
-          created = null;
-        }
-      } else {
-        const errorData = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorData}`);
-      }
-    } catch (err: any) {
-      console.error('Excepción de red al enviar POST /api/batches:', err);
-      setShowConfirmModal(false);
-      setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
-      setIsSavingBatch(false);
-      return;
-    }
+      alert(`4. Respuesta servidor: Código ${response.status}`);
 
-    if (responseOk) {
-      setBatchNetworkError(null);
-      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
-
-      setBatchName('');
-      setCustomsTax('');
-      setShippingCost('');
-      setExchangeRateGtq('7.80');
-      setProfitMarginPct('15.0');
-      setInputItems([]);
-      setShowConfirmModal(false);
-      setShowAddModal(false);
-      setAddBatchStep(1);
-      setIsSavingBatch(false);
-
-      try {
+      if (response.ok) {
+        setBatchNetworkError(null);
+        try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+        setShowConfirmModal(false);
+        setShowAddModal(false);
+        setAddBatchStep(1);
         await loadBatchesData();
-        if (created && created.id) {
-          setExpandedBatchId(created.id);
-        }
-        setIsDbConnected(true);
-      } catch (loadErr) {
-        console.warn('Lote guardado correctamente, recarga en segundo plano omitida:', loadErr);
+        alert("¡ÉXITO: Lote guardado!");
+      } else {
+        const errText = await response.text();
+        alert(`Fallo en backend: ${errText}`);
       }
+    } catch (error: any) {
+      alert(`ERROR ATRAPADO: ${error?.message || error}`);
+    } finally {
+      setIsSavingBatch(false);
     }
   };
 
