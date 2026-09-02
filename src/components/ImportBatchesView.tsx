@@ -481,7 +481,7 @@ export const ImportBatchesView: React.FC = () => {
         totalShippingCost: Number(shippingCost) || 0,
         exchangeRateGtq: Number(exchangeRateGtq) || 7.80,
         profitMarginPct: Number(profitMarginPct) || 15.0,
-        costUpdateStrategy: costUpdateStrategy || 'weighted',
+        costUpdateStrategy: costUpdateStrategy || 'weighted_average',
         items: itemsList.map((i: any) => ({
           sku: i.sku || '',
           productName: i.productName || 'Producto',
@@ -494,7 +494,7 @@ export const ImportBatchesView: React.FC = () => {
       alert("3. Enviando POST a /api/batches...");
       setIsSavingBatch(true);
 
-      const response = await fetch(`${API_BASE_URL}/batches`, {
+      const response = await fetch('/api/batches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
