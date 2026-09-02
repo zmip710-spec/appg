@@ -311,7 +311,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       return;
     }
 
+    if (isSavingProduct) return;
     setIsSavingProduct(true);
+
     try {
       await createInventoryApi({
         sku: sku.trim().toUpperCase(),
@@ -323,18 +325,26 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         unitCost: parseFloat(unitCost) || 0.0,
         image: image || ''
       });
-
-      // Clear draft ONLY on HTTP 200/201 success
-      try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
-      setShowAddModal(false);
-      resetForm();
-      await loadInventory();
     } catch (err: any) {
       console.error('Error de conexión o servidor al crear producto:', err);
       // DO NOT RESET FORM OR CLEAR STATE!
       setInvNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
-    } finally {
       setIsSavingProduct(false);
+      return;
+    }
+
+    // HTTP 200/201 SUCCESS: Immediately clear errors, remove draft, reset form and close modal
+    setInvNetworkError(null);
+    try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
+    setShowAddModal(false);
+    resetForm();
+    setIsSavingProduct(false);
+
+    // Refresh inventory list in background safely
+    try {
+      await loadInventory();
+    } catch (loadErr) {
+      console.warn('Producto creado correctamente, pero falló la actualización del inventario:', loadErr);
     }
   };
 

@@ -193,7 +193,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
   const handleAddTransaction = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!clientName.trim() || cartItems.length === 0) return;
+    if (!clientName.trim() || cartItems.length === 0 || isSavingTransaction) return;
 
     setPosNetworkError(null);
     setIsSavingTransaction(true);
@@ -216,21 +216,29 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
     try {
       await createTransaction(payload);
-      await loadData();
-      setIsDbConnected(true);
-
-      // Successful HTTP 200/201 response -> CLEAR DRAFT & RESET FORM
-      try { localStorage.removeItem(DRAFT_SALES_KEY); } catch {}
-      setCartItems([]);
-      setClientName('');
-      setProductSearch('');
-      setShowAddModal(false);
     } catch (err: any) {
       console.error('Error de conexión o servidor al registrar venta:', err);
       // DO NOT RESET FORM OR CLEAR STATE!
       setPosNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
-    } finally {
       setIsSavingTransaction(false);
+      return;
+    }
+
+    // HTTP 200/201 SUCCESS: Immediately clear errors, remove draft, reset form and close modal
+    setPosNetworkError(null);
+    try { localStorage.removeItem(DRAFT_SALES_KEY); } catch {}
+    setCartItems([]);
+    setClientName('');
+    setProductSearch('');
+    setShowAddModal(false);
+    setIsSavingTransaction(false);
+
+    // Refresh transaction list in background safely
+    try {
+      await loadData();
+      setIsDbConnected(true);
+    } catch (loadErr) {
+      console.warn('Venta registrada correctamente, pero falló la actualización del listado:', loadErr);
     }
   };
 
@@ -713,12 +721,10 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                 </button>
                 <button
                   type="submit"
-                  disabled={cartItems.length === 0}
-                  className={`px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 ${
-                    cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  disabled={cartItems.length === 0 || isSavingTransaction}
+                  className={`px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer flex items-center space-x-2`}
                 >
-                  🛒 Guardar Venta en Quetzales & Descontar Stock
+                  <span>{isSavingTransaction ? 'Guardando Venta...' : '🛒 Guardar Venta en Quetzales & Descontar Stock'}</span>
                 </button>
               </div>
             </form>

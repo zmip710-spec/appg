@@ -460,7 +460,7 @@ export const ImportBatchesView: React.FC = () => {
   };
 
   const processSaveBatch = async () => {
-    if (!batchName || previewItems.length === 0) return;
+    if (!batchName || previewItems.length === 0 || isSavingBatch) return;
     setIsSavingBatch(true);
     setBatchNetworkError(null);
 
@@ -474,29 +474,42 @@ export const ImportBatchesView: React.FC = () => {
       items: previewItems.map(i => ({ sku: i.sku, productName: i.productName, quantity: i.quantity, unitCostFob: i.unitCostFob, image: i.image }))
     };
 
-    try {
-      const created = await createBatchApi(payload);
-      await loadBatchesData();
-      setExpandedBatchId(created.id);
-      setIsDbConnected(true);
+    let created: ImportBatch | null = null;
 
-      // Successful HTTP 200/201 response -> CLEAR DRAFT & RESET FORM
-      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
-      setBatchName('');
-      setCustomsTax('');
-      setShippingCost('');
-      setExchangeRateGtq('7.80');
-      setProfitMarginPct('15.0');
-      setInputItems([]);
-      setShowConfirmModal(false);
-      setShowAddModal(false);
+    try {
+      created = await createBatchApi(payload);
     } catch (err: any) {
       console.error('Error de conexión o servidor al guardar lote:', err);
       // DO NOT RESET FORM OR CLEAR STATE!
       setShowConfirmModal(false);
       setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
-    } finally {
       setIsSavingBatch(false);
+      return;
+    }
+
+    // HTTP 200/201 SUCCESS: Immediately clear error, draft, reset form and close modals
+    setBatchNetworkError(null);
+    try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+    setBatchName('');
+    setCustomsTax('');
+    setShippingCost('');
+    setExchangeRateGtq('7.80');
+    setProfitMarginPct('15.0');
+    setInputItems([]);
+    setShowConfirmModal(false);
+    setShowAddModal(false);
+    setAddBatchStep(1);
+    setIsSavingBatch(false);
+
+    // Refresh batch data in background safely
+    try {
+      await loadBatchesData();
+      if (created && created.id) {
+        setExpandedBatchId(created.id);
+      }
+      setIsDbConnected(true);
+    } catch (loadErr) {
+      console.warn('Lote guardado correctamente, pero falló la actualización del listado:', loadErr);
     }
   };
 
@@ -1741,11 +1754,11 @@ export const ImportBatchesView: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={inputItems.length === 0}
+                      disabled={inputItems.length === 0 || isSavingBatch}
                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center space-x-1.5 active:scale-95"
                     >
                       <CheckCircle className="w-4 h-4" />
-                      <span>Guardar Lote ({inputItems.length})</span>
+                      <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length})`}</span>
                     </button>
                   </div>
                 </div>
@@ -1853,16 +1866,18 @@ export const ImportBatchesView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold transition"
+                disabled={isSavingBatch}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-slate-200 rounded-lg text-xs font-semibold transition"
               >
                 ✏️ Modificar
               </button>
               <button
                 type="button"
                 onClick={processSaveBatch}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                disabled={isSavingBatch}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-600/20 active:scale-95 cursor-pointer"
               >
-                ✅ Confirmar y Guardar Lote
+                {isSavingBatch ? 'Guardando Lote...' : '✅ Confirmar y Guardar Lote'}
               </button>
             </div>
           </div>
