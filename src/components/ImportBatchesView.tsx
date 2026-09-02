@@ -467,10 +467,11 @@ export const ImportBatchesView: React.FC = () => {
       return;
     }
 
-    if (previewItems.length === 0) {
-      setBatchNetworkError(null);
-      setAddBatchStep(2);
-      setIsAddingProduct(true);
+    // 1. Unificar lectura de productos (previewItems o inputItems)
+    const itemsToSend = (previewItems && previewItems.length > 0) ? previewItems : inputItems;
+
+    if (itemsToSend.length === 0) {
+      alert('Por favor agrega al menos un producto al lote antes de guardar.');
       return;
     }
 
@@ -484,7 +485,13 @@ export const ImportBatchesView: React.FC = () => {
       exchangeRateGtq: parsedGtqRate,
       profitMarginPct: parsedMargin,
       costUpdateStrategy: costUpdateStrategy,
-      items: previewItems.map(i => ({ sku: i.sku, productName: i.productName, quantity: i.quantity, unitCostFob: i.unitCostFob, image: i.image }))
+      items: itemsToSend.map((i: any) => ({
+        sku: i.sku ? String(i.sku).trim().toUpperCase() : `PROD-${Math.floor(100 + Math.random() * 900)}`,
+        productName: i.productName ? String(i.productName).trim() : 'Producto Importado',
+        quantity: typeof i.quantity === 'number' ? i.quantity : (parseInt(i.quantity) || 1),
+        unitCostFob: typeof i.unitCostFob === 'number' ? i.unitCostFob : (parseFloat(i.unitCostFob) || 0),
+        image: i.image || ''
+      }))
     };
 
     let responseOk = false;
