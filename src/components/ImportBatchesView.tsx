@@ -1117,30 +1117,35 @@ export const ImportBatchesView: React.FC = () => {
             <form onSubmit={handleFormSubmit} className="p-3 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain touch-pan-y max-h-[calc(92vh-120px)]">
               
               {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
-              {batchNetworkError && (
-                <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
-                  <div className="flex items-center space-x-2.5">
-                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
-                    <span className="font-semibold">{batchNetworkError}</span>
+              {batchNetworkError && (() => {
+                const cleanErrorMessage = typeof batchNetworkError === 'string' && (batchNetworkError.includes('<') || batchNetworkError.toLowerCase().includes('doctype') || batchNetworkError.length > 100)
+                  ? "Sin conexión con el host. Tus datos están seguros aquí. Presiona 'Reintentar Guardar' cuando se restablezca la conexión."
+                  : batchNetworkError;
+                return (
+                  <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+                    <div className="flex items-center space-x-2.5">
+                      <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                      <span className="font-semibold">{cleanErrorMessage}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRetryOrSaveBatch();
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRetryOrSaveBatch();
+                      }}
+                      className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1 relative z-50 pointer-events-auto active:scale-95"
+                    >
+                      <span>{isSavingBatch ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRetryOrSaveBatch();
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRetryOrSaveBatch();
-                    }}
-                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1 relative z-50 pointer-events-auto active:scale-95"
-                  >
-                    <span>{isSavingBatch ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
-                  </button>
-                </div>
-              )}
+                );
+              })()}
               
               {/* PASO 1: Parámetros Generales del Lote */}
               {addBatchStep === 1 && (
