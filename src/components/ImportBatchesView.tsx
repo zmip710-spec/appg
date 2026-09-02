@@ -460,7 +460,7 @@ export const ImportBatchesView: React.FC = () => {
   };
 
   const handleRetryOrSaveBatch = async () => {
-    if (isSavingBatch) return;
+    try { alert("Disparando reintento..."); } catch {}
 
     if (!batchName.trim()) {
       alert('Por favor ingresa un nombre para el lote.');
@@ -1141,9 +1141,17 @@ export const ImportBatchesView: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={handleRetryOrSaveBatch}
-                    disabled={isSavingBatch}
-                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRetryOrSaveBatch();
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRetryOrSaveBatch();
+                    }}
+                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow shrink-0 cursor-pointer flex items-center space-x-1 relative z-50 pointer-events-auto active:scale-95"
                   >
                     <span>{isSavingBatch ? 'Guardando...' : '🔄 Reintentar Guardar'}</span>
                   </button>
