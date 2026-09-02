@@ -462,7 +462,6 @@ export const ImportBatchesView: React.FC = () => {
   const processSaveBatch = async () => {
     if (!batchName || previewItems.length === 0 || isSavingBatch) return;
     setIsSavingBatch(true);
-    setBatchNetworkError(null);
 
     const payload = {
       name: batchName,
@@ -474,42 +473,66 @@ export const ImportBatchesView: React.FC = () => {
       items: previewItems.map(i => ({ sku: i.sku, productName: i.productName, quantity: i.quantity, unitCostFob: i.unitCostFob, image: i.image }))
     };
 
+    let responseOk = false;
     let created: ImportBatch | null = null;
 
     try {
-      created = await createBatchApi(payload);
+      const response = await fetch(`${API_BASE_URL}/batches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok || response.status === 200 || response.status === 201) {
+        responseOk = true;
+        try {
+          created = await response.json();
+        } catch {
+          created = null;
+        }
+      } else {
+        const errorData = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
     } catch (err: any) {
-      console.error('Error de conexión o servidor al guardar lote:', err);
-      // DO NOT RESET FORM OR CLEAR STATE!
+      console.error('Excepción de red o servidor al enviar POST /api/batches:', err);
+      // ONLY trigger visual network error on real fetch/network catch block or non-200 HTTP code
       setShowConfirmModal(false);
       setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
       setIsSavingBatch(false);
       return;
     }
 
-    // HTTP 200/201 SUCCESS: Immediately clear error, draft, reset form and close modals
-    setBatchNetworkError(null);
-    try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
-    setBatchName('');
-    setCustomsTax('');
-    setShippingCost('');
-    setExchangeRateGtq('7.80');
-    setProfitMarginPct('15.0');
-    setInputItems([]);
-    setShowConfirmModal(false);
-    setShowAddModal(false);
-    setAddBatchStep(1);
-    setIsSavingBatch(false);
+    // ON HTTP 200 / 201 OK -> UNDER NO CONDITION FALL INTO ERROR BLOCK
+    if (responseOk) {
+      // 1. Reset visual error banner immediately
+      setBatchNetworkError(null);
 
-    // Refresh batch data in background safely
-    try {
-      await loadBatchesData();
-      if (created && created.id) {
-        setExpandedBatchId(created.id);
+      // 2. Remove draft from localStorage
+      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+
+      // 3. Reset form fields & close modal / reset steps
+      setBatchName('');
+      setCustomsTax('');
+      setShippingCost('');
+      setExchangeRateGtq('7.80');
+      setProfitMarginPct('15.0');
+      setInputItems([]);
+      setShowConfirmModal(false);
+      setShowAddModal(false);
+      setAddBatchStep(1);
+      setIsSavingBatch(false);
+
+      // 4. Safely refresh list in background
+      try {
+        await loadBatchesData();
+        if (created && created.id) {
+          setExpandedBatchId(created.id);
+        }
+        setIsDbConnected(true);
+      } catch (loadErr) {
+        console.warn('Lote guardado con éxito, recarga en segundo plano omitida:', loadErr);
       }
-      setIsDbConnected(true);
-    } catch (loadErr) {
-      console.warn('Lote guardado correctamente, pero falló la actualización del listado:', loadErr);
     }
   };
 
