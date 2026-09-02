@@ -7,12 +7,16 @@ import db from './database.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.join(__dirname, '../dist');
+const cwdDistPath = path.join(process.cwd(), 'dist');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir los archivos compilados de Vite (dist)
+app.use(express.static(cwdDistPath));
 app.use(express.static(distPath));
 
 // Health check endpoint for connection monitoring
@@ -722,10 +726,14 @@ app.delete('/api/inventory/:id', (req, res) => {
   });
 });
 
-// SPA Fallback Routing
+// SPA Fallback Routing (Asegurar que las rutas del frontend resuelvan index.html)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(distPath, 'index.html'));
+  res.sendFile(path.join(process.cwd(), 'dist', 'index.html'), (err) => {
+    if (err) {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
+  });
 });
 
 // Dedicated 404 JSON handler for unhandled /api requests
