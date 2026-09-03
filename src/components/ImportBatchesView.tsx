@@ -177,6 +177,7 @@ export const ImportBatchesView: React.FC = () => {
     } catch {}
     return '';
   });
+  const [shippingCurrency, setShippingCurrency] = useState<'GTQ' | 'USD'>('USD');
   const [exchangeRateGtq, setExchangeRateGtq] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('draft_form_batch');
@@ -295,7 +296,13 @@ export const ImportBatchesView: React.FC = () => {
     }
     return raw;
   }, [customsTax, customsCurrency, parsedGtqRate]);
-  const parsedShipping = useMemo(() => parseFloat(shippingCost) || 0, [shippingCost]);
+  const parsedShipping = useMemo(() => {
+    const raw = parseFloat(shippingCost) || 0;
+    if (shippingCurrency === 'GTQ') {
+      return parsedGtqRate > 0 ? raw / parsedGtqRate : raw;
+    }
+    return raw;
+  }, [shippingCost, shippingCurrency, parsedGtqRate]);
   const parsedMargin = useMemo(() => parseFloat(profitMarginPct) || 15.0, [profitMarginPct]);
   const totalLandedExpenses = useMemo(() => parsedTax + parsedShipping, [parsedTax, parsedShipping]);
 
@@ -1201,24 +1208,16 @@ export const ImportBatchesView: React.FC = () => {
                       />
                     </div>
 
+                    {/* IMPUESTO ADUANA */}
                     <div className="flex flex-col space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
-                          <label className="text-xs font-semibold text-slate-300">Impuesto Aduana</label>
-                          {computedCustomsTaxPct > 0 && (
-                            <span className="text-[10px] font-bold text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                              {computedCustomsTaxPct.toFixed(1)}% FOB
-                            </span>
-                          )}
-                        </div>
+                        <label className="text-xs font-semibold text-slate-300">Impuesto Aduana</label>
                         <div className="inline-flex p-0.5 bg-slate-900/90 border border-slate-700/60 rounded-lg text-[10px] font-bold">
                           <button
                             type="button"
                             onClick={() => setCustomsCurrency('USD')}
                             className={`px-2 py-0.5 rounded-md transition ${
-                              customsCurrency === 'USD'
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-slate-200'
+                              customsCurrency === 'USD' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
                             $ USD
@@ -1227,9 +1226,7 @@ export const ImportBatchesView: React.FC = () => {
                             type="button"
                             onClick={() => setCustomsCurrency('GTQ')}
                             className={`px-2 py-0.5 rounded-md transition ${
-                              customsCurrency === 'GTQ'
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-slate-200'
+                              customsCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
                             Q GTQ
@@ -1258,17 +1255,51 @@ export const ImportBatchesView: React.FC = () => {
                       </span>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Costo Flete (USD)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={shippingCost}
-                        onChange={(e) => setShippingCost(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                      />
+                    {/* COSTO FLETE */}
+                    <div className="flex flex-col space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">Costo Flete</label>
+                        <div className="inline-flex p-0.5 bg-slate-900/90 border border-slate-700/60 rounded-lg text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setShippingCurrency('USD')}
+                            className={`px-2 py-0.5 rounded-md transition ${
+                              shippingCurrency === 'USD' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            $ USD
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShippingCurrency('GTQ')}
+                            className={`px-2 py-0.5 rounded-md transition ${
+                              shippingCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            Q GTQ
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="relative rounded-xl shadow-inner">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">
+                          {shippingCurrency === 'GTQ' ? 'Q' : '$'}
+                        </span>
+                        <input
+                          type="number"
+                          step="any"
+                          value={shippingCost}
+                          onChange={(e) => setShippingCost(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition"
+                        />
+                      </div>
+
+                      <span className="text-[11px] text-slate-400 pl-1 font-mono">
+                        {shippingCurrency === 'GTQ'
+                          ? `≈ $${((Number(shippingCost) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
+                          : `≈ Q${((Number(shippingCost) || 0) * (Number(exchangeRateGtq) || 7.80)).toFixed(2)} GTQ`}
+                      </span>
                     </div>
 
                     <div>
