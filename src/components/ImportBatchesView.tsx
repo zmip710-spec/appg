@@ -239,6 +239,28 @@ export const ImportBatchesView: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [batchName, inputItems]);
 
+  // Bloqueo estricto de desplazamiento a nivel documento cuando los modales están abiertos
+  useEffect(() => {
+    const isModalOpen = Boolean(showAddModal || showConfirmModal || selectedBatchForFullDetails);
+    
+    if (isModalOpen) {
+      // Guarda el ancho del scrollbar para evitar saltos de layout en PC
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [showAddModal, showConfirmModal, selectedBatchForFullDetails]);
+
   const loadBatchesData = async () => {
     setIsLoading(true);
     try {
