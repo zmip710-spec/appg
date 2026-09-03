@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Package,
   Plus,
@@ -263,60 +263,66 @@ export const ImportBatchesView: React.FC = () => {
     loadBatchesData();
   }, []);
 
-  // Real-time prorating calculation preview
-  const parsedTax = parseFloat(customsTax) || 0;
-  const parsedShipping = parseFloat(shippingCost) || 0;
-  const parsedGtqRate = parseFloat(exchangeRateGtq) || 7.80;
-  const parsedMargin = parseFloat(profitMarginPct) || 15.0;
-  const totalLandedExpenses = parsedTax + parsedShipping;
+  // Real-time prorating calculation preview memoized with useMemo
+  const parsedTax = useMemo(() => parseFloat(customsTax) || 0, [customsTax]);
+  const parsedShipping = useMemo(() => parseFloat(shippingCost) || 0, [shippingCost]);
+  const parsedGtqRate = useMemo(() => parseFloat(exchangeRateGtq) || 7.80, [exchangeRateGtq]);
+  const parsedMargin = useMemo(() => parseFloat(profitMarginPct) || 15.0, [profitMarginPct]);
+  const totalLandedExpenses = useMemo(() => parsedTax + parsedShipping, [parsedTax, parsedShipping]);
 
-  let totalBatchFob = 0;
-
-  const previewItems = inputItems.map((item, idx) => {
-    const qty = Math.max(0, parseInt(item.quantity) || 0);
-    const cost = Math.max(0, parseFloat(item.unitCostFob) || 0);
-    const totalFob = qty * cost;
-    totalBatchFob += totalFob;
-    const sku = item.sku && item.sku.trim() !== '' ? item.sku.trim().toUpperCase() : `PROD-00${idx + 1}`;
-    const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto #${idx + 1}`;
-    return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalFob, image: item.image || '' };
-  });
+  const { previewItems, totalBatchFob } = useMemo(() => {
+    let totalFob = 0;
+    const items = inputItems.map((item, idx) => {
+      const qty = Math.max(0, parseInt(item.quantity) || 0);
+      const cost = Math.max(0, parseFloat(item.unitCostFob) || 0);
+      const totalItemFob = qty * cost;
+      totalFob += totalItemFob;
+      const sku = item.sku && item.sku.trim() !== '' ? item.sku.trim().toUpperCase() : `PROD-00${idx + 1}`;
+      const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto #${idx + 1}`;
+      return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalItemFob, image: item.image || '' };
+    });
+    return { previewItems: items, totalBatchFob: totalFob };
+  }, [inputItems]);
 
   // Calculate live customs percentage on total FOB (100% Automatic Read-Only)
-  const computedCustomsTaxPct = totalBatchFob > 0 ? (parsedTax / totalBatchFob) * 100 : 0;
+  const computedCustomsTaxPct = useMemo(() => (totalBatchFob > 0 ? (parsedTax / totalBatchFob) * 100 : 0), [totalBatchFob, parsedTax]);
 
-  const proratedPreview = previewItems.map(item => {
-    const sharePercentage = totalBatchFob > 0 ? (item.totalFobValue / totalBatchFob) * 100 : 0;
-    const allocatedCustoms = (sharePercentage / 100) * parsedTax;
-    const allocatedShipping = (sharePercentage / 100) * parsedShipping;
-    const allocatedExpenses = allocatedCustoms + allocatedShipping;
-    const unitTax = item.quantity > 0 ? allocatedExpenses / item.quantity : 0;
-    const finalUnitCost = item.unitCostFob + unitTax;
-    const finalSellingPrice = finalUnitCost * (1 + parsedMargin / 100);
+  const proratedPreview = useMemo(() => {
+    return previewItems.map(item => {
+      const sharePercentage = totalBatchFob > 0 ? (item.totalFobValue / totalBatchFob) * 100 : 0;
+      const allocatedCustoms = (sharePercentage / 100) * parsedTax;
+      const allocatedShipping = (sharePercentage / 100) * parsedShipping;
+      const allocatedExpenses = allocatedCustoms + allocatedShipping;
+      const unitTax = item.quantity > 0 ? allocatedExpenses / item.quantity : 0;
+      const finalUnitCost = item.unitCostFob + unitTax;
+      const finalSellingPrice = finalUnitCost * (1 + parsedMargin / 100);
 
-    return {
-      ...item,
-      sharePercentage: isNaN(sharePercentage) ? 0 : parseFloat(sharePercentage.toFixed(2)),
-      allocatedCustoms: isNaN(allocatedCustoms) ? 0 : parseFloat(allocatedCustoms.toFixed(2)),
-      allocatedShipping: isNaN(allocatedShipping) ? 0 : parseFloat(allocatedShipping.toFixed(2)),
-      allocatedTax: isNaN(allocatedExpenses) ? 0 : parseFloat(allocatedExpenses.toFixed(2)),
-      unitTax: isNaN(unitTax) ? 0 : parseFloat(unitTax.toFixed(2)),
-      finalUnitCost: isNaN(finalUnitCost) ? item.unitCostFob : parseFloat(finalUnitCost.toFixed(2)),
-      profitMarginPct: parsedMargin,
-      finalSellingPrice: isNaN(finalSellingPrice) ? finalUnitCost : parseFloat(finalSellingPrice.toFixed(2))
-    };
-  });
+      return {
+        ...item,
+        sharePercentage: isNaN(sharePercentage) ? 0 : parseFloat(sharePercentage.toFixed(2)),
+        allocatedCustoms: isNaN(allocatedCustoms) ? 0 : parseFloat(allocatedCustoms.toFixed(2)),
+        allocatedShipping: isNaN(allocatedShipping) ? 0 : parseFloat(allocatedShipping.toFixed(2)),
+        allocatedTax: isNaN(allocatedExpenses) ? 0 : parseFloat(allocatedExpenses.toFixed(2)),
+        unitTax: isNaN(unitTax) ? 0 : parseFloat(unitTax.toFixed(2)),
+        finalUnitCost: isNaN(finalUnitCost) ? item.unitCostFob : parseFloat(finalUnitCost.toFixed(2)),
+        profitMarginPct: parsedMargin,
+        finalSellingPrice: isNaN(finalSellingPrice) ? finalUnitCost : parseFloat(finalSellingPrice.toFixed(2))
+      };
+    });
+  }, [previewItems, totalBatchFob, parsedTax, parsedShipping, parsedMargin]);
 
   // Check if any item being imported currently has stock > 0 in inventory AND has a price variation
-  const detectedPriceVariations = proratedPreview.filter(item => {
-    const cleanSku = item.sku.trim().toUpperCase();
-    if (!cleanSku) return false;
-    const existingInStock = inventoryList.find(inv => inv.sku.toUpperCase() === cleanSku && inv.stock > 0);
-    if (!existingInStock) return false;
-    return Math.abs(item.finalUnitCost - existingInStock.unitCost) >= 0.01;
-  });
+  const detectedPriceVariations = useMemo(() => {
+    return proratedPreview.filter(item => {
+      const cleanSku = item.sku.trim().toUpperCase();
+      if (!cleanSku) return false;
+      const existingInStock = inventoryList.find(inv => inv.sku.toUpperCase() === cleanSku && inv.stock > 0);
+      if (!existingInStock) return false;
+      return Math.abs(item.finalUnitCost - existingInStock.unitCost) >= 0.01;
+    });
+  }, [proratedPreview, inventoryList]);
 
-  const hasStockWithPriceVariation = detectedPriceVariations.length > 0;
+  const hasStockWithPriceVariation = useMemo(() => detectedPriceVariations.length > 0, [detectedPriceVariations]);
 
   const handleAddItemRow = () => {
     setInputItems([...inputItems, { sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' }]);
@@ -551,11 +557,17 @@ export const ImportBatchesView: React.FC = () => {
     }
   };
 
-  // Metrics summary
-  const totalCustomsTaxPaid = batches.reduce((sum, b) => sum + (b.totalCustomsTax || 0), 0);
-  const totalShippingPaid = batches.reduce((sum, b) => sum + (b.totalShippingCost || 0), 0);
-  const totalImportExpenses = totalCustomsTaxPaid + totalShippingPaid;
-  const totalBatchesCount = batches.length;
+  // Metrics summary memoized
+  const { totalCustomsTaxPaid, totalShippingPaid, totalImportExpenses, totalBatchesCount } = useMemo(() => {
+    const taxPaid = batches.reduce((sum, b) => sum + (b.totalCustomsTax || 0), 0);
+    const shipPaid = batches.reduce((sum, b) => sum + (b.totalShippingCost || 0), 0);
+    return {
+      totalCustomsTaxPaid: taxPaid,
+      totalShippingPaid: shipPaid,
+      totalImportExpenses: taxPaid + shipPaid,
+      totalBatchesCount: batches.length
+    };
+  }, [batches]);
 
   if (isLoading) {
     return (
