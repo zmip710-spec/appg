@@ -178,6 +178,8 @@ export const AnalyticsView: React.FC = () => {
                     alertText = '🟡 Reordenar Pronto';
                   }
 
+                  const itemValue = prod.stock * prod.unitCost;
+
                   return (
                     <tr key={prod.id} className="hover:bg-slate-700/40 transition">
                       <td className="px-6 py-3">

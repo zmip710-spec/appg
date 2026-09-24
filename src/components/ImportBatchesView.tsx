@@ -31,6 +31,7 @@ const fallbackBatches: ImportBatch[] = [
     exchangeRateGtq: 7.80,
     profitMarginPct: 15.0,
     costUpdateStrategy: 'weighted',
+    status: 'Procesado',
     items: [
       {
         sku: 'asdasd',
@@ -198,7 +199,7 @@ export const ImportBatchesView: React.FC = () => {
     } catch {}
     return 'weighted';
   });
-  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; quantity: string; unitCostFob: string; image: string }>>(() => {
+  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; brand?: string; model?: string; quantity: string; unitCostFob: string; image: string }>>(() => {
     try {
       const saved = localStorage.getItem('draft_form_batch');
       if (saved) return JSON.parse(saved).inputItems || [];
@@ -462,7 +463,7 @@ export const ImportBatchesView: React.FC = () => {
       setInputItems([...inputItems, cleanItem]);
     }
 
-    setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+    setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
     setIsAddingProduct(false);
     setOpenSkuDropdownIndex(null);
   };
@@ -480,7 +481,7 @@ export const ImportBatchesView: React.FC = () => {
     setProfitMarginPct('15.0');
     setCostUpdateStrategy('weighted');
     setInputItems([]);
-    setSingleProductForm({ sku: '', productName: '', quantity: '1', unitCostFob: '', image: '' });
+    setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
     setIsAddingProduct(false);
     setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);

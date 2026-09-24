@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import {
   InventoryProduct,
@@ -338,7 +339,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
   const handleDeleteProduct = async (product: InventoryProduct) => {
     try {
-      await deleteInventoryApi(product.id, product.sku);
+      await deleteInventoryApi(product.id);
       setDeleteConfirmProduct(null);
       if (selectedDetailProduct?.id === product.id) setSelectedDetailProduct(null);
       await loadInventory();
@@ -353,7 +354,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     if (!stockManageProduct) return;
     const newStock = Math.max(0, stockManageProduct.stock + delta);
     try {
-      await updateStockApi(stockManageProduct.id, newStock, stockManageProduct.sku);
+      await updateStockApi(stockManageProduct.id, delta);
       setInventory(inventory.map((item) => (item.id === stockManageProduct.id ? { ...item, stock: newStock } : item)));
       setStockManageProduct({ ...stockManageProduct, stock: newStock });
       if (selectedDetailProduct?.id === stockManageProduct.id) {

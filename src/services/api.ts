@@ -353,6 +353,8 @@ export const fetchInventory = async (): Promise<InventoryProduct[]> => {
 export const createInventoryProductApi = async (data: {
   sku: string;
   name: string;
+  brand?: string;
+  model?: string;
   category?: string;
   stock: number;
   unitCost: number;

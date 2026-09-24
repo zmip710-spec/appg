@@ -12,6 +12,7 @@ import { ImportBatchesView } from './components/ImportBatchesView';
 import { InventoryView } from './components/InventoryView';
 import { LoginView } from './components/LoginView';
 import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, checkHealthApi, DashboardStats, User } from './services/api';
+import { exportViewPdf } from './utils/pdfExport';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
 export default function App() {
@@ -198,29 +199,23 @@ export default function App() {
         fetchUsers().catch(() => [])
       ]);
 
-      exportViewPdf({
-        activeTab,
-        user: currentUser,
-        stats: dashboardStats,
-        inventory: Array.isArray(invData) ? invData : [],
-        transactions: Array.isArray(trxsData) ? trxsData : [],
-        batches: Array.isArray(batchesData) ? batchesData : [],
-        users: Array.isArray(usersData) ? usersData : []
-      });
+      if (typeof exportViewPdf === 'function') {
+        exportViewPdf({
+          activeTab,
+          user: currentUser,
+          stats: dashboardStats,
+          inventory: Array.isArray(invData) ? invData : [],
+          transactions: Array.isArray(trxsData) ? trxsData : [],
+          batches: Array.isArray(batchesData) ? batchesData : [],
+          users: Array.isArray(usersData) ? usersData : []
+        });
+      }
 
       setToastMessage(`¡Reporte PDF de ${activeTab.toUpperCase()} listo para imprimir!`);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
-    } catch {
-      exportViewPdf({
-        activeTab,
-        user: currentUser,
-        stats: dashboardStats,
-        inventory: [],
-        transactions: [],
-        batches: [],
-        users: []
-      });
+    } catch (err) {
+      console.warn('Advertencia al generar exportación PDF:', err);
     }
   };
 
