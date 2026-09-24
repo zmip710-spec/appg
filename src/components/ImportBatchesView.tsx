@@ -209,6 +209,8 @@ export const ImportBatchesView: React.FC = () => {
 
   const [batchNetworkError, setBatchNetworkError] = useState<string | null>(null);
   const [isSavingBatch, setIsSavingBatch] = useState<boolean>(false);
+  const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
+  const [toastSuccessMessage, setToastSuccessMessage] = useState<string>('');
 
   // Autosave Debounced Effect (400ms)
   useEffect(() => {
@@ -514,13 +516,15 @@ export const ImportBatchesView: React.FC = () => {
         totalShippingCost: Number(shippingCost) || 0,
         exchangeRateGtq: Number(exchangeRateGtq) || 7.80,
         profitMarginPct: Number(profitMarginPct) || 15.0,
-        costUpdateStrategy: costUpdateStrategy || 'weighted_average',
+        costUpdateStrategy: costUpdateStrategy || 'weighted',
         items: itemsList.map((i: any) => ({
           sku: i.sku || '',
           productName: i.productName || 'Producto',
+          brand: i.brand || '',
+          model: i.model || '',
           quantity: Number(i.quantity) || 1,
           unitCostFob: Number(i.unitCostFob) || 0,
-          image: i.image || ''
+          image: ''
         }))
       };
 
@@ -536,6 +540,7 @@ export const ImportBatchesView: React.FC = () => {
       });
 
       if (!response.ok) {
+        setIsSavingBatch(false);
         setShowConfirmModal(false);
         let errorMsg = "El servidor aún se está reconectando. Espera unos segundos y vuelve a presionar Reintentar.";
         try {
@@ -553,27 +558,52 @@ export const ImportBatchesView: React.FC = () => {
         return;
       }
 
+      const createdBatch: ImportBatch | null = await response.json().catch(() => null);
+
+      // Cierre inmediato del modal y reseteo de banderas
+      setIsSavingBatch(false);
+      setShowConfirmModal(false);
+      setShowAddModal(false);
+      setAddBatchStep(1);
       setBatchNetworkError(null);
-      try { localStorage.removeItem(DRAFT_BATCH_KEY); } catch {}
+
+      // Limpieza de borrador y formulario
+      try {
+        localStorage.removeItem('draft_form_batch');
+        localStorage.removeItem(DRAFT_BATCH_KEY);
+      } catch {}
       setBatchName('');
       setCustomsTax('');
       setShippingCost('');
       setExchangeRateGtq('7.80');
       setProfitMarginPct('15.0');
       setInputItems([]);
-      setShowConfirmModal(false);
-      setShowAddModal(false);
-      setAddBatchStep(1);
-      await loadBatchesData();
+      setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
+
+      // Notificación Toast de confirmación
+      setToastSuccessMessage('Lote guardado con éxito');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 4000);
+
+      // Actualización inmediata del estado local para visualización sin F5
+      if (createdBatch && createdBatch.id) {
+        setBatches(prev => [createdBatch, ...prev.filter(b => b.id !== createdBatch.id)]);
+        setExpandedBatchId(createdBatch.id);
+      }
+
+      // Refresco en background desde la base de datos
+      loadBatchesData().catch(() => {});
     } catch (error: any) {
-      console.error('Error de conexión al guardar lote:', error);
+      console.error('Error al guardar lote:', error);
+      setIsSavingBatch(false);
       setShowConfirmModal(false);
-      setBatchNetworkError("Error de conexión con el host. Tus datos siguen guardados aquí. Presiona 'Reintentar' cuando se restablezca la conexión.");
+      setBatchNetworkError(error?.message || "Error al conectar con el servidor. Presiona 'Reintentar'.");
     } finally {
       setIsSavingBatch(false);
     }
   };
 
+  const handleSaveBatch = handleRetryOrSaveBatch;
   const processSaveBatch = handleRetryOrSaveBatch;
 
   const handleDeleteBatch = async (id: string) => {
@@ -2291,6 +2321,14 @@ export const ImportBatchesView: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification de Éxito al Guardar Lote */}
+      {showSuccessToast && (
+        <div className="fixed bottom-5 right-5 z-[200000] bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom duration-200">
+          <CheckCircle className="w-5 h-5 text-white shrink-0" />
+          <span className="text-xs sm:text-sm font-bold">{toastSuccessMessage}</span>
         </div>
       )}
     </div>

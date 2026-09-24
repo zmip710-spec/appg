@@ -414,32 +414,21 @@ app.post('/api/batches', (req, res) => {
         // Upsert secuencial de Inventario
         const processInventoryUpsert = (index) => {
           if (index >= finalItems.length) {
-            if (stmt && typeof stmt.finalize === 'function') {
-              stmt.finalize(() => {
-                res.json({
-                  id: batchId,
-                  name,
-                  importDate,
-                  totalCustomsTax: taxFloat,
-                  totalShippingCost: shippingFloat,
-                  exchangeRateGtq: gtqFloat,
-                  status: 'Procesado',
-                  items: finalItems
-                });
-              });
-            } else {
-              res.json({
-                id: batchId,
-                name,
-                importDate,
-                totalCustomsTax: taxFloat,
-                totalShippingCost: shippingFloat,
-                exchangeRateGtq: gtqFloat,
-                status: 'Procesado',
-                items: finalItems
-              });
-            }
-            return;
+            try {
+              if (stmt && typeof stmt.finalize === 'function') {
+                stmt.finalize(() => {});
+              }
+            } catch {}
+            return res.json({
+              id: batchId,
+              name,
+              importDate,
+              totalCustomsTax: taxFloat,
+              totalShippingCost: shippingFloat,
+              exchangeRateGtq: gtqFloat,
+              status: 'Procesado',
+              items: finalItems
+            });
           }
 
           const item = finalItems[index];

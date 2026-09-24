@@ -432,7 +432,9 @@ const db = {
               if (cb) cb(err);
             });
         },
-        finalize: function () {}
+        finalize: function (cb) {
+          if (typeof cb === 'function') cb(null);
+        }
       };
     } else {
       return sqliteDb.prepare(sql);
