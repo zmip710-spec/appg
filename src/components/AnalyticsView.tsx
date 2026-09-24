@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Layers, PackageCheck, AlertTriangle, ArrowRight, DollarSign, Database, Image as ImageIcon, BarChart3 } from 'lucide-react';
+import { TrendingUp, Layers, PackageCheck, AlertTriangle, ArrowRight, DollarSign, Database, Image as ImageIcon, BarChart3, Package } from 'lucide-react';
 import { fetchDashboardStatsApi, fetchInventory, fetchBatches, DashboardStats, InventoryProduct, ImportBatch } from '../services/api';
 
 export const AnalyticsView: React.FC = () => {
@@ -178,17 +178,12 @@ export const AnalyticsView: React.FC = () => {
                     alertText = '🟡 Reordenar Pronto';
                   }
 
-                  const itemValue = prod.stock * prod.unitCost;
-                  const defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80';
-
                   return (
                     <tr key={prod.id} className="hover:bg-slate-700/40 transition">
                       <td className="px-6 py-3">
-                        <img
-                          src={prod.image || defaultImg}
-                          alt={prod.name}
-                          className="w-9 h-9 rounded-lg object-cover border border-slate-700 shadow"
-                        />
+                        <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 shadow text-slate-400">
+                          <Package className="w-4 h-4 text-slate-400" />
+                        </div>
                       </td>
                       <td className="px-6 py-4 font-mono font-bold text-blue-400">{prod.sku}</td>
                       <td className="px-6 py-4 font-semibold text-white">{prod.name}</td>

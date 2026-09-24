@@ -64,8 +64,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? allNavItems.filter((item) => item.id === 'inventory' || item.id === 'sales')
     : allNavItems;
 
-  const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
-
   return (
     <>
       {/* DESKTOP SIDEBAR (Collapsible w-64 / w-20) */}

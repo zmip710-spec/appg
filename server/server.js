@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '2mb' }));
 
 const DEFAULT_USER = {
   id: 1,
@@ -69,13 +69,13 @@ app.get('/api/inventory', async (req, res) => {
 });
 
 app.post('/api/inventory', (req, res) => {
-  const { sku, name, brand, model, category, stock, unitCost, image } = req.body;
+  const { sku, name, brand, model, category, stock, unitCost } = req.body;
   const lastUpdated = new Date().toISOString();
-  const sql = `INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, '', ?)`;
   
-  db.run(sql, [sku, name, brand || '', model || '', category || 'General', stock || 0, unitCost || 0, image || '', lastUpdated], function(err) {
+  db.run(sql, [sku, name, brand || '', model || '', category || 'General', stock || 0, unitCost || 0, lastUpdated], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, sku, name, brand, model, category, stock, unitCost, image, lastUpdated });
+    res.json({ id: this.lastID, sku, name, brand, model, category, stock, unitCost, image: '', lastUpdated });
   });
 });
 

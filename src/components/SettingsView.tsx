@@ -56,7 +56,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
       const updated = await updateUserProfileApi(currentUser.id, {
         name: name.trim(),
         email: currentUser.email || `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}@empresa.com`,
-        avatar: currentUser.avatar || ''
+        avatar: ''
       });
 
       // 2. Update Password if provided

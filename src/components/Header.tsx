@@ -24,7 +24,6 @@ export const Header: React.FC<HeaderProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Usuario';
-  const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

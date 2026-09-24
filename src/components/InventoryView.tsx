@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Boxes,
+  Package,
   Plus,
   Trash2,
   Search,
@@ -8,7 +9,6 @@ import {
   DollarSign,
   Minus,
   Database,
-  Camera,
   Eye,
   TrendingUp,
   Tag,
@@ -27,12 +27,10 @@ import {
   createInventoryApi,
   deleteInventoryApi,
   updateStockApi,
-  updateProductImageApi,
   PriceHistoryEntry,
   fetchPriceHistoryApi,
   User
 } from '../services/api';
-import { ImagePicker } from './ImagePicker';
 
 interface InventoryViewProps {
   currentUser?: User | null;
@@ -64,7 +62,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
   const [selectedDetailProduct, setSelectedDetailProduct] = useState<InventoryProduct | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [historyProduct, setHistoryProduct] = useState<InventoryProduct | null>(null);
@@ -72,7 +69,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const [stockChangeAmount, setStockChangeAmount] = useState<string>('1');
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<InventoryProduct | null>(null);
   const [priceHistory, setPriceHistory] = useState<PriceHistoryEntry[]>([]);
-  const [editImageUrl, setEditImageUrl] = useState<string>('');
   const [selectedProductImportDetails, setSelectedProductImportDetails] = useState<{
     fobUsd: number;
     sharePercentage: number;
@@ -229,13 +225,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     } catch {}
     return '10.0';
   });
-  const [image, setImage] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem('draft_form_inventory');
-      if (saved) return JSON.parse(saved).image || '';
-    } catch {}
-    return '';
-  });
   const [errorMessage, setErrorMessage] = useState('');
   const [invNetworkError, setInvNetworkError] = useState<string | null>(null);
   const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
@@ -247,7 +236,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       try {
         if (hasContent) {
           localStorage.setItem('draft_form_inventory', JSON.stringify({
-            sku, name, brand, model, category, stock, unitCost, image
+            sku, name, brand, model, category, stock, unitCost
           }));
         } else {
           localStorage.removeItem('draft_form_inventory');
@@ -255,7 +244,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       } catch {}
     }, 400);
     return () => clearTimeout(timer);
-  }, [sku, name, brand, model, category, stock, unitCost, image]);
+  }, [sku, name, brand, model, category, stock, unitCost]);
 
   // Window beforeunload Accidental Navigation Protection
   useEffect(() => {
@@ -322,8 +311,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         model: model.trim(),
         category: category.trim() || 'General',
         stock: parseInt(stock, 10) || 0,
-        unitCost: parseFloat(unitCost) || 0.0,
-        image: image || ''
+        unitCost: parseFloat(unitCost) || 0.0
       });
     } catch (err: any) {
       console.error('Error de conexión o servidor al crear producto:', err);
@@ -376,24 +364,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     }
   };
 
-  const handleSaveProductImage = async () => {
-    if (!editingProduct) return;
-    try {
-      await updateProductImageApi(editingProduct.id, editImageUrl, editingProduct.sku);
-      setInventory(inventory.map((item) => (item.id === editingProduct.id ? { ...item, image: editImageUrl } : item)));
-      if (selectedDetailProduct?.id === editingProduct.id) {
-        setSelectedDetailProduct({ ...selectedDetailProduct, image: editImageUrl });
-      }
-      setEditingProduct(null);
-    } catch {
-      setInventory(inventory.map((item) => (item.id === editingProduct.id ? { ...item, image: editImageUrl } : item)));
-      if (selectedDetailProduct?.id === editingProduct.id) {
-        setSelectedDetailProduct({ ...selectedDetailProduct, image: editImageUrl });
-      }
-      setEditingProduct(null);
-    }
-  };
-
   const resetForm = () => {
     setSku('');
     setName('');
@@ -402,7 +372,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     setCategory('General');
     setStock('10');
     setUnitCost('10.0');
-    setImage('');
     setErrorMessage('');
     setInvNetworkError(null);
     try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
@@ -688,16 +657,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const unitCostGtq = item.unitCost * 7.80;
                   const sellingPriceUsd = item.unitCost * 1.15;
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
-                  const defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80';
-
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
                       <td className="px-5 py-3">
-                        <img
-                          src={item.image || defaultImg}
-                          alt={item.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
-                        />
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center border border-slate-200 dark:border-slate-600 shadow-sm text-slate-400">
+                          <Package className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                        </div>
                       </td>
                       <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{item.sku}</td>
                       <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
@@ -779,11 +744,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             {/* Sheet Header */}
             <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
               <div className="flex items-center space-x-3">
-                <img
-                  src={selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80'}
-                  alt={selectedDetailProduct.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-600 shadow-sm shrink-0"
-                />
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center border border-slate-200 dark:border-slate-600 shadow-sm shrink-0 text-slate-400">
+                  <Package className="w-6 h-6 text-blue-500" />
+                </div>
                 {(() => {
                   const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
                   const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
@@ -977,19 +940,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                     </button>
                   )}
 
-                  {!isVendedor && (
-                    <button
-                      onClick={() => {
-                        setEditingProduct(selectedDetailProduct);
-                        setEditImageUrl(selectedDetailProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80');
-                      }}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4 shrink-0" />
-                      <span>Editar Foto / Datos</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
                     className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer ${isVendedor ? 'col-span-2' : ''}`}
@@ -1146,13 +1096,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 />
               </div>
 
-              {/* Photo Upload / Camera Capture Component */}
-              <ImagePicker
-                value={image}
-                onChange={(img) => setImage(img)}
-                label="Imagen del Producto (Subir o Tomar foto)"
-              />
-
               <div className="flex justify-end space-x-2 pt-3 border-t border-slate-700">
                 <button
                   type="button"
@@ -1228,44 +1171,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-xl transition"
               >
                 Listo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Edit Photo / Image */}
-      {editingProduct && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-6 shadow-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-700 pb-3">
-              <div>
-                <h3 className="font-bold text-white text-base">Actualizar Foto del Producto</h3>
-                <span className="text-xs text-blue-400 font-mono font-bold">{editingProduct.sku}</span>
-              </div>
-              <button onClick={() => setEditingProduct(null)} className="text-slate-400 hover:text-white text-base font-bold">✕</button>
-            </div>
-
-            <ImagePicker
-              value={editImageUrl}
-              onChange={(img) => setEditImageUrl(img)}
-              label="Selecciona una nueva foto o captura desde la cámara"
-            />
-
-            <div className="flex justify-end space-x-2 pt-3 border-t border-slate-700">
-              <button
-                type="button"
-                onClick={() => setEditingProduct(null)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveProductImage}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-blue-600/20"
-              >
-                Actualizar Foto
               </button>
             </div>
           </div>
