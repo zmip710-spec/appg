@@ -1,8 +1,8 @@
 @echo off
 title AppG Launcher
-echo ===========================================
-echo         INICIANDO SISTEMA APPG
-echo ===========================================
+echo ===================================================
+echo           INICIANDO SISTEMA APPG
+echo ===================================================
 echo.
 
 cd /d "%~dp0"
@@ -21,12 +21,11 @@ echo Esperando que el servidor responda...
 timeout /t 4 /nobreak >nul
 
 echo [3/3] Iniciando Tunel Ngrok (Puerto 4000)...
-start /min "AppG - Ngrok" cmd /k ""%USERPROFILE%\ngrok.exe" http --domain=baking-wildfowl-opt.ngrok-free.dev 4000"
-
+start /min "AppG - Ngrok" cmd /k ""C:\Program Files\ngrok\ngrok.exe" http --domain=baking-wildfowl-opt.ngrok-free.dev 4000"
 echo.
-echo ===========================================
+echo ===================================================
 echo  AppG iniciado correctamente.
 echo  URL: https://baking-wildfowl-opt.ngrok-free.dev
-echo ===========================================
+echo ===================================================
 timeout /t 4 >nul
 exit
