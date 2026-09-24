@@ -148,7 +148,12 @@ export const verifySessionApi = async (id?: string | number, username?: string):
     }
 
     const data = await response.json().catch(() => ({ valid: true }));
-    return data;
+    const isValid = data.valid !== undefined ? Boolean(data.valid) : (data.success !== undefined ? Boolean(data.success) : true);
+    return {
+      valid: isValid,
+      user: data.user,
+      error: data.error
+    };
   } catch {
     return { valid: true };
   }

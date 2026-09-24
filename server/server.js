@@ -49,7 +49,7 @@ function safeQuery(query, params = []) {
 // ==========================================
 
 app.post('/api/auth/verify', (req, res) => {
-  res.json({ success: true, user: DEFAULT_USER, token: 'local-token', ...DEFAULT_USER });
+  res.json({ valid: true, success: true, user: DEFAULT_USER, token: 'local-token', ...DEFAULT_USER });
 });
 
 app.post('/api/auth/login', (req, res) => {

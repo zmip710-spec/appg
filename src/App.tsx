@@ -15,15 +15,44 @@ import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches
 import { exportViewPdf } from './utils/pdfExport';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
-export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem('nexus_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
+// Helpers para persistencia de sesión segura y resiliente
+const getUserFromStorage = (): User | null => {
+  try {
+    const saved = localStorage.getItem('nexus_user') ||
+                  localStorage.getItem('appg_user') ||
+                  sessionStorage.getItem('nexus_user') ||
+                  sessionStorage.getItem('appg_user');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
     }
-  });
+  } catch {}
+  return null;
+};
+
+const saveUserToStorage = (user: User) => {
+  try {
+    const serialized = JSON.stringify(user);
+    localStorage.setItem('nexus_user', serialized);
+    localStorage.setItem('appg_user', serialized);
+    sessionStorage.setItem('nexus_user', serialized);
+    sessionStorage.setItem('appg_user', serialized);
+  } catch {}
+};
+
+const clearUserFromStorage = () => {
+  try {
+    localStorage.removeItem('nexus_user');
+    localStorage.removeItem('appg_user');
+    sessionStorage.removeItem('nexus_user');
+    sessionStorage.removeItem('appg_user');
+  } catch {}
+};
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getUserFromStorage());
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     try {
@@ -107,20 +136,50 @@ export default function App() {
     };
   });
 
-  // Strict Security Session Guard: Check if profile exists and is active in SQLite
+  // Preservar y rehidratar sesión activa al recargar, cambiar de pestaña o reactivar foco
+  useEffect(() => {
+    if (!currentUser) {
+      const stored = getUserFromStorage();
+      if (stored) {
+        setCurrentUser(stored);
+      }
+    }
+
+    const handleWindowActive = () => {
+      const stored = getUserFromStorage();
+      if (stored) {
+        setCurrentUser((prev) => prev || stored);
+      }
+    };
+
+    window.addEventListener('focus', handleWindowActive);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleWindowActive();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleWindowActive);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Verificación no intrusiva de perfil (NUNCA fuerza logout ni borra sesión por pérdida de foco)
   useEffect(() => {
     const checkSecuritySession = async () => {
       if (!currentUser) return;
-      const res = await verifySessionApi(currentUser.id, currentUser.email || currentUser.name);
-      if (!res.valid) {
-        localStorage.removeItem('nexus_user');
-        setCurrentUser(null);
-        setShowToast(false);
-      } else if (res.user) {
-        if (JSON.stringify(res.user) !== JSON.stringify(currentUser)) {
-          setCurrentUser(res.user);
-          localStorage.setItem('nexus_user', JSON.stringify(res.user));
+      try {
+        const res = await verifySessionApi(currentUser.id, currentUser.email || currentUser.name);
+        if (res && res.user) {
+          if (JSON.stringify(res.user) !== JSON.stringify(currentUser)) {
+            setCurrentUser(res.user);
+            saveUserToStorage(res.user);
+          }
         }
+      } catch {
+        // En caso de latencia o corte momentáneo, mantener la sesión local activa
       }
     };
 
@@ -171,23 +230,17 @@ export default function App() {
     if (user.role === 'Vendedor') {
       setActiveTab('inventory');
     }
-    try {
-      localStorage.setItem('nexus_user', JSON.stringify(user));
-    } catch {}
+    saveUserToStorage(user);
   };
 
   const handleUpdateUser = (updatedUser: User) => {
     setCurrentUser(updatedUser);
-    try {
-      localStorage.setItem('nexus_user', JSON.stringify(updatedUser));
-    } catch {}
+    saveUserToStorage(updatedUser);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    try {
-      localStorage.removeItem('nexus_user');
-    } catch {}
+    clearUserFromStorage();
   };
 
   const handleExportPDF = async () => {
