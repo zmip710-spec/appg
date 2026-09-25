@@ -1123,23 +1123,14 @@ export const ImportBatchesView: React.FC = () => {
                               onClick={() => setExpandedMobileItemKeys(prev => ({ ...prev, [itemKey]: !prev[itemKey] }))}
                               className="p-3 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 transition"
                             >
-                              {/* Izquierda: Foto + Título + SKU & Uds */}
-                              <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-                                {item.image ? (
-                                  <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800" />
-                                ) : (
-                                  <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
-                                    <ImageIcon className="w-4 h-4" />
-                                  </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-bold text-slate-900 dark:text-white text-xs leading-snug break-words">{displayTitle}</h4>
-                                  <div className="flex items-center space-x-1.5 mt-0.5">
-                                    <span className="font-mono text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-500/20">
-                                      {itemSku}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">• {item.quantity} uds</span>
-                                  </div>
+                              {/* Izquierda: Título + SKU & Uds */}
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-bold text-slate-900 dark:text-white text-xs leading-snug break-words">{displayTitle}</h4>
+                                <div className="flex items-center space-x-1.5 mt-0.5">
+                                  <span className="font-mono text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-500/20">
+                                    {itemSku}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">• {item.quantity} uds</span>
                                 </div>
                               </div>
 
@@ -1300,24 +1291,19 @@ export const ImportBatchesView: React.FC = () => {
 
                               return (
                                 <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
-                                  {/* Producto (Foto, SKU, Marca/Modelo - Nombre, Subtitulo, Cantidad) */}
+                                  {/* Producto (SKU, Unidades, Nombre, Subtítulo Marca/Modelo) */}
                                   <td className="py-3 px-4">
-                                    <div className="flex items-center space-x-3 min-w-[260px]">
-                                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
-                                        <Package className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                                    <div className="min-w-[240px]">
+                                      <div className="flex items-center space-x-2 mb-0.5">
+                                        <span className="font-mono text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 inline-block">
+                                          {item.sku || `PROD-00${idx+1}`}
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{item.quantity} unidades</span>
                                       </div>
-                                      <div className="min-w-0">
-                                        <div className="flex items-center space-x-2 mb-0.5">
-                                          <span className="font-mono text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 inline-block">
-                                            {item.sku || `PROD-00${idx+1}`}
-                                          </span>
-                                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{item.quantity} unidades</span>
-                                        </div>
-                                        <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate" title={displayTitle}>{displayTitle}</h4>
-                                        {metadataSubtitle && (
-                                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
-                                        )}
-                                      </div>
+                                      <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate" title={displayTitle}>{displayTitle}</h4>
+                                      {metadataSubtitle && (
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
+                                      )}
                                     </div>
                                   </td>
 
@@ -2618,33 +2604,26 @@ export const ImportBatchesView: React.FC = () => {
                             <div key={idx} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-md">
                               {/* Product Header */}
                               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                                <div className="flex items-center space-x-3 min-w-0">
-                                  {item.image ? (
-                                    <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-xs shrink-0">📦</div>
-                                  )}
-                                  <div className="min-w-0">
-                                    <div className="flex items-center flex-wrap gap-1.5 mb-1">
-                                      <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                                        {item.sku}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                                    <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                      {item.sku}
+                                    </span>
+                                    {cleanBrand && (
+                                      <span className="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                        {cleanBrand}
                                       </span>
-                                      {cleanBrand && (
-                                        <span className="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                                          {cleanBrand}
-                                        </span>
-                                      )}
-                                      <span className="text-[10px] font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                                        {item.sharePct.toFixed(1)}% del lote
-                                      </span>
-                                    </div>
-                                    <h4 className="font-bold text-white text-xs sm:text-sm truncate leading-snug">{displayTitle}</h4>
-                                    {metadataSubtitle && (
-                                      <span className="text-[10px] text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
                                     )}
+                                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                      {item.sharePct.toFixed(1)}% del lote
+                                    </span>
                                   </div>
+                                  <h4 className="font-bold text-white text-xs sm:text-sm truncate leading-snug">{displayTitle}</h4>
+                                  {metadataSubtitle && (
+                                    <span className="text-[10px] text-slate-400 block truncate mt-0.5">{metadataSubtitle}</span>
+                                  )}
                                 </div>
-                                <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-800 text-slate-200 border border-slate-700 shrink-0">
+                                <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-800 text-slate-200 border border-slate-700 shrink-0 ml-3">
                                   {item.qty} uds
                                 </span>
                               </div>
