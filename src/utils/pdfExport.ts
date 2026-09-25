@@ -479,5 +479,5 @@ export const exportViewPdf = ({ activeTab, user, stats, inventory, transactions,
   printWindow.document.close();
 };
 
-export { exportSingleBatchPdf, exportInventoryPdf } from './pdfGenerator';
+export { exportSingleBatchPdf, exportInventoryPdf, generateBatchReportPDF } from './pdfGenerator';
 

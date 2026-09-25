@@ -134,14 +134,14 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
     const cardH = 17;
     const gap = 2.6;
 
-    // KPI 1: FOB Total
+    // KPI 1: Compra Fábrica Total
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(203, 213, 225);
     doc.roundedRect(14, cardY, cardW, cardH, 1.5, 1.5, 'FD');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(100, 116, 139);
-    doc.text('TOTAL FOB (COMPRA)', 17, cardY + 4.5);
+    doc.text('TOTAL COMPRA FÁBRICA', 17, cardY + 4.5);
     doc.setFontSize(9.5);
     doc.setTextColor(15, 23, 42);
     doc.text(`$${grandTotalFob.toFixed(2)} USD`, 17, cardY + 10);
@@ -166,14 +166,14 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
     doc.setTextColor(71, 85, 105);
     doc.text(`Aduana: $${totalCustomsTax.toFixed(2)} | Flete: $${totalShippingCost.toFixed(2)}`, c2X + 3, cardY + 14.5);
 
-    // KPI 3: Costo Landed Total
+    // KPI 3: Costo Puesto Total
     const c3X = c2X + cardW + gap;
     doc.setFillColor(248, 250, 252);
     doc.roundedRect(c3X, cardY, cardW, cardH, 1.5, 1.5, 'FD');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(100, 116, 139);
-    doc.text('COSTO LANDED TOTAL', c3X + 3, cardY + 4.5);
+    doc.text('COSTO TOTAL PUESTO', c3X + 3, cardY + 4.5);
     doc.setFontSize(9.5);
     doc.setTextColor(15, 23, 42);
     doc.text(`$${grandTotalLanded.toFixed(2)} USD`, c3X + 3, cardY + 10);
@@ -213,7 +213,10 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
 
     autoTable(doc, {
       startY: yPosition,
-      head: [['SKU', 'Producto', 'Cant.', 'FOB (USD)', 'Landed (USD)', 'Landed (GTQ)', 'Venta Sugerida (GTQ)']],
+      theme: 'grid',
+      tableLineColor: [203, 213, 225], // slate-300
+      tableLineWidth: 0.5,
+      head: [['SKU', 'Producto', 'Cant.', 'Costo Fábrica (USD)', 'Costo Puesto (USD)', 'Costo Puesto (Q)', 'Precio Venta Sugerido (Q)']],
       body: itemsDetailed.map(it => [
         String(it.sku || ''),
         String(it.name || ''),
@@ -224,16 +227,29 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
         `Q${Number(it.sale_price_gtq || 0).toFixed(2)}`
       ]),
       margin: { top: 18, bottom: 18, left: 14, right: 14 },
-      styles: { fontSize: 7.5, cellPadding: 2, overflow: 'linebreak' },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      styles: {
+        font: 'helvetica',
+        fontSize: 7.5,
+        cellPadding: 3,
+        valign: 'middle',
+        lineColor: [226, 232, 240], // slate-200
+        lineWidth: 0.3
+      },
+      headStyles: {
+        fillColor: [15, 23, 42], // slate-900
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center',
+        valign: 'middle'
+      },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 14, halign: 'center' },
-        3: { cellWidth: 20, halign: 'right' },
-        4: { cellWidth: 22, halign: 'right' },
-        5: { cellWidth: 22, halign: 'right' },
-        6: { cellWidth: 26, halign: 'right', fontStyle: 'bold', textColor: [21, 128, 61] }
+        0: { halign: 'center', cellWidth: 20 }, // SKU
+        1: { halign: 'left', cellWidth: 'auto' }, // Producto
+        2: { halign: 'center', cellWidth: 12 }, // Cant.
+        3: { halign: 'center', cellWidth: 22 }, // Costo Fábrica (USD)
+        4: { halign: 'center', cellWidth: 22 }, // Costo Puesto (USD)
+        5: { halign: 'center', cellWidth: 22 }, // Costo Puesto (Q)
+        6: { halign: 'center', cellWidth: 25, fontStyle: 'bold', textColor: [22, 101, 52] } // Precio Venta Sugerido (Q)
       },
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
@@ -387,4 +403,6 @@ export const exportInventoryPdf = (inventory: InventoryProduct[], user?: User | 
     alert('Ocurrió un error al generar el PDF de inventario. Por favor intenta de nuevo.');
   }
 };
+
+export const generateBatchReportPDF = exportSingleBatchPdf;
 
