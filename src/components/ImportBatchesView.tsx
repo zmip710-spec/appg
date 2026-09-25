@@ -236,16 +236,7 @@ export const ImportBatchesView: React.FC = () => {
       return [];
     }
   });
-  const [expandedBatchId, setExpandedBatchId] = useState<string | null>(() => {
-    try {
-      const cached = localStorage.getItem('appg_cache_batches');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0].id;
-      }
-    } catch {}
-    return null;
-  });
+  const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
   const [expandedMobileItemKeys, setExpandedMobileItemKeys] = useState<Record<string, boolean>>({});
   const [selectedBatchForFullDetails, setSelectedBatchForFullDetails] = useState<ImportBatch | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -435,7 +426,6 @@ export const ImportBatchesView: React.FC = () => {
         const sorted = [...data].sort(compareBatchesDesc);
         setBatches(sorted);
         setIsDbConnected(true);
-        if (sorted.length > 0) setExpandedBatchId(sorted[0].id);
       }
       if (Array.isArray(invData)) {
         setInventoryList(invData);
