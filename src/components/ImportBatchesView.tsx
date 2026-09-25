@@ -752,7 +752,7 @@ export const ImportBatchesView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4 min-h-[500px]">
+    <div className="space-y-4 pb-24 sm:pb-32 min-h-[500px]">
       {/* Compact Minimal Header */}
       <div className="flex items-center justify-between py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Lotes de Importación</h2>

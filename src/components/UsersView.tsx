@@ -9,7 +9,7 @@ export const UsersView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', password: '', role: 'Desarrollador' });
+  const [newUser, setNewUser] = useState({ name: '', password: '', role: 'Vendedor' });
   const [isDbConnected, setIsDbConnected] = useState(false);
 
   const loadDataFromDb = async () => {
@@ -80,7 +80,7 @@ export const UsersView: React.FC = () => {
       setUsers([localCreated, ...users]);
     }
 
-    setNewUser({ name: '', password: '', role: 'Desarrollador' });
+    setNewUser({ name: '', password: '', role: 'Vendedor' });
     setShowAddModal(false);
   };
 
@@ -115,13 +115,13 @@ export const UsersView: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            setNewUser({ name: '', password: '', role: 'Desarrollador' });
+            setNewUser({ name: '', password: '', role: 'Vendedor' });
             setShowAddModal(true);
           }}
           className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-md cursor-pointer active:scale-95 shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          <span>+ Agregar Usuario</span>
+          <Plus size={16} />
+          <span>Agregar Usuario</span>
         </button>
       </div>
 
@@ -147,10 +147,7 @@ export const UsersView: React.FC = () => {
           >
             <option value="all">Todos los Roles</option>
             <option value="Administrador">Administrador</option>
-            <option value="Desarrollador">Desarrollador</option>
             <option value="Vendedor">Vendedor</option>
-            <option value="Diseñadora UI/UX">Diseñadora UI/UX</option>
-            <option value="Marketing Manager">Marketing Manager</option>
           </select>
         </div>
       </div>
@@ -159,7 +156,7 @@ export const UsersView: React.FC = () => {
       <div className="md:hidden space-y-2.5">
         {filteredUsers.length === 0 ? (
           <div className="bg-white dark:bg-slate-900/60 p-5 rounded-xl border border-slate-200 dark:border-slate-700 text-center text-slate-500 dark:text-slate-400 text-xs">
-            No se encontraron usuarios. Haz clic en "+ Agregar Usuario" para crear uno.
+            No se encontraron usuarios. Haz clic en "Agregar Usuario" para crear uno.
           </div>
         ) : (
           filteredUsers.map((u) => (
@@ -222,7 +219,7 @@ export const UsersView: React.FC = () => {
             {filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-5 py-6 text-center text-slate-500 dark:text-slate-400">
-                  No se encontraron usuarios. Haz clic en "+ Agregar Usuario" para crear uno.
+                  No se encontraron usuarios. Haz clic en "Agregar Usuario" para crear uno.
                 </td>
               </tr>
             ) : (
@@ -316,11 +313,8 @@ export const UsersView: React.FC = () => {
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
                 >
-                  <option value="Desarrollador">Desarrollador</option>
                   <option value="Administrador">Administrador</option>
                   <option value="Vendedor">Vendedor</option>
-                  <option value="Diseñadora UI/UX">Diseñadora UI/UX</option>
-                  <option value="Marketing Manager">Marketing Manager</option>
                 </select>
               </div>
 

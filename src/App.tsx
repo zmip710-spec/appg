@@ -310,7 +310,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="p-4 sm:p-6 pb-24 md:pb-6 space-y-6 min-h-[calc(100vh-80px)]">
+        <div className="p-4 sm:p-6 pb-32 md:pb-12 space-y-6 min-h-[calc(100vh-80px)]">
           
           {/* TAB 1: DASHBOARD DINÁMICO DESDE SQLITE */}
           {activeTab === 'dashboard' && (

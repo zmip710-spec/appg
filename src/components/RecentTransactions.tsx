@@ -331,8 +331,8 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
             }}
             className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-600/20 shrink-0 w-full sm:w-auto active:scale-95"
           >
-            <Plus className="w-4 h-4 shrink-0" />
-            <span>+ Registrar Nueva Venta</span>
+            <Plus size={16} className="shrink-0" />
+            <span>Registrar Nueva Venta</span>
           </button>
         </div>
       </div>
@@ -346,7 +346,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
           </div>
         ) : filteredData.length === 0 ? (
           <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
-            No se encontraron ventas. Haz clic en "+ Registrar Nueva Venta" para realizar una.
+            No se encontraron ventas. Haz clic en "Registrar Nueva Venta" para realizar una.
           </div>
         ) : (
           filteredData.map((item) => {
@@ -412,7 +412,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
             {filteredData.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                  No se encontraron ventas registradas. Haz clic en "+ Registrar Nueva Venta" para realizar una.
+                  No se encontraron ventas registradas. Haz clic en "Registrar Nueva Venta" para realizar una.
                 </td>
               </tr>
             ) : (
