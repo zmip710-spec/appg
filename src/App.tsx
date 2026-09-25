@@ -291,7 +291,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full min-h-screen overflow-x-hidden">
         <Header
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -310,7 +310,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="p-4 sm:p-6 pb-32 md:pb-12 space-y-6 min-h-[calc(100vh-80px)]">
+        <div className="w-full min-h-screen px-4 py-4 md:px-6 md:py-6 pb-32 md:pb-12 space-y-6 overflow-x-hidden">
           
           {/* TAB 1: DASHBOARD DINÁMICO DESDE SQLITE */}
           {activeTab === 'dashboard' && (

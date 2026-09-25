@@ -711,23 +711,23 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           <h3 className="font-bold text-slate-900 dark:text-white text-base">Catálogo de Productos ({filteredInventory.length})</h3>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-left text-slate-700 dark:text-slate-300">
+        <div className="w-full overflow-x-hidden">
+          <table className="w-full table-fixed border-collapse text-left">
             <thead className="bg-slate-50 dark:bg-slate-900/80 text-[11px] uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="w-[10%] px-2.5 py-2.5">SKU</th>
-                <th className="w-[38%] px-2.5 py-2.5">Producto</th>
-                <th className="w-[12%] px-2.5 py-2.5">Categoría</th>
-                <th className="w-[8%] px-2.5 py-2.5">Stock</th>
-                <th className="w-[12%] px-2.5 py-2.5">Costo Landed</th>
-                <th className="w-[12%] px-2.5 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Precio Venta (+15%)</th>
-                <th className="w-[8%] px-2.5 py-2.5 text-right">Acciones</th>
+                <th className="w-[12%] px-2 py-2">SKU</th>
+                <th className="w-[36%] px-2 py-2">Producto</th>
+                <th className="w-[12%] px-2 py-2">Categoría</th>
+                <th className="w-[8%] px-2 py-2 text-center">Stock</th>
+                <th className="w-[14%] px-2 py-2 text-right">Costo Landed</th>
+                <th className="w-[12%] px-2 py-2 bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-right">Precio Venta (+15%)</th>
+                <th className="w-[6%] px-2 py-2 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700 text-xs">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="px-2 py-8 text-center text-slate-500 dark:text-slate-400">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
@@ -738,10 +738,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
-                      <td className="px-2.5 py-2.5 font-mono font-bold text-blue-600 dark:text-blue-400 text-xs truncate" title={String(item.sku ?? '')}>
+                      <td className="px-2 py-2 font-mono font-bold text-blue-600 dark:text-blue-400 text-xs truncate" title={String(item.sku ?? '')}>
                         {String(item.sku ?? '')}
                       </td>
-                      <td className="px-2.5 py-2.5 font-semibold text-slate-900 dark:text-white">
+                      <td className="px-2 py-2 font-semibold text-slate-900 dark:text-white">
                         {(() => {
                           const bStr = item.brand != null ? String(item.brand).trim() : '';
                           const mStr = item.model != null ? String(item.model).trim() : '';
@@ -761,30 +761,30 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                           );
                         })()}
                       </td>
-                      <td className="px-2.5 py-2.5">
+                      <td className="px-2 py-2">
                         <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] rounded-md font-medium border border-slate-200 dark:border-slate-600 inline-block truncate max-w-full">
                           {item.category || 'General'}
                         </span>
                       </td>
-                      <td className="px-2.5 py-2.5 text-slate-700 dark:text-slate-200 font-medium text-xs whitespace-nowrap">
+                      <td className="px-2 py-2 text-center text-slate-700 dark:text-slate-200 font-medium text-xs whitespace-nowrap">
                         {item.stock === 0 ? (
                           <span className="text-slate-400 dark:text-slate-500 font-normal">0 uds</span>
                         ) : (
                           <span>{item.stock} uds</span>
                         )}
                       </td>
-                      <td className="px-2.5 py-2.5 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                      <td className="px-2 py-2 text-right font-medium text-slate-900 dark:text-white whitespace-nowrap">
                         <span className="block text-xs font-mono font-bold">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                         <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {unitCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </td>
-                      <td className="px-2.5 py-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-l border-emerald-200 dark:border-emerald-500/20 whitespace-nowrap">
+                      <td className="px-2 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/20 border-l border-emerald-200 dark:border-emerald-500/20 whitespace-nowrap">
                         <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block">Q {sellingPriceGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                         <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">${sellingPriceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                       </td>
-                      <td className="px-2.5 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setSelectedDetailProduct(item)}
-                          className="px-2.5 py-1 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
+                          className="px-2 py-1 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
                         >
                           Ver Detalle
                         </button>
@@ -828,7 +828,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       {/* Vista Pantalla Completa Detalle de SKU y Estructura de Costos */}
       {selectedDetailProduct && (
         <div className="fixed inset-0 z-50 w-full h-full bg-[#0b1329] p-4 md:p-8 overflow-y-auto flex flex-col text-slate-100 animate-in fade-in duration-150">
-          <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col space-y-5">
+          <div className="w-full flex-1 flex flex-col space-y-5">
             {/* Header */}
             <div className="flex justify-between items-start border-b border-slate-700/80 pb-4 shrink-0 gap-4">
               <div className="flex items-start space-x-3 min-w-0 flex-1">

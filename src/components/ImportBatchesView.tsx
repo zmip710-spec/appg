@@ -1230,17 +1230,17 @@ export const ImportBatchesView: React.FC = () => {
 
                     {/* DESKTOP TABLE VIEW (Visible only on md and larger) */}
                     <div className="hidden md:block bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
+                      <div className="w-full overflow-x-hidden">
+                        <table className="w-full table-fixed border-collapse text-left text-xs">
                           <thead className="bg-slate-50 dark:bg-slate-900/90 text-[11px] uppercase font-bold text-slate-700 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                             <tr>
-                              <th className="py-3 px-4 font-semibold">Producto</th>
-                              <th className="py-3 px-3 font-semibold text-right">Precio Inicial (FOB)</th>
-                              <th className="py-3 px-3 font-semibold text-center text-blue-700 dark:text-blue-400">% Part. Lote</th>
-                              <th className="py-3 px-3 font-semibold text-right text-amber-700 dark:text-amber-400">+ Impuesto & Flete</th>
-                              <th className="py-3 px-3 font-semibold text-right text-indigo-700 dark:text-indigo-400">% Recargo Impuesto</th>
-                              <th className="py-3 px-3 font-semibold text-right text-blue-700 dark:text-blue-400">= Costo Landed</th>
-                              <th className="py-3 px-4 font-semibold text-right text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
+                              <th className="w-[30%] px-2 py-2 font-semibold">Producto</th>
+                              <th className="w-[11%] px-2 py-2 font-semibold text-right">Precio Inicial (FOB)</th>
+                              <th className="w-[9%] px-2 py-2 font-semibold text-center text-blue-700 dark:text-blue-400">% Part. Lote</th>
+                              <th className="w-[12%] px-2 py-2 font-semibold text-right text-amber-700 dark:text-amber-400">+ Impuesto & Flete</th>
+                              <th className="w-[11%] px-2 py-2 font-semibold text-right text-indigo-700 dark:text-indigo-400">% Recargo Impuesto</th>
+                              <th className="w-[12%] px-2 py-2 font-semibold text-right text-blue-700 dark:text-blue-400">= Costo Landed</th>
+                              <th className="w-[15%] px-2 py-2 font-semibold text-right text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
                                 Precio Final Venta (+{marginPct}%)
                               </th>
                             </tr>
@@ -1292,13 +1292,13 @@ export const ImportBatchesView: React.FC = () => {
                               return (
                                 <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                                   {/* Producto (SKU, Unidades, Nombre, Subtítulo Marca/Modelo) */}
-                                  <td className="py-3 px-4">
-                                    <div className="min-w-[240px]">
-                                      <div className="flex items-center space-x-2 mb-0.5">
-                                        <span className="font-mono text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 inline-block">
+                                  <td className="px-2 py-2">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center space-x-1.5 mb-0.5">
+                                        <span className="font-mono text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-500/20 inline-block">
                                           {item.sku || `PROD-00${idx+1}`}
                                         </span>
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{item.quantity} unidades</span>
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{item.quantity} uds</span>
                                       </div>
                                       <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate" title={displayTitle}>{displayTitle}</h4>
                                       {metadataSubtitle && (
@@ -1308,41 +1308,41 @@ export const ImportBatchesView: React.FC = () => {
                                   </td>
 
                                   {/* Precio Inicial (FOB Base) */}
-                                  <td className="py-3 px-3 text-right">
+                                  <td className="px-2 py-2 text-right">
                                     <span className="font-bold text-slate-900 dark:text-white block text-xs">${valFobNoTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                                     <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {(valFobNoTax * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
 
                                   {/* % Participación en el Lote */}
-                                  <td className="py-3 px-3 text-center">
-                                    <span className="font-bold font-mono text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 text-xs">
+                                  <td className="px-2 py-2 text-center">
+                                    <span className="font-bold font-mono text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 text-xs">
                                       {sharePct.toFixed(1)}%
                                     </span>
                                     <span className="text-[9px] text-slate-500 dark:text-slate-400 block mt-0.5">del Lote Total</span>
                                   </td>
 
                                   {/* + Impuesto & Flete ($USD total e individual) */}
-                                  <td className="py-3 px-3 text-right">
+                                  <td className="px-2 py-2 text-right">
                                     <span className="font-bold text-amber-700 dark:text-amber-300 block text-xs">+${totalTaxPerUnit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
                                     <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono block">Total: ${totalAllocatedExpenseForItem.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                   </td>
 
                                   {/* % Recargo de Impuestos sobre FOB */}
-                                  <td className="py-3 px-3 text-right">
-                                    <span className="font-bold text-indigo-700 dark:text-indigo-300 font-mono bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20 text-xs inline-block">
+                                  <td className="px-2 py-2 text-right">
+                                    <span className="font-bold text-indigo-700 dark:text-indigo-300 font-mono bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20 text-xs inline-block">
                                       +{taxSurchargePct.toFixed(1)}%
                                     </span>
                                     <span className="text-[9px] text-indigo-600 dark:text-indigo-400 block mt-0.5">Recargo sobre FOB</span>
                                   </td>
 
                                   {/* = Costo Landed Unitario */}
-                                  <td className="py-3 px-3 text-right">
+                                  <td className="px-2 py-2 text-right">
                                     <span className="font-bold text-slate-900 dark:text-white block text-xs">${valLandedFull.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                                     <span className="font-mono text-[10px] text-indigo-700 dark:text-indigo-400 block">Q {(valLandedFull * rate).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
 
                                   {/* Precio Final Venta (+Margen) */}
-                                  <td className="py-3 px-4 text-right bg-emerald-50/50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
+                                  <td className="px-2 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/40 border-l border-emerald-200 dark:border-emerald-500/30">
                                     <span className="font-black text-slate-900 dark:text-white text-xs block">${valFinalSellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                                     <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs block">Q {valFinalSellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                                   </td>
@@ -1367,7 +1367,7 @@ export const ImportBatchesView: React.FC = () => {
           
           {/* Header Superior Fijo y 100% Responsive */}
           <header className="px-4 sm:px-6 lg:px-8 py-3.5 border-b border-slate-800/90 bg-[#0d1733]/95 backdrop-blur-md shrink-0 z-30 shadow-md">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 max-w-7xl mx-auto w-full">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 w-full">
               {/* Fila 1 (Identificación y Navegación izquierda) */}
               <div className="flex items-center space-x-3 min-w-0">
                 <button
@@ -1464,7 +1464,7 @@ export const ImportBatchesView: React.FC = () => {
 
           {/* Cuerpo Scrolleable Expansivo */}
           <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto overscroll-contain pb-12">
-            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
               
               {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
               {batchNetworkError && (
@@ -2094,17 +2094,17 @@ export const ImportBatchesView: React.FC = () => {
 
                       {/* Desktop: Elegant Full-Width Table */}
                       <div className="hidden lg:block w-full bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-                        <table className="w-full text-left text-xs divide-y divide-slate-800">
+                        <table className="w-full table-fixed border-collapse text-left text-xs divide-y divide-slate-800">
                           <thead className="bg-slate-950/80 text-slate-400 font-bold uppercase text-[11px] tracking-wider">
                             <tr>
-                              <th className="py-3.5 px-4 w-12 text-center text-slate-500">#</th>
-                              <th className="py-3.5 px-4">SKU / Producto</th>
-                              <th className="py-3.5 px-4 text-center">Cantidad</th>
-                              <th className="py-3.5 px-4 text-right">Costo FOB</th>
-                              <th className="py-3.5 px-4 text-right">Recargos (Ad + Fl)</th>
-                              <th className="py-3.5 px-4 text-right">Costo Landed Final</th>
-                              <th className="py-3.5 px-4 text-right">Precio Venta Sugerido</th>
-                              <th className="py-3.5 px-4 text-center w-28">Acciones</th>
+                              <th className="py-2.5 px-2 w-[4%] text-center text-slate-500">#</th>
+                              <th className="py-2.5 px-2 w-[30%]">SKU / Producto</th>
+                              <th className="py-2.5 px-2 w-[8%] text-center">Cantidad</th>
+                              <th className="py-2.5 px-2 w-[11%] text-right">Costo FOB</th>
+                              <th className="py-2.5 px-2 w-[11%] text-right">Recargos (Ad + Fl)</th>
+                              <th className="py-2.5 px-2 w-[13%] text-right">Costo Landed Final</th>
+                              <th className="py-2.5 px-2 w-[13%] text-right">Precio Venta Sugerido</th>
+                              <th className="py-2.5 px-2 w-[10%] text-center">Acciones</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800/80">
@@ -2126,19 +2126,19 @@ export const ImportBatchesView: React.FC = () => {
 
                               return (
                                 <tr key={index} className="hover:bg-slate-800/40 transition">
-                                  <td className="py-3.5 px-4 text-center font-mono text-slate-500 font-bold">
+                                  <td className="py-2 px-2 text-center font-mono text-slate-500 font-bold">
                                     {index + 1}
                                   </td>
-                                  <td className="py-3.5 px-4">
-                                    <div className="flex items-center space-x-3">
+                                  <td className="py-2 px-2 min-w-0">
+                                    <div className="flex items-center space-x-2.5 min-w-0">
                                       {item.image ? (
-                                        <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700 shrink-0" />
+                                        <img src={item.image} alt={item.productName} className="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0" />
                                       ) : (
-                                        <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-sm shrink-0">📦</div>
+                                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs shrink-0">📦</div>
                                       )}
-                                      <div className="min-w-0">
-                                        <span className="font-mono text-xs font-bold text-blue-400 block">{item.sku}</span>
-                                        <span className="text-white font-semibold text-xs block truncate max-w-xs">{item.productName}</span>
+                                      <div className="min-w-0 flex-1">
+                                        <span className="font-mono text-xs font-bold text-blue-400 block truncate">{item.sku}</span>
+                                        <span className="text-white font-semibold text-xs block truncate" title={item.productName}>{item.productName}</span>
                                         {(item.brand || item.model) && (
                                           <span className="text-[10px] text-slate-400 block truncate">
                                             {[item.brand, item.model].filter(Boolean).join(' • ')}
@@ -2147,40 +2147,40 @@ export const ImportBatchesView: React.FC = () => {
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="py-3.5 px-4 text-center">
-                                    <span className="inline-block px-2.5 py-1 rounded-full bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700">
+                                  <td className="py-2 px-2 text-center">
+                                    <span className="inline-block px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700">
                                       {qty} uds
                                     </span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-right">
+                                  <td className="py-2 px-2 text-right">
                                     <span className="font-mono font-bold text-slate-200 text-xs block">${fobCost.toFixed(2)} USD</span>
                                     <span className="font-mono text-[10px] text-slate-400 block">Q {(fobCost * parsedGtqRate).toFixed(2)}</span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-right">
+                                  <td className="py-2 px-2 text-right">
                                     <span className="font-mono font-semibold text-amber-400 text-xs block">+{itemRecargoPct.toFixed(1)}%</span>
                                     <span className="font-mono text-[10px] text-slate-400 block">+${(itemUnitTax + itemUnitShip).toFixed(2)} / ud</span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-right">
+                                  <td className="py-2 px-2 text-right">
                                     <span className="font-mono font-bold text-indigo-300 text-xs block">${itemUnitLandedUsd.toFixed(2)} USD</span>
                                     <span className="font-mono font-extrabold text-indigo-400 text-xs block">Q {itemUnitLandedGtq.toFixed(2)} GTQ</span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-right">
+                                  <td className="py-2 px-2 text-right">
                                     <span className="font-mono font-extrabold text-emerald-400 text-sm block">Q {itemSellingGtq.toFixed(2)} GTQ</span>
                                     <span className="font-mono text-[10px] text-slate-400 block">(${itemSellingUsd.toFixed(2)} USD)</span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-center">
+                                  <td className="py-2 px-2 text-center">
                                     <div className="flex items-center justify-center space-x-1.5">
                                       <button
                                         type="button"
                                         onClick={() => handleOpenSingleProductForm(index)}
-                                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
+                                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2 py-0.5 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
                                       >
                                         Editar
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => handleRemoveConfirmedItem(index)}
-                                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
+                                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
                                       >
                                         Eliminar
                                       </button>
