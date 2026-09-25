@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { Save, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users, Eye, EyeOff, KeyRound, Database, Download, FileJson, Loader2 } from 'lucide-react';
 import { updateUserProfileApi, changePasswordApi, User } from '../services/api';
 import { UsersView } from './UsersView';
 import { UserAvatar } from './UserAvatar';
@@ -11,7 +11,7 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser }) => {
   const isAdmin = currentUser?.role === 'Administrador';
-  const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'security' | 'backup'>('profile');
 
   // Profile Form State (Username only, NO password here)
   const [name, setName] = useState(currentUser?.name || '');
@@ -30,15 +30,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
   const [securityError, setSecurityError] = useState('');
   const [securityLoading, setSecurityLoading] = useState(false);
 
+  // Backup State
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupSuccess, setBackupSuccess] = useState(false);
+  const [backupError, setBackupError] = useState('');
+
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || '');
     }
   }, [currentUser]);
 
-  // Fallback to 'profile' if a non-admin user lands on 'team'
+  // Fallback to 'profile' if a non-admin user lands on 'team' or 'backup'
   useEffect(() => {
-    if (activeTab === 'team' && !isAdmin) {
+    if ((activeTab === 'team' || activeTab === 'backup') && !isAdmin) {
       setActiveTab('profile');
     }
   }, [activeTab, isAdmin]);
@@ -118,6 +123,128 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     }
   };
 
+  const handleDownloadBackup = async () => {
+    setBackupLoading(true);
+    setBackupError('');
+    setBackupSuccess(false);
+
+    try {
+      const response = await fetch('/api/backup/download', {
+        headers: {
+          'x-user-role': currentUser?.role || 'Administrador'
+        }
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Error al descargar la copia de seguridad');
+      }
+
+      const blob = await response.blob();
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `backup_appg_${today}.json`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setBackupSuccess(true);
+      setTimeout(() => setBackupSuccess(false), 5000);
+    } catch (err: any) {
+      setBackupError(err.message || 'Error al descargar la copia de seguridad');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const renderBackupCard = () => (
+    <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 sm:p-6 space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-start space-x-3.5">
+          <div className="p-3 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+            <Database className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-500/20">
+                Copia de Seguridad y Datos
+              </span>
+            </div>
+            <h4 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white mt-1">
+              Respaldo del Sistema
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Descarga una copia completa de tus productos, lotes, proveedores y transacciones en tu computadora. Puedes guardar este archivo como respaldo ante cualquier eventualidad.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {backupError && (
+        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 p-3 rounded-xl text-xs text-rose-700 dark:text-rose-400 flex items-center space-x-2 font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <span>{backupError}</span>
+        </div>
+      )}
+
+      {backupSuccess && (
+        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-3.5 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 flex items-center space-x-2.5 font-bold">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>Copia de seguridad descargada exitosamente</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Inventario</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Productos & SKU</p>
+        </div>
+        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Importaciones</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Lotes & Costos</p>
+        </div>
+        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Histórico</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Transacciones</p>
+        </div>
+        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Seguridad</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Sin Contraseñas</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <span className="text-[11px] text-slate-400 flex items-center space-x-1.5">
+          <FileJson className="w-3.5 h-3.5 text-blue-500" />
+          <span>Formato JSON serializado compatible con cualquier base de datos</span>
+        </span>
+        <button
+          type="button"
+          onClick={handleDownloadBackup}
+          disabled={backupLoading}
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white font-extrabold py-2.5 px-5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+        >
+          {backupLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+              <span>Generando Copia...</span>
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4 shrink-0" />
+              <span>Descargar Copia de Seguridad</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4 pb-24 sm:pb-32 max-w-4xl mx-auto">
       {/* Header Banner */}
@@ -143,6 +270,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           <div className="w-full sm:w-auto flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>¡Contraseña actualizada con éxito!</span>
+          </div>
+        )}
+
+        {backupSuccess && (
+          <div className="w-full sm:w-auto flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span>Copia de seguridad descargada exitosamente</span>
           </div>
         )}
       </div>
@@ -189,6 +323,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           <Lock className="w-4 h-4 shrink-0" />
           <span>Seguridad</span>
         </button>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => { setActiveTab('backup'); setProfileError(''); setSecurityError(''); }}
+            className={`flex-1 min-w-[140px] flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+              activeTab === 'backup'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Database className="w-4 h-4 shrink-0" />
+            <span>Copia de Seguridad</span>
+          </button>
+        )}
       </div>
 
       {/* Main Settings Content */}
@@ -271,110 +420,125 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
 
         {/* TAB 3: SEGURIDAD (Centraliza exclusivamente el cambio de contraseña) */}
         {activeTab === 'security' && (
-          <form onSubmit={handleChangePassword} className="space-y-4 max-w-md mx-auto">
-            <div className="text-center pb-2 border-b border-slate-200 dark:border-slate-700/80">
-              <div className="inline-flex p-3 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-2">
-                <KeyRound className="w-6 h-6" />
+          <div className="space-y-8">
+            <form onSubmit={handleChangePassword} className="space-y-4 max-w-md mx-auto">
+              <div className="text-center pb-2 border-b border-slate-200 dark:border-slate-700/80">
+                <div className="inline-flex p-3 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-2">
+                  <KeyRound className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Cambiar Contraseña</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Ingresa tu contraseña actual y define una nueva para proteger tu cuenta
+                </p>
               </div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Cambiar Contraseña</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Ingresa tu contraseña actual y define una nueva para proteger tu cuenta
-              </p>
-            </div>
 
-            {securityError && (
-              <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 p-3 rounded-xl text-xs text-rose-700 dark:text-rose-400 flex items-center space-x-2 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                <span>{securityError}</span>
+              {securityError && (
+                <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 p-3 rounded-xl text-xs text-rose-700 dark:text-rose-400 flex items-center space-x-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                  <span>{securityError}</span>
+                </div>
+              )}
+
+              {/* Field 1: Contraseña Actual */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                  Contraseña Actual
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showCurrentPass ? 'text' : 'password'}
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Ingresa tu contraseña actual..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                  >
+                    {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Field 2: Nueva Contraseña */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                  Nueva Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showNewPass ? 'text' : 'password'}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 4 caracteres..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                  >
+                    {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Field 3: Confirmar Contraseña */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                  Confirmar Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showConfirmPass ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repite la nueva contraseña..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPass(!showConfirmPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                  >
+                    {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={securityLoading}
+                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition shadow-md active:scale-[0.98] cursor-pointer"
+                >
+                  <Save className="w-4 h-4 shrink-0" />
+                  <span>{securityLoading ? 'Actualizando...' : 'Actualizar Contraseña'}</span>
+                </button>
+              </div>
+            </form>
+
+            {isAdmin && (
+              <div className="max-w-3xl mx-auto pt-6 border-t border-slate-200 dark:border-slate-700/80">
+                {renderBackupCard()}
               </div>
             )}
+          </div>
+        )}
 
-            {/* Field 1: Contraseña Actual */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                Contraseña Actual
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type={showCurrentPass ? 'text' : 'password'}
-                  required
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Ingresa tu contraseña actual..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPass(!showCurrentPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
-                >
-                  {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Field 2: Nueva Contraseña */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                Nueva Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type={showNewPass ? 'text' : 'password'}
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 4 caracteres..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPass(!showNewPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
-                >
-                  {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Field 3: Confirmar Contraseña */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                Confirmar Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type={showConfirmPass ? 'text' : 'password'}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repite la nueva contraseña..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPass(!showConfirmPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
-                >
-                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={securityLoading}
-                className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition shadow-md active:scale-[0.98] cursor-pointer"
-              >
-                <Save className="w-4 h-4 shrink-0" />
-                <span>{securityLoading ? 'Actualizando...' : 'Actualizar Contraseña'}</span>
-              </button>
-            </div>
-          </form>
+        {/* TAB 4: COPIA DE SEGURIDAD (Visible solo para Administradores) */}
+        {activeTab === 'backup' && isAdmin && (
+          <div className="max-w-3xl mx-auto">
+            {renderBackupCard()}
+          </div>
         )}
       </div>
     </div>

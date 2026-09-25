@@ -763,6 +763,79 @@ app.get('/api/price-history', (req, res) => {
 });
 
 // ==========================================
+// RESPALDO DE BASE DE DATOS (BACKUP)
+// ==========================================
+
+const authenticateAdmin = (req, res, next) => {
+  const role = req.headers['x-user-role'] || req.query.role;
+  if (role && role.toLowerCase() !== 'administrador') {
+    return res.status(403).json({ error: 'Acceso denegado: se requieren permisos de Administrador' });
+  }
+  next();
+};
+
+const queryAll = (sql, params = []) => {
+  return new Promise((resolve) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        console.error(`[BACKUP] Error consultando "${sql}":`, err.message);
+        resolve([]);
+      } else {
+        resolve(rows || []);
+      }
+    });
+  });
+};
+
+app.get('/api/backup/download', authenticateAdmin, async (req, res) => {
+  try {
+    const [categories, inventory, batches, batch_items, transactions, users, price_history] = await Promise.all([
+      queryAll('SELECT * FROM categories ORDER BY id ASC'),
+      queryAll('SELECT * FROM inventory ORDER BY id ASC'),
+      queryAll('SELECT * FROM batches ORDER BY id ASC'),
+      queryAll('SELECT * FROM batch_items ORDER BY id ASC'),
+      queryAll('SELECT * FROM transactions ORDER BY id ASC'),
+      queryAll('SELECT id, name, email, role, status, avatar, lastLogin FROM users ORDER BY id ASC'),
+      queryAll('SELECT * FROM price_history ORDER BY id ASC')
+    ]);
+
+    const backupData = {
+      metadata: {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        system: 'APPG Importaciones & Inventario',
+        recordsCount: {
+          categories: categories.length,
+          inventory: inventory.length,
+          batches: batches.length,
+          batch_items: batch_items.length,
+          transactions: transactions.length,
+          users: users.length,
+          price_history: price_history.length
+        }
+      },
+      data: {
+        categories,
+        inventory,
+        batches,
+        batch_items,
+        transactions,
+        users,
+        price_history
+      }
+    };
+
+    const filename = `backup_appg_${new Date().toISOString().split('T')[0]}.json`;
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(JSON.stringify(backupData, null, 2));
+  } catch (error) {
+    console.error('Error generando respaldo:', error);
+    res.status(500).json({ error: 'Error al generar la copia de seguridad: ' + error.message });
+  }
+});
+
+// ==========================================
 // HEALTH CHECKS
 // ==========================================
 
