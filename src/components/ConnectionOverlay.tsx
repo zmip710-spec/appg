@@ -24,27 +24,21 @@ export const ConnectionOverlay: React.FC = () => {
   useEffect(() => {
     const handleOffline = () => setIsDisconnected(true);
     const handleOnline = () => verifyConnection();
+    const handleFocus = () => verifyConnection();
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
+    window.addEventListener('focus', handleFocus);
 
-    // Periodic health check ping (every 15 seconds)
-    const interval = setInterval(async () => {
-      const healthy = await checkHealthApi();
-      if (!healthy) {
-        setIsDisconnected(true);
-      } else if (isDisconnected) {
-        setIsDisconnected(false);
-        setLastCheckMessage(null);
-      }
-    }, 15000);
+    // Verificación inicial al cargar
+    verifyConnection();
 
     return () => {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
-      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, [isDisconnected]);
+  }, []);
 
   if (!isDisconnected) return null;
 
