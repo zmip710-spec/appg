@@ -563,17 +563,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           </div>
         ) : (
           paginatedInventory.map((item) => {
-            const sellingPriceGtq = (item.unitCost * 1.15 * 7.80).toFixed(2);
-            let stockBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            let stockText = `${item.stock} uds`;
-
-            if (item.stock === 0) {
-              stockBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-              stockText = 'Agotado';
-            } else if (item.stock <= 10) {
-              stockBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-              stockText = `${item.stock} uds`;
-            }
+            const isOutOfStock = item.stock === 0;
+            const stockText = isOutOfStock ? '0 uds (Agotado)' : `${item.stock} uds`;
 
             return (
               <div
@@ -599,9 +590,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   );
                 })()}
 
-                {/* Right: Stock Badge + Price in GTQ */}
+                {/* Right: Clean Stock Text + Price in GTQ */}
                 <div className="text-right shrink-0">
-                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold border ${stockBadge}`}>
+                  <span className={`text-[11px] font-medium ${isOutOfStock ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}`}>
                     {stockText}
                   </span>
                   <span className="block text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -642,16 +633,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 </tr>
               ) : (
                 paginatedInventory.map((item) => {
-                  let stockBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
-                  let stockLabel = 'Disponible';
-                  if (item.stock === 0) {
-                    stockBadge = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
-                    stockLabel = 'Agotado';
-                  } else if (item.stock <= 10) {
-                    stockBadge = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
-                    stockLabel = 'Bajo Stock';
-                  }
-
                   const unitCostGtq = item.unitCost * 7.80;
                   const sellingPriceUsd = item.unitCost * 1.15;
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
@@ -679,10 +660,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                           {item.category || 'General'}
                         </span>
                       </td>
-                      <td className="px-5 py-3">
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${stockBadge}`}>
-                          {item.stock} uds ({stockLabel})
-                        </span>
+                      <td className="px-5 py-3 text-slate-700 dark:text-slate-200 font-medium">
+                        {item.stock === 0 ? (
+                          <span className="text-slate-400 dark:text-slate-500 font-normal">0 uds</span>
+                        ) : (
+                          <span>{item.stock} uds</span>
+                        )}
                       </td>
                       <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
                         <span className="block text-xs">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
