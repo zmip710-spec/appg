@@ -835,6 +835,342 @@ app.get('/api/backup/download', authenticateAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/backup/restore', authenticateAdmin, async (req, res) => {
+  const payload = req.body;
+  const data = (payload && payload.data) ? payload.data : payload;
+
+  if (!data || (!Array.isArray(data.inventory) && !Array.isArray(data.batches) && !Array.isArray(data.categories))) {
+    return res.status(400).json({ error: 'Archivo de respaldo inválido o incompleto (se requiere datos de inventario, lotes o categorías).' });
+  }
+
+  const categories = Array.isArray(data.categories) ? data.categories : [];
+  const inventory = Array.isArray(data.inventory) ? data.inventory : [];
+  const batches = Array.isArray(data.batches) ? data.batches : [];
+  const batchItems = Array.isArray(data.batch_items) ? data.batch_items : (Array.isArray(data.batchItems) ? data.batchItems : []);
+  const transactions = Array.isArray(data.transactions) ? data.transactions : [];
+  const priceHistory = Array.isArray(data.price_history) ? data.price_history : (Array.isArray(data.priceHistory) ? data.priceHistory : []);
+
+  if (db.isPg) {
+    let client;
+    try {
+      client = await db.pool.connect();
+      await client.query('BEGIN');
+
+      const execPg = (sql, params = []) => {
+        let paramIndex = 1;
+        const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+        return client.query(pgSql, params);
+      };
+
+      // 1. Limpiar tablas dependientes en orden inverso por claves foráneas
+      await client.query('DELETE FROM batch_items');
+      await client.query('DELETE FROM price_history');
+      await client.query('DELETE FROM transactions');
+      await client.query('DELETE FROM inventory');
+      await client.query('DELETE FROM batches');
+      await client.query('DELETE FROM categories');
+
+      // 2. Insertar Categorías
+      for (const cat of categories) {
+        const id = cat.id || null;
+        const name = cat.name || 'General';
+        const createdAt = cat.created_at || cat.createdAt || new Date().toISOString();
+        if (id) {
+          await execPg('INSERT INTO categories (id, name, created_at) VALUES (?, ?, ?)', [id, name, createdAt]);
+        } else {
+          await execPg('INSERT INTO categories (name, created_at) VALUES (?, ?)', [name, createdAt]);
+        }
+      }
+
+      // 3. Insertar Inventario
+      for (const item of inventory) {
+        const id = item.id || null;
+        const sku = String(item.sku || '').trim().toUpperCase();
+        const name = String(item.name || '').trim();
+        const brand = item.brand || '';
+        const model = item.model || '';
+        const category = item.category || item.category_id || 'General';
+        const stock = Math.max(0, parseInt(item.stock) || 0);
+        const unitCost = Math.max(0, parseFloat(item.unitCost ?? item.unit_cost ?? 0));
+        const previousUnitCost = Math.max(0, parseFloat(item.previousUnitCost ?? item.previous_unit_cost ?? unitCost));
+        const priceChangeDelta = parseFloat(item.priceChangeDelta ?? item.price_change_delta ?? 0);
+        const priceChangePct = parseFloat(item.priceChangePct ?? item.price_change_pct ?? 0);
+        const image = item.image || '';
+        const lastUpdated = item.lastUpdated || item.last_updated || new Date().toLocaleDateString('es-ES');
+
+        if (id) {
+          await execPg(
+            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+          );
+        } else {
+          await execPg(
+            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+          );
+        }
+      }
+
+      // 4. Insertar Lotes
+      for (const batch of batches) {
+        const id = String(batch.id || batch.batch_code || `BATCH-${Date.now()}`);
+        const name = batch.name || batch.batch_code || 'Lote';
+        const importDate = batch.importDate || batch.import_date || new Date().toLocaleDateString('es-ES');
+        const totalCustomsTax = Math.max(0, parseFloat(batch.totalCustomsTax ?? batch.customs_tax ?? 0));
+        const totalShippingCost = Math.max(0, parseFloat(batch.totalShippingCost ?? batch.shipping_cost ?? 0));
+        const exchangeRateGtq = parseFloat(batch.exchangeRateGtq ?? batch.exchange_rate ?? 7.80);
+        const profitMarginPct = parseFloat(batch.profitMarginPct ?? batch.margin_rate ?? 15.0);
+        const costUpdateStrategy = batch.costUpdateStrategy || 'weighted';
+        const status = batch.status || 'Procesado';
+        const createdAt = batch.created_at || batch.createdAt || new Date().toISOString();
+
+        await execPg(
+          'INSERT INTO batches (id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status, createdAt]
+        );
+      }
+
+      // 5. Insertar Items de Lote
+      for (const bi of batchItems) {
+        const id = bi.id || null;
+        const batchId = String(bi.batchId || bi.batch_id || '');
+        const sku = String(bi.sku || 'PROD-001').trim().toUpperCase();
+        const productName = String(bi.productName || bi.product_name || 'Producto').trim();
+        const brand = bi.brand || '';
+        const model = bi.model || '';
+        const quantity = Math.max(1, parseInt(bi.quantity) || 1);
+        const unitCostFob = Math.max(0, parseFloat(bi.unitCostFob ?? bi.fob_unit ?? 0));
+        const totalFobValue = Math.max(0, parseFloat(bi.totalFobValue ?? (quantity * unitCostFob)));
+        const sharePercentage = parseFloat(bi.sharePercentage ?? 0);
+        const allocatedCustoms = parseFloat(bi.allocatedCustoms ?? 0);
+        const allocatedShipping = parseFloat(bi.allocatedShipping ?? 0);
+        const allocatedTax = parseFloat(bi.allocatedTax ?? (allocatedCustoms + allocatedShipping));
+        const unitTax = parseFloat(bi.unitTax ?? (quantity > 0 ? allocatedTax / quantity : 0));
+        const finalUnitCost = parseFloat(bi.finalUnitCost ?? bi.landed_unit_usd ?? (unitCostFob + unitTax));
+        const profitMarginPct = parseFloat(bi.profitMarginPct ?? 15.0);
+        const finalSellingPrice = parseFloat(bi.finalSellingPrice ?? bi.sale_price_gtq ?? (finalUnitCost * (1 + profitMarginPct / 100)));
+        const image = bi.image || '';
+
+        if (id) {
+          await execPg(
+            'INSERT INTO batch_items (id, batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image]
+          );
+        } else {
+          await execPg(
+            'INSERT INTO batch_items (batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image]
+          );
+        }
+      }
+
+      // 6. Insertar Transacciones
+      for (const trx of transactions) {
+        const id = String(trx.id || `#TRX-${Date.now()}`);
+        const client = trx.client || 'Cliente';
+        const service = trx.service || 'Venta';
+        const date = trx.date || new Date().toLocaleDateString('es-ES');
+        const amount = String(trx.amount || '0');
+        const status = trx.status || 'Completado';
+
+        await execPg(
+          'INSERT INTO transactions (id, client, service, date, amount, status) VALUES (?, ?, ?, ?, ?, ?)',
+          [id, client, service, date, amount, status]
+        );
+      }
+
+      // 7. Insertar Historial de Precios
+      for (const ph of priceHistory) {
+        const id = ph.id || null;
+        const sku = String(ph.sku || '').trim().toUpperCase();
+        const batchId = ph.batchId || ph.batch_id || null;
+        const oldCost = parseFloat(ph.oldCost ?? ph.old_cost ?? 0);
+        const newCost = parseFloat(ph.newCost ?? ph.new_cost ?? 0);
+        const delta = parseFloat(ph.delta ?? 0);
+        const pct = parseFloat(ph.pct ?? 0);
+        const changeDate = ph.changeDate || ph.change_date || new Date().toLocaleDateString('es-ES');
+
+        if (id) {
+          await execPg(
+            'INSERT INTO price_history (id, sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, batchId, oldCost, newCost, delta, pct, changeDate]
+          );
+        } else {
+          await execPg(
+            'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [sku, batchId, oldCost, newCost, delta, pct, changeDate]
+          );
+        }
+      }
+
+      // Reiniciar secuencias PostgreSQL
+      await client.query("SELECT setval(pg_get_serial_sequence('categories', 'id'), COALESCE((SELECT MAX(id) FROM categories), 1))").catch(() => {});
+      await client.query("SELECT setval(pg_get_serial_sequence('inventory', 'id'), COALESCE((SELECT MAX(id) FROM inventory), 1))").catch(() => {});
+      await client.query("SELECT setval(pg_get_serial_sequence('batch_items', 'id'), COALESCE((SELECT MAX(id) FROM batch_items), 1))").catch(() => {});
+      await client.query("SELECT setval(pg_get_serial_sequence('price_history', 'id'), COALESCE((SELECT MAX(id) FROM price_history), 1))").catch(() => {});
+
+      await client.query('COMMIT');
+      return res.status(200).json({ success: true, message: 'Datos restaurados correctamente' });
+    } catch (err) {
+      if (client) await client.query('ROLLBACK').catch(() => {});
+      console.error('Error restaurando base de datos (PostgreSQL):', err);
+      return res.status(500).json({ error: 'Error al procesar la restauración: ' + err.message });
+    } finally {
+      if (client) client.release();
+    }
+  } else {
+    // SQLite
+    const runSqlite = (sql, params = []) => new Promise((resolve, reject) => {
+      db.sqliteDb.run(sql, params, (err) => err ? reject(err) : resolve());
+    });
+
+    try {
+      await runSqlite('BEGIN TRANSACTION');
+
+      await runSqlite('DELETE FROM batch_items');
+      await runSqlite('DELETE FROM price_history');
+      await runSqlite('DELETE FROM transactions');
+      await runSqlite('DELETE FROM inventory');
+      await runSqlite('DELETE FROM batches');
+      await runSqlite('DELETE FROM categories');
+
+      for (const cat of categories) {
+        const id = cat.id || null;
+        const name = cat.name || 'General';
+        const createdAt = cat.created_at || cat.createdAt || new Date().toISOString();
+        if (id) {
+          await runSqlite('INSERT INTO categories (id, name, created_at) VALUES (?, ?, ?)', [id, name, createdAt]);
+        } else {
+          await runSqlite('INSERT INTO categories (name, created_at) VALUES (?, ?)', [name, createdAt]);
+        }
+      }
+
+      for (const item of inventory) {
+        const id = item.id || null;
+        const sku = String(item.sku || '').trim().toUpperCase();
+        const name = String(item.name || '').trim();
+        const brand = item.brand || '';
+        const model = item.model || '';
+        const category = item.category || item.category_id || 'General';
+        const stock = Math.max(0, parseInt(item.stock) || 0);
+        const unitCost = Math.max(0, parseFloat(item.unitCost ?? item.unit_cost ?? 0));
+        const previousUnitCost = Math.max(0, parseFloat(item.previousUnitCost ?? item.previous_unit_cost ?? unitCost));
+        const priceChangeDelta = parseFloat(item.priceChangeDelta ?? item.price_change_delta ?? 0);
+        const priceChangePct = parseFloat(item.priceChangePct ?? item.price_change_pct ?? 0);
+        const image = item.image || '';
+        const lastUpdated = item.lastUpdated || item.last_updated || new Date().toLocaleDateString('es-ES');
+
+        if (id) {
+          await runSqlite(
+            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+          );
+        } else {
+          await runSqlite(
+            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+          );
+        }
+      }
+
+      for (const batch of batches) {
+        const id = String(batch.id || batch.batch_code || `BATCH-${Date.now()}`);
+        const name = batch.name || batch.batch_code || 'Lote';
+        const importDate = batch.importDate || batch.import_date || new Date().toLocaleDateString('es-ES');
+        const totalCustomsTax = Math.max(0, parseFloat(batch.totalCustomsTax ?? batch.customs_tax ?? 0));
+        const totalShippingCost = Math.max(0, parseFloat(batch.totalShippingCost ?? batch.shipping_cost ?? 0));
+        const exchangeRateGtq = parseFloat(batch.exchangeRateGtq ?? batch.exchange_rate ?? 7.80);
+        const profitMarginPct = parseFloat(batch.profitMarginPct ?? batch.margin_rate ?? 15.0);
+        const costUpdateStrategy = batch.costUpdateStrategy || 'weighted';
+        const status = batch.status || 'Procesado';
+        const createdAt = batch.created_at || batch.createdAt || new Date().toISOString();
+
+        await runSqlite(
+          'INSERT INTO batches (id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status, createdAt]
+        );
+      }
+
+      for (const bi of batchItems) {
+        const id = bi.id || null;
+        const batchId = String(bi.batchId || bi.batch_id || '');
+        const sku = String(bi.sku || 'PROD-001').trim().toUpperCase();
+        const productName = String(bi.productName || bi.product_name || 'Producto').trim();
+        const brand = bi.brand || '';
+        const model = bi.model || '';
+        const quantity = Math.max(1, parseInt(bi.quantity) || 1);
+        const unitCostFob = Math.max(0, parseFloat(bi.unitCostFob ?? bi.fob_unit ?? 0));
+        const totalFobValue = Math.max(0, parseFloat(bi.totalFobValue ?? (quantity * unitCostFob)));
+        const sharePercentage = parseFloat(bi.sharePercentage ?? 0);
+        const allocatedCustoms = parseFloat(bi.allocatedCustoms ?? 0);
+        const allocatedShipping = parseFloat(bi.allocatedShipping ?? 0);
+        const allocatedTax = parseFloat(bi.allocatedTax ?? (allocatedCustoms + allocatedShipping));
+        const unitTax = parseFloat(bi.unitTax ?? (quantity > 0 ? allocatedTax / quantity : 0));
+        const finalUnitCost = parseFloat(bi.finalUnitCost ?? bi.landed_unit_usd ?? (unitCostFob + unitTax));
+        const profitMarginPct = parseFloat(bi.profitMarginPct ?? 15.0);
+        const finalSellingPrice = parseFloat(bi.finalSellingPrice ?? bi.sale_price_gtq ?? (finalUnitCost * (1 + profitMarginPct / 100)));
+        const image = bi.image || '';
+
+        if (id) {
+          await runSqlite(
+            'INSERT INTO batch_items (id, batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image]
+          );
+        } else {
+          await runSqlite(
+            'INSERT INTO batch_items (batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image]
+          );
+        }
+      }
+
+      for (const trx of transactions) {
+        const id = String(trx.id || `#TRX-${Date.now()}`);
+        const client = trx.client || 'Cliente';
+        const service = trx.service || 'Venta';
+        const date = trx.date || new Date().toLocaleDateString('es-ES');
+        const amount = String(trx.amount || '0');
+        const status = trx.status || 'Completado';
+
+        await runSqlite(
+          'INSERT INTO transactions (id, client, service, date, amount, status) VALUES (?, ?, ?, ?, ?, ?)',
+          [id, client, service, date, amount, status]
+        );
+      }
+
+      for (const ph of priceHistory) {
+        const id = ph.id || null;
+        const sku = String(ph.sku || '').trim().toUpperCase();
+        const batchId = ph.batchId || ph.batch_id || null;
+        const oldCost = parseFloat(ph.oldCost ?? ph.old_cost ?? 0);
+        const newCost = parseFloat(ph.newCost ?? ph.new_cost ?? 0);
+        const delta = parseFloat(ph.delta ?? 0);
+        const pct = parseFloat(ph.pct ?? 0);
+        const changeDate = ph.changeDate || ph.change_date || new Date().toLocaleDateString('es-ES');
+
+        if (id) {
+          await runSqlite(
+            'INSERT INTO price_history (id, sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, batchId, oldCost, newCost, delta, pct, changeDate]
+          );
+        } else {
+          await runSqlite(
+            'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [sku, batchId, oldCost, newCost, delta, pct, changeDate]
+          );
+        }
+      }
+
+      await runSqlite('COMMIT');
+      return res.status(200).json({ success: true, message: 'Datos restaurados correctamente' });
+    } catch (err) {
+      await runSqlite('ROLLBACK').catch(() => {});
+      console.error('Error restaurando base de datos (SQLite):', err);
+      return res.status(500).json({ error: 'Error al procesar la restauración: ' + err.message });
+    }
+  }
+});
+
 // ==========================================
 // HEALTH CHECKS
 // ==========================================

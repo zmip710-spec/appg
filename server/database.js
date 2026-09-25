@@ -395,6 +395,10 @@ if (isPg) {
 // Adaptador unificado para PostgreSQL / SQLite con normalización automática de CamelCase
 const db = {
   isPg,
+  get pool() { return pgPool; },
+  get pgPool() { return pgPool; },
+  get sqliteDb() { return sqliteDb; },
+  convertSql,
   all: function (sql, params, cb) {
     if (typeof params === 'function') {
       cb = params;

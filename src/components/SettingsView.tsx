@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users, Eye, EyeOff, KeyRound, Database, Download, FileJson, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, Lock, User as UserIcon, CheckCircle2, Shield, AlertCircle, Users, Eye, EyeOff, KeyRound, Database, Download, FileJson, Loader2, Upload, AlertTriangle, X } from 'lucide-react';
 import { updateUserProfileApi, changePasswordApi, User } from '../services/api';
 import { UsersView } from './UsersView';
 import { UserAvatar } from './UserAvatar';
@@ -34,6 +34,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupSuccess, setBackupSuccess] = useState(false);
   const [backupError, setBackupError] = useState('');
+
+  // Restore State
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedBackupFile, setSelectedBackupFile] = useState<File | null>(null);
+  const [showConfirmRestoreModal, setShowConfirmRestoreModal] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreSuccess, setRestoreSuccess] = useState(false);
+  const [restoreError, setRestoreError] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -162,6 +170,92 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     }
   };
 
+  const handleTriggerRestore = () => {
+    setRestoreError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.json')) {
+      setRestoreError('Por favor selecciona un archivo de respaldo válido con extensión .json');
+      return;
+    }
+
+    setSelectedBackupFile(file);
+    setShowConfirmRestoreModal(true);
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!selectedBackupFile) return;
+
+    setRestoreLoading(true);
+    setRestoreError('');
+    setShowConfirmRestoreModal(false);
+
+    try {
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo seleccionado.'));
+        reader.readAsText(selectedBackupFile);
+      });
+
+      let parsedData: any;
+      try {
+        parsedData = JSON.parse(fileContent);
+      } catch {
+        throw new Error('El archivo seleccionado no contiene un formato JSON válido.');
+      }
+
+      const response = await fetch('/api/backup/restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': currentUser?.role || 'Administrador'
+        },
+        body: JSON.stringify(parsedData)
+      });
+
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(json.error || 'Error al restaurar la copia de seguridad.');
+      }
+
+      setRestoreSuccess(true);
+
+      // Preservar la sesión actual y tema, pero limpiar la caché de datos para forzar refresco
+      try {
+        const currentUserData = localStorage.getItem('appg_user');
+        const nexusUserData = localStorage.getItem('nexus_user');
+        const currentTheme = localStorage.getItem('appg_theme');
+
+        localStorage.clear();
+
+        if (currentUserData) localStorage.setItem('appg_user', currentUserData);
+        if (nexusUserData) localStorage.setItem('nexus_user', nexusUserData);
+        if (currentTheme) localStorage.setItem('appg_theme', currentTheme);
+        localStorage.setItem('appg_active_tab', 'inventory');
+      } catch {}
+
+      // Breve pausa para que el usuario aprecie el mensaje de éxito antes del refresco
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (err: any) {
+      setRestoreError(err.message || 'Error inesperado durante la restauración.');
+    } finally {
+      setRestoreLoading(false);
+      setSelectedBackupFile(null);
+    }
+  };
+
   const renderBackupCard = () => (
     <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 sm:p-6 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
@@ -192,10 +286,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
         </div>
       )}
 
+      {restoreError && (
+        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 p-3 rounded-xl text-xs text-rose-700 dark:text-rose-400 flex items-center space-x-2 font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <span>{restoreError}</span>
+        </div>
+      )}
+
       {backupSuccess && (
         <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-3.5 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 flex items-center space-x-2.5 font-bold">
           <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>Copia de seguridad descargada exitosamente</span>
+        </div>
+      )}
+
+      {restoreSuccess && (
+        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-3.5 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 flex items-center space-x-2.5 font-bold">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>¡Datos restaurados correctamente! Recargando aplicación...</span>
         </div>
       )}
 
@@ -214,7 +322,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
         </div>
         <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60">
           <p className="text-[10px] uppercase font-bold text-slate-400">Seguridad</p>
-          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Sin Contraseñas</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">Transacción Atómica</p>
         </div>
       </div>
 
@@ -223,24 +331,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           <FileJson className="w-3.5 h-3.5 text-blue-500" />
           <span>Formato JSON serializado compatible con cualquier base de datos</span>
         </span>
-        <button
-          type="button"
-          onClick={handleDownloadBackup}
-          disabled={backupLoading}
-          className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white font-extrabold py-2.5 px-5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
-        >
-          {backupLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-              <span>Generando Copia...</span>
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 shrink-0" />
-              <span>Descargar Copia de Seguridad</span>
-            </>
-          )}
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={handleTriggerRestore}
+            disabled={restoreLoading || backupLoading}
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 disabled:opacity-60 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-extrabold py-2.5 px-4 rounded-xl text-xs transition shadow-sm active:scale-[0.98] cursor-pointer"
+          >
+            {restoreLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 shrink-0 animate-spin text-amber-500" />
+                <span>Restaurando...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 shrink-0 text-amber-500" />
+                <span>Restaurar Copia de Seguridad</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadBackup}
+            disabled={backupLoading || restoreLoading}
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white font-extrabold py-2.5 px-5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+          >
+            {backupLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                <span>Generando Copia...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 shrink-0" />
+                <span>Descargar Copia de Seguridad</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -277,6 +413,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           <div className="w-full sm:w-auto flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>Copia de seguridad descargada exitosamente</span>
+          </div>
+        )}
+
+        {restoreSuccess && (
+          <div className="w-full sm:w-auto flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span>Datos restaurados correctamente. Recargando...</span>
           </div>
         )}
       </div>
@@ -541,6 +684,77 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmación Estricta de Restauración */}
+      {showConfirmRestoreModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-start space-x-3.5">
+              <div className="p-3 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  Confirmar Restauración
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Operación destructiva sobre la base de datos
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowConfirmRestoreModal(false); setSelectedBackupFile(null); }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl p-3 text-xs space-y-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Archivo Seleccionado</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 break-all">
+                {selectedBackupFile?.name}
+              </p>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                Tamaño: {selectedBackupFile ? (selectedBackupFile.size / 1024).toFixed(1) + ' KB' : ''}
+              </span>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+              ¿Estás seguro de restaurar esta copia de seguridad? Esta acción reemplazará el inventario y lotes actuales por los contenidos en el archivo.
+            </div>
+
+            <div className="flex items-center justify-end space-x-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowConfirmRestoreModal(false); setSelectedBackupFile(null); }}
+                disabled={restoreLoading}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRestore}
+                disabled={restoreLoading}
+                className="flex items-center space-x-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl text-xs transition shadow-md shadow-amber-600/20 active:scale-[0.98] cursor-pointer"
+              >
+                {restoreLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                    <span>Restaurando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 shrink-0" />
+                    <span>Sí, Restaurar Datos</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
