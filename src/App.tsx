@@ -71,7 +71,7 @@ export default function App() {
         return savedTab;
       }
     } catch {}
-    return 'inventory';
+    return 'batches';
   });
 
   const [searchTerm, setSearchTerm] = useState('');

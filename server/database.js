@@ -252,6 +252,7 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS model TEXT DEFAULT ''");
+    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS category VARCHAR(255) DEFAULT 'General'");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS model TEXT DEFAULT ''");
     await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT '123456'");
@@ -382,6 +383,7 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN profitMarginPct REAL DEFAULT 15.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN finalSellingPrice REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN image TEXT", () => {});
+    sqliteDb.run("ALTER TABLE batch_items ADD COLUMN category TEXT DEFAULT 'General'", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN brand TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN model TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN image TEXT", () => {});

@@ -366,7 +366,8 @@ app.post('/api/batches', (req, res) => {
     const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto ${index + 1}`;
     const brand = item.brand ? item.brand.trim() : '';
     const model = item.model ? item.model.trim() : '';
-    return { sku, productName, brand, model, quantity: qty, unitCostFob: unitCost, totalFobValue: totalFob, image: '' };
+    const category = item.category && item.category.trim() !== '' ? item.category.trim() : 'General';
+    return { sku, productName, brand, model, category, quantity: qty, unitCostFob: unitCost, totalFobValue: totalFob, image: '' };
   });
 
   // 2. Prorratear Gastos de Aduana y Envío proporcionalmente al valor FOB
@@ -381,6 +382,7 @@ app.post('/api/batches', (req, res) => {
 
     return {
       ...item,
+      category: item.category || 'General',
       sharePercentage: isNaN(sharePercentage) ? 0 : parseFloat(sharePercentage.toFixed(2)),
       allocatedCustoms: isNaN(allocatedCustoms) ? 0 : parseFloat(allocatedCustoms.toFixed(2)),
       allocatedShipping: isNaN(allocatedShipping) ? 0 : parseFloat(allocatedShipping.toFixed(2)),
@@ -406,12 +408,12 @@ app.post('/api/batches', (req, res) => {
         }
 
         const stmt = db.prepare(`
-          INSERT INTO batch_items (batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')
+          INSERT INTO batch_items (batchId, sku, productName, brand, model, quantity, unitCostFob, totalFobValue, sharePercentage, allocatedCustoms, allocatedShipping, allocatedTax, unitTax, finalUnitCost, profitMarginPct, finalSellingPrice, image, category)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?)
         `);
 
         finalItems.forEach(item => {
-          stmt.run(batchId, item.sku, item.productName, item.brand || '', item.model || '', item.quantity, item.unitCostFob, item.totalFobValue, item.sharePercentage, item.allocatedCustoms, item.allocatedShipping, item.allocatedTax, item.unitTax, item.finalUnitCost, marginFloat, item.finalSellingPrice);
+          stmt.run(batchId, item.sku, item.productName, item.brand || '', item.model || '', item.quantity, item.unitCostFob, item.totalFobValue, item.sharePercentage, item.allocatedCustoms, item.allocatedShipping, item.allocatedTax, item.unitTax, item.finalUnitCost, marginFloat, item.finalSellingPrice, item.category || 'General');
         });
 
         // Upsert secuencial de Inventario
@@ -453,10 +455,11 @@ app.post('/api/batches', (req, res) => {
               const pct = oldCost > 0 ? parseFloat(((delta / oldCost) * 100).toFixed(2)) : 0;
               const updatedBrand = item.brand || existing.brand || '';
               const updatedModel = item.model || existing.model || '';
+              const updatedCategory = (item.category && item.category !== 'General') ? item.category : (existing.category || item.category || 'General');
 
               db.run(
-                'UPDATE inventory SET name = ?, brand = ?, model = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
-                [item.productName, updatedBrand, updatedModel, newStock, newCost, oldCost, delta, pct, '', importDate, targetSku],
+                'UPDATE inventory SET name = ?, brand = ?, model = ?, category = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
+                [item.productName, updatedBrand, updatedModel, updatedCategory, newStock, newCost, oldCost, delta, pct, '', importDate, targetSku],
                 () => {
                   db.run(
                     'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -468,7 +471,7 @@ app.post('/api/batches', (req, res) => {
             } else {
               db.run(
                 'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, item.productName, item.brand || '', item.model || '', 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, '', importDate],
+                [cleanSku, item.productName, item.brand || '', item.model || '', item.category || 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, '', importDate],
                 (err) => {
                   if (err) {
                     console.error('Error al insertar en inventario BD:', err.message);

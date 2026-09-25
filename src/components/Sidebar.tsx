@@ -54,8 +54,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const allNavItems = [
-    { id: 'inventory', label: 'Stock', icon: Boxes },
     { id: 'batches', label: 'Lotes', icon: Layers },
+    { id: 'inventory', label: 'Stock', icon: Boxes },
     { id: 'sales', label: 'Ventas', icon: ShoppingCart },
     { id: 'settings', label: 'Config', icon: Settings },
   ];

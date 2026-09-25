@@ -30,6 +30,7 @@ export interface BatchItem {
   productName: string;
   brand?: string;
   model?: string;
+  category?: string;
   quantity: number;
   unitCostFob: number;
   totalFobValue?: number;

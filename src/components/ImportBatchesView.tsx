@@ -20,7 +20,7 @@ import {
   Download,
   Search
 } from 'lucide-react';
-import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
+import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct, fetchCategoriesApi, Category } from '../services/api';
 import { exportSingleBatchPdf } from '../utils/pdfExport';
 
 export type BatchSortOption = 'date-desc' | 'date-asc' | 'cost-desc' | 'cost-asc';
@@ -236,6 +236,24 @@ export const ImportBatchesView: React.FC = () => {
       return [];
     }
   });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_categories');
+      return cached ? JSON.parse(cached) : [
+        { id: 1, name: 'Repuestos' },
+        { id: 2, name: 'Accesorios' },
+        { id: 3, name: 'Pantallas' },
+        { id: 4, name: 'General' }
+      ];
+    } catch {
+      return [
+        { id: 1, name: 'Repuestos' },
+        { id: 2, name: 'Accesorios' },
+        { id: 3, name: 'Pantallas' },
+        { id: 4, name: 'General' }
+      ];
+    }
+  });
   const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
   const [expandedMobileItemKeys, setExpandedMobileItemKeys] = useState<Record<string, boolean>>({});
   const [selectedBatchForFullDetails, setSelectedBatchForFullDetails] = useState<ImportBatch | null>(null);
@@ -302,7 +320,7 @@ export const ImportBatchesView: React.FC = () => {
     } catch {}
     return 'weighted';
   });
-  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; brand?: string; model?: string; quantity: string; unitCostFob: string; image: string }>>(() => {
+  const [inputItems, setInputItems] = useState<Array<{ sku: string; productName: string; brand?: string; model?: string; category?: string; quantity: string; unitCostFob: string; image: string }>>(() => {
     try {
       const saved = localStorage.getItem('draft_form_batch');
       if (saved) return JSON.parse(saved).inputItems || [];
@@ -430,6 +448,12 @@ export const ImportBatchesView: React.FC = () => {
       if (Array.isArray(invData)) {
         setInventoryList(invData);
       }
+      try {
+        const catData = await fetchCategoriesApi();
+        if (Array.isArray(catData) && catData.length > 0) {
+          setCategories(catData);
+        }
+      } catch {}
     } catch {
       setIsDbConnected(false);
     } finally {
@@ -471,7 +495,17 @@ export const ImportBatchesView: React.FC = () => {
       const sku = rawSku !== '' ? rawSku.toUpperCase() : `PROD-00${idx + 1}`;
       const rawName = String(item.productName ?? '').trim();
       const productName = rawName !== '' ? rawName : `Producto #${idx + 1}`;
-      return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalItemFob, image: item.image || '' };
+      return {
+        sku,
+        productName,
+        brand: item.brand || '',
+        model: item.model || '',
+        category: item.category || 'General',
+        quantity: qty,
+        unitCostFob: cost,
+        totalFobValue: totalItemFob,
+        image: item.image || ''
+      };
     });
     return { previewItems: items, totalBatchFob: totalFob };
   }, [inputItems]);
@@ -564,17 +598,28 @@ export const ImportBatchesView: React.FC = () => {
   // Single Product Form Entry State inside Modal
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
-  const [singleProductForm, setSingleProductForm] = useState<{ sku: string; productName: string; brand: string; model: string; quantity: string; unitCostFob: string; image: string }>({
+  const [singleProductForm, setSingleProductForm] = useState<{
+    sku: string;
+    productName: string;
+    brand: string;
+    model: string;
+    category: string;
+    quantity: string;
+    unitCostFob: string;
+    image: string;
+  }>({
     sku: '',
     productName: '',
     brand: '',
     model: '',
+    category: 'General',
     quantity: '1',
     unitCostFob: '',
     image: ''
   });
 
   const handleOpenSingleProductForm = (indexToEdit: number | null = null) => {
+    const defaultCat = categories[0]?.name || 'General';
     if (indexToEdit !== null && inputItems[indexToEdit]) {
       setEditingItemIndex(indexToEdit);
       setSingleProductForm({
@@ -582,13 +627,23 @@ export const ImportBatchesView: React.FC = () => {
         productName: inputItems[indexToEdit].productName || '',
         brand: inputItems[indexToEdit].brand || '',
         model: inputItems[indexToEdit].model || '',
+        category: inputItems[indexToEdit].category || defaultCat,
         quantity: inputItems[indexToEdit].quantity || '1',
         unitCostFob: inputItems[indexToEdit].unitCostFob || '',
         image: ''
       });
     } else {
       setEditingItemIndex(null);
-      setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
+      setSingleProductForm({
+        sku: '',
+        productName: '',
+        brand: '',
+        model: '',
+        category: defaultCat,
+        quantity: '1',
+        unitCostFob: '',
+        image: ''
+      });
     }
     setIsAddingProduct(true);
     setOpenSkuDropdownIndex(null);
@@ -606,6 +661,7 @@ export const ImportBatchesView: React.FC = () => {
       productName: String(singleProductForm.productName ?? '').trim(),
       brand: String(singleProductForm.brand ?? '').trim(),
       model: String(singleProductForm.model ?? '').trim(),
+      category: String(singleProductForm.category ?? '').trim() || 'General',
       quantity: singleProductForm.quantity,
       unitCostFob: singleProductForm.unitCostFob,
       image: ''
@@ -620,7 +676,16 @@ export const ImportBatchesView: React.FC = () => {
       setInputItems([...inputItems, cleanItem]);
     }
 
-    setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
+    setSingleProductForm({
+      sku: '',
+      productName: '',
+      brand: '',
+      model: '',
+      category: categories[0]?.name || 'General',
+      quantity: '1',
+      unitCostFob: '',
+      image: ''
+    });
     setIsAddingProduct(false);
     setOpenSkuDropdownIndex(null);
   };
@@ -638,7 +703,16 @@ export const ImportBatchesView: React.FC = () => {
     setProfitMarginPct('15.0');
     setCostUpdateStrategy('weighted');
     setInputItems([]);
-    setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
+    setSingleProductForm({
+      sku: '',
+      productName: '',
+      brand: '',
+      model: '',
+      category: categories[0]?.name || 'General',
+      quantity: '1',
+      unitCostFob: '',
+      image: ''
+    });
     setIsAddingProduct(false);
     setEditingItemIndex(null);
     setOpenSkuDropdownIndex(null);
@@ -677,6 +751,7 @@ export const ImportBatchesView: React.FC = () => {
           productName: i.productName || 'Producto',
           brand: i.brand || '',
           model: i.model || '',
+          category: i.category || 'General',
           quantity: Number(i.quantity) || 1,
           unitCostFob: Number(i.unitCostFob) || 0,
           image: ''
@@ -1791,6 +1866,9 @@ export const ImportBatchesView: React.FC = () => {
                                 setSingleProductForm(prev => ({
                                   ...prev,
                                   productName: String(match.name ?? ''),
+                                  brand: match.brand || prev.brand,
+                                  model: match.model || prev.model,
+                                  category: match.category || prev.category || 'General',
                                   image: match.image || prev.image,
                                   unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
                                 }));
@@ -1817,6 +1895,9 @@ export const ImportBatchesView: React.FC = () => {
                                         ...prev,
                                         sku: inv.sku,
                                         productName: inv.name,
+                                        brand: inv.brand || prev.brand,
+                                        model: inv.model || prev.model,
+                                        category: inv.category || prev.category || 'General',
                                         image: inv.image || prev.image,
                                         unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
                                       }));
@@ -1855,8 +1936,37 @@ export const ImportBatchesView: React.FC = () => {
                           />
                         </div>
 
+                        {/* Categoría Dropdown */}
+                        <div className="sm:col-span-1 lg:col-span-4">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Categoría *</label>
+                          <select
+                            value={singleProductForm.category}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, category: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner cursor-pointer"
+                          >
+                            {categories.map((c) => (
+                              <option key={c.id || c.name} value={c.name} className="bg-slate-900 text-white">
+                                {c.name}
+                              </option>
+                            ))}
+                            {categories.length === 0 && (
+                              <>
+                                <option value="Repuestos" className="bg-slate-900 text-white">Repuestos</option>
+                                <option value="Accesorios" className="bg-slate-900 text-white">Accesorios</option>
+                                <option value="Pantallas" className="bg-slate-900 text-white">Pantallas</option>
+                                <option value="General" className="bg-slate-900 text-white">General</option>
+                              </>
+                            )}
+                            {singleProductForm.category && !categories.some(c => c.name === singleProductForm.category) && (
+                              <option value={singleProductForm.category} className="bg-slate-900 text-white">
+                                {singleProductForm.category}
+                              </option>
+                            )}
+                          </select>
+                        </div>
+
                         {/* Marca */}
-                        <div className="sm:col-span-1 lg:col-span-2">
+                        <div className="sm:col-span-1 lg:col-span-3">
                           <label className="block text-xs font-semibold text-slate-300 mb-1.5">Marca (Opcional)</label>
                           <input
                             type="text"
@@ -1868,7 +1978,7 @@ export const ImportBatchesView: React.FC = () => {
                         </div>
 
                         {/* Modelo */}
-                        <div className="sm:col-span-1 lg:col-span-2">
+                        <div className="sm:col-span-1 lg:col-span-3">
                           <label className="block text-xs font-semibold text-slate-300 mb-1.5">Modelo (Opcional)</label>
                           <input
                             type="text"
@@ -2127,7 +2237,14 @@ export const ImportBatchesView: React.FC = () => {
                                         <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs shrink-0">📦</div>
                                       )}
                                       <div className="min-w-0 flex-1">
-                                        <span className="font-mono text-xs font-bold text-blue-400 block truncate">{item.sku}</span>
+                                        <div className="flex items-center space-x-1.5 flex-wrap">
+                                          <span className="font-mono text-xs font-bold text-blue-400 truncate">{item.sku}</span>
+                                          {item.category && (
+                                            <span className="text-[10px] font-semibold text-blue-300 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 shrink-0">
+                                              {item.category}
+                                            </span>
+                                          )}
+                                        </div>
                                         <span className="text-white font-semibold text-xs block truncate" title={item.productName}>{item.productName}</span>
                                         {(item.brand || item.model) && (
                                           <span className="text-[10px] text-slate-400 block truncate">
@@ -2212,12 +2329,24 @@ export const ImportBatchesView: React.FC = () => {
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center justify-between">
-                                    <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
-                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">
+                                    <div className="flex items-center space-x-1.5 flex-wrap">
+                                      <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
+                                      {item.category && (
+                                        <span className="text-[10px] font-semibold text-blue-300 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 shrink-0">
+                                          {item.category}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 shrink-0">
                                       {item.quantity} uds
                                     </span>
                                   </div>
                                   <h4 className="text-xs font-semibold text-white truncate mt-0.5">{item.productName}</h4>
+                                  {(item.brand || item.model) && (
+                                    <span className="text-[10px] text-slate-400 block truncate">
+                                      {[item.brand, item.model].filter(Boolean).join(' • ')}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
