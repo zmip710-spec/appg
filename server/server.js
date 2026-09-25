@@ -556,6 +556,38 @@ app.post('/api/categories', (req, res) => {
   });
 });
 
+app.put('/api/categories/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'El nombre de la categoría es requerido.' });
+  }
+  const cleanName = name.trim();
+
+  db.get('SELECT * FROM categories WHERE LOWER(TRIM(name)) = LOWER(?) AND id != ?', [cleanName, id], (err, existing) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (existing) {
+      return res.status(400).json({ error: 'Ya existe una categoría con ese nombre.' });
+    }
+
+    db.run('UPDATE categories SET name = ? WHERE id = ?', [cleanName, id], function (updateErr) {
+      if (updateErr) return res.status(500).json({ error: updateErr.message });
+      db.get('SELECT id, name, created_at FROM categories WHERE id = ?', [id], (getErr, row) => {
+        if (!getErr && row) return res.json(row);
+        res.json({ id, name: cleanName });
+      });
+    });
+  });
+});
+
+app.delete('/api/categories/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM categories WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Categoría eliminada con éxito', id });
+  });
+});
+
 // ==========================================
 // INVENTARIO & HISTORIAL DE PRECIOS
 // ==========================================

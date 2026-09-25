@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Edit2
 } from 'lucide-react';
 import {
   InventoryProduct,
@@ -32,7 +33,9 @@ import {
   User,
   Category,
   fetchCategories,
-  createCategory
+  createCategory,
+  updateCategory,
+  deleteCategory
 } from '../services/api';
 
 interface InventoryViewProps {
@@ -108,6 +111,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<number | string | null>(null);
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState('');
   const [isSavingCategory, setIsSavingCategory] = useState(false);
   const [categoryToastMessage, setCategoryToastMessage] = useState<string | null>(null);
@@ -319,7 +326,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     loadCategories();
   }, []);
 
-  const handleCreateCategory = async (e?: React.FormEvent) => {
+  const handleSaveCategorySubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setCategoryError('');
     const trimmed = newCategoryName.trim();
@@ -330,19 +337,64 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
     setIsSavingCategory(true);
     try {
-      const created = await createCategory(trimmed);
-      await loadCategories();
-      setCategory(created.name || trimmed);
-      setNewCategoryName('');
-      setShowCategoryModal(false);
-      setCategoryToastMessage(`¡Categoría "${created.name || trimmed}" creada con éxito!`);
+      if (editingCategoryId) {
+        const updated = await updateCategory(editingCategoryId, trimmed);
+        await loadCategories();
+        setCategory(updated.name || trimmed);
+        setEditingCategoryId(null);
+        setNewCategoryName('');
+        setCategoryToastMessage(`¡Categoría "${updated.name || trimmed}" actualizada con éxito!`);
+      } else {
+        const created = await createCategory(trimmed);
+        await loadCategories();
+        setCategory(created.name || trimmed);
+        setNewCategoryName('');
+        setCategoryToastMessage(`¡Categoría "${created.name || trimmed}" creada con éxito!`);
+      }
       setTimeout(() => setCategoryToastMessage(null), 3500);
     } catch (err: any) {
-      setCategoryError(err.message || 'Error al crear la categoría.');
+      setCategoryError(err.message || 'Error al procesar la categoría.');
     } finally {
       setIsSavingCategory(false);
     }
   };
+
+  const handleStartEditCategory = (cat: Category) => {
+    setEditingCategoryId(cat.id);
+    setNewCategoryName(cat.name);
+    setCategoryError('');
+  };
+
+  const handleCancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setNewCategoryName('');
+    setCategoryError('');
+  };
+
+  const handleDeleteCategoryConfirm = async () => {
+    if (!categoryToDelete) return;
+    setIsDeletingCategory(true);
+    try {
+      await deleteCategory(categoryToDelete.id);
+      await loadCategories();
+      setCategoryToastMessage(`Categoría "${categoryToDelete.name}" eliminada.`);
+      setTimeout(() => setCategoryToastMessage(null), 3500);
+      if (editingCategoryId === categoryToDelete.id) {
+        setEditingCategoryId(null);
+        setNewCategoryName('');
+      }
+      setCategoryToDelete(null);
+    } catch (err: any) {
+      setCategoryError(err.message || 'Error al eliminar la categoría.');
+      setCategoryToDelete(null);
+    } finally {
+      setIsDeletingCategory(false);
+    }
+  };
+
+  const filteredCategoriesList = categories.filter((c) =>
+    String(c.name ?? '').toLowerCase().includes(categorySearchTerm.trim().toLowerCase())
+  );
 
   const handleOpenPriceHistory = async (product: InventoryProduct) => {
     setHistoryProduct(product);
@@ -1379,59 +1431,235 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         </div>
       )}
 
-      {/* Modal Nueva Categoría */}
+      {/* Panel de Gestión de Categorías a Pantalla Completa */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100005] flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 sm:p-6 shadow-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-700 pb-3">
-              <h3 className="font-bold text-white text-base">Nueva Categoría</h3>
-              <button
-                type="button"
-                onClick={() => setShowCategoryModal(false)}
-                className="text-slate-400 hover:text-white text-base font-bold cursor-pointer"
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 z-50 z-[100005] bg-slate-950 flex flex-col p-4 sm:p-6 overflow-hidden animate-in fade-in duration-200">
+          {/* Header Superior */}
+          <div className="flex justify-between items-start border-b border-slate-800 pb-4 mb-5 shrink-0">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                <Tag className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Gestión de Categorías</h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                  Total: <span className="text-blue-400 font-bold font-mono">{categories.length}</span> categorías registradas
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCategoryModal(false);
+                setEditingCategoryId(null);
+                setNewCategoryName('');
+                setCategorySearchTerm('');
+                setCategoryError('');
+              }}
+              className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition text-lg font-bold cursor-pointer"
+              title="Cerrar panel"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Cuerpo en Dos Columnas */}
+          <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
+            {/* Columna Izquierda (Crear Categoría, ~35% de ancho) */}
+            <div className="w-full lg:w-[35%] shrink-0 flex flex-col space-y-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <h3 className="font-bold text-white text-base">
+                    {editingCategoryId ? 'Editar Categoría' : 'Nueva Categoría'}
+                  </h3>
+                  {editingCategoryId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEditCategory}
+                      className="text-xs text-slate-400 hover:text-slate-200 underline cursor-pointer"
+                    >
+                      Cancelar edición
+                    </button>
+                  )}
+                </div>
+
+                {categoryError && (
+                  <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-lg font-medium">
+                    {categoryError}
+                  </div>
+                )}
+
+                <form onSubmit={handleSaveCategorySubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-slate-400 font-semibold uppercase text-xs mb-1.5">
+                      Nombre de la Categoría
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Baterías, Cargadores, Pantallas..."
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      autoFocus
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium transition"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {editingCategoryId
+                        ? 'Modifica el nombre para actualizar la categoría en el catálogo.'
+                        : 'Define una nueva categoría para organizar productos y SKUs.'}
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingCategory}
+                      className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-blue-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2"
+                    >
+                      {isSavingCategory ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                          <span>{editingCategoryId ? 'Actualizando...' : 'Guardando...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          <span>{editingCategoryId ? 'Actualizar Categoría' : 'Guardar Categoría'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Caja de ayuda informativa */}
+              <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-400 space-y-1.5">
+                <span className="font-semibold text-slate-300 block">💡 Organización Dinámica</span>
+                <p>
+                  Las categorías permiten segmentar y filtrar eficientemente el catálogo de productos y son cargadas dinámicamente en el formulario de nuevos SKUs.
+                </p>
+              </div>
             </div>
 
-            {categoryError && (
-              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-lg font-medium">
-                {categoryError}
-              </div>
-            )}
-
-            <form onSubmit={handleCreateCategory} className="space-y-4">
-              <div>
-                <label className="block text-slate-400 font-semibold uppercase text-xs mb-1">
-                  Nombre de la Categoría
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Baterías, Cargadores, Carcasas"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  autoFocus
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500 text-sm font-medium"
-                />
+            {/* Columna Derecha (Listado y Administración, ~65% de ancho) */}
+            <div className="w-full lg:w-[65%] flex-1 min-h-0 flex flex-col bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
+              {/* Barra rápida de búsqueda */}
+              <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-800 shrink-0">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Buscar categoría existente..."
+                    value={categorySearchTerm}
+                    onChange={(e) => setCategorySearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 text-xs sm:text-sm font-medium transition"
+                  />
+                </div>
+                <span className="text-xs text-slate-400 font-mono shrink-0">
+                  {filteredCategoriesList.length} de {categories.length}
+                </span>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryModal(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold rounded-lg text-xs cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingCategory}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition shadow-md shadow-blue-600/20 cursor-pointer"
-                >
-                  {isSavingCategory ? 'Guardando...' : 'Guardar Categoría'}
-                </button>
+              {/* Card contenedora con scroll vertical independiente */}
+              <div className="flex-1 max-h-[calc(100vh-180px)] overflow-y-auto space-y-2.5 pt-4 pr-1">
+                {filteredCategoriesList.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 text-sm">
+                    No se encontraron categorías que coincidan con la búsqueda.
+                  </div>
+                ) : (
+                  filteredCategoriesList.map((cat) => {
+                    const associatedProductsCount = inventory.filter(
+                      (p) => String(p.category ?? '').trim().toLowerCase() === String(cat.name ?? '').trim().toLowerCase()
+                    ).length;
+
+                    const isEditingThis = editingCategoryId === cat.id;
+
+                    return (
+                      <div
+                        key={cat.id}
+                        className={`bg-slate-900/60 border rounded-lg p-3 flex items-center justify-between gap-3 transition hover:bg-slate-800/40 ${
+                          isEditingThis ? 'border-blue-500 ring-1 ring-blue-500/30' : 'border-slate-800/80'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-white text-sm sm:text-base tracking-tight truncate">
+                              {cat.name}
+                            </span>
+                            {associatedProductsCount > 0 ? (
+                              <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">
+                                {associatedProductsCount} {associatedProductsCount === 1 ? 'SKU' : 'SKUs'}
+                              </span>
+                            ) : (
+                              <span className="bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                                0 SKUs
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-3 text-[11px] text-slate-400 mt-1">
+                            {cat.created_at ? (
+                              <span>
+                                Creada el {new Date(cat.created_at).toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            ) : (
+                              <span>Categoría estándar</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Acciones */}
+                        <div className="flex items-center space-x-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCategory(cat)}
+                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition text-xs font-semibold cursor-pointer"
+                            title="Editar categoría"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCategoryToDelete(cat)}
+                            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition text-xs font-semibold cursor-pointer"
+                            title="Eliminar categoría"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
-            </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación Rápida de Eliminación */}
+      {categoryToDelete && (
+        <div className="fixed inset-0 bg-black/80 z-[100010] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+            <h4 className="font-bold text-white text-base">¿Eliminar Categoría?</h4>
+            <p className="text-xs text-slate-300">
+              ¿Estás seguro de que deseas eliminar la categoría <span className="font-bold text-white">"{categoryToDelete.name}"</span>?
+            </p>
+            <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setCategoryToDelete(null)}
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteCategoryConfirm}
+                disabled={isDeletingCategory}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition cursor-pointer"
+              >
+                {isDeletingCategory ? 'Eliminando...' : 'Sí, Eliminar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

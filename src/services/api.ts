@@ -477,3 +477,30 @@ export const createCategory = async (name: string): Promise<Category> => {
 
 export const createCategoryApi = createCategory;
 
+export const updateCategory = async (id: number | string, name: string): Promise<Category> => {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim() })
+  });
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.error || 'Error al actualizar la categoría');
+  }
+  return response.json();
+};
+
+export const updateCategoryApi = updateCategory;
+
+export const deleteCategory = async (id: number | string): Promise<{ message: string; id: number | string }> => {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    method: 'DELETE'
+  });
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.error || 'Error al eliminar la categoría');
+  }
+  return response.json();
+};
+
+export const deleteCategoryApi = deleteCategory;
