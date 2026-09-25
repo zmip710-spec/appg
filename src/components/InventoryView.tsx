@@ -712,22 +712,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-900/80 text-xs uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
+          <table className="w-full table-fixed text-left text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-50 dark:bg-slate-900/80 text-[11px] uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-5 py-3">SKU</th>
-                <th className="px-5 py-3">Producto</th>
-                <th className="px-5 py-3">Categoría</th>
-                <th className="px-5 py-3">Stock</th>
-                <th className="px-5 py-3">Costo Landed</th>
-                <th className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Precio Venta (+15%)</th>
-                <th className="px-5 py-3 text-right">Acciones</th>
+                <th className="w-[10%] px-2.5 py-2.5">SKU</th>
+                <th className="w-[38%] px-2.5 py-2.5">Producto</th>
+                <th className="w-[12%] px-2.5 py-2.5">Categoría</th>
+                <th className="w-[8%] px-2.5 py-2.5">Stock</th>
+                <th className="w-[12%] px-2.5 py-2.5">Costo Landed</th>
+                <th className="w-[12%] px-2.5 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Precio Venta (+15%)</th>
+                <th className="w-[8%] px-2.5 py-2.5 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700 text-xs">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
@@ -738,47 +738,53 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
-                      <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{String(item.sku ?? '')}</td>
-                      <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
+                      <td className="px-2.5 py-2.5 font-mono font-bold text-blue-600 dark:text-blue-400 text-xs truncate" title={String(item.sku ?? '')}>
+                        {String(item.sku ?? '')}
+                      </td>
+                      <td className="px-2.5 py-2.5 font-semibold text-slate-900 dark:text-white">
                         {(() => {
                           const bStr = item.brand != null ? String(item.brand).trim() : '';
                           const mStr = item.model != null ? String(item.model).trim() : '';
                           const bmStr = [bStr, mStr].filter(Boolean).join(' ');
                           const title = bmStr ? `${bmStr} - ${String(item.name ?? '')}` : String(item.name ?? '');
                           return (
-                            <>
-                              <span className="block truncate">{title}</span>
+                            <div className="min-w-0">
+                              <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white leading-snug" title={title}>
+                                {title}
+                              </span>
                               {bStr && (
-                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-normal">Marca: {bStr} {mStr ? `• Modelo: ${mStr}` : ''}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-normal truncate mt-0.5">
+                                  Marca: {bStr} {mStr ? `• Modelo: ${mStr}` : ''}
+                                </span>
                               )}
-                            </>
+                            </div>
                           );
                         })()}
                       </td>
-                      <td className="px-5 py-3">
-                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-md font-medium border border-slate-200 dark:border-slate-600">
+                      <td className="px-2.5 py-2.5">
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] rounded-md font-medium border border-slate-200 dark:border-slate-600 inline-block truncate max-w-full">
                           {item.category || 'General'}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-slate-700 dark:text-slate-200 font-medium">
+                      <td className="px-2.5 py-2.5 text-slate-700 dark:text-slate-200 font-medium text-xs whitespace-nowrap">
                         {item.stock === 0 ? (
                           <span className="text-slate-400 dark:text-slate-500 font-normal">0 uds</span>
                         ) : (
                           <span>{item.stock} uds</span>
                         )}
                       </td>
-                      <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
-                        <span className="block text-xs">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                        <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Q {unitCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                      <td className="px-2.5 py-2.5 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                        <span className="block text-xs font-mono font-bold">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {unitCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
                       </td>
-                      <td className="px-5 py-3 bg-emerald-50/50 dark:bg-emerald-950/20 border-l border-emerald-200 dark:border-emerald-500/20">
-                        <span className="font-extrabold text-slate-900 dark:text-white text-xs block">${sellingPriceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                      <td className="px-2.5 py-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-l border-emerald-200 dark:border-emerald-500/20 whitespace-nowrap">
                         <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block">Q {sellingPriceGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">${sellingPriceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
                       </td>
-                      <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2.5 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setSelectedDetailProduct(item)}
-                          className="px-3 py-1.5 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
+                          className="px-2.5 py-1 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/40 rounded-lg text-xs font-bold transition cursor-pointer"
                         >
                           Ver Detalle
                         </button>
