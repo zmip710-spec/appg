@@ -12,7 +12,7 @@ import { ImportBatchesView } from './components/ImportBatchesView';
 import { InventoryView } from './components/InventoryView';
 import { LoginView } from './components/LoginView';
 import { fetchDashboardStatsApi, fetchInventory, fetchTransactions, fetchBatches, fetchUsers, verifySessionApi, checkHealthApi, DashboardStats, User } from './services/api';
-import { exportViewPdf } from './utils/pdfExport';
+import { exportViewPdf, exportInventoryPdf } from './utils/pdfExport';
 import { DollarSign, Boxes, Layers, PackageCheck, CheckCircle } from 'lucide-react';
 
 // Helpers para persistencia de sesión segura y resiliente
@@ -252,7 +252,11 @@ export default function App() {
         fetchUsers().catch(() => [])
       ]);
 
-      if (typeof exportViewPdf === 'function') {
+      if (activeTab === 'inventory') {
+        const finalInv = Array.isArray(invData) ? invData : [];
+        exportInventoryPdf(finalInv, currentUser);
+        setToastMessage('¡Reporte PDF de Inventario descargado con éxito!');
+      } else if (typeof exportViewPdf === 'function') {
         exportViewPdf({
           activeTab,
           user: currentUser,
@@ -262,9 +266,9 @@ export default function App() {
           batches: Array.isArray(batchesData) ? batchesData : [],
           users: Array.isArray(usersData) ? usersData : []
         });
+        setToastMessage(`¡Reporte PDF de ${activeTab.toUpperCase()} listo para imprimir!`);
       }
 
-      setToastMessage(`¡Reporte PDF de ${activeTab.toUpperCase()} listo para imprimir!`);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
     } catch (err) {
@@ -376,7 +380,7 @@ export default function App() {
           )}
 
           {/* TAB: INVENTARIO & STOCK */}
-          {activeTab === 'inventory' && <InventoryView currentUser={currentUser} />}
+          {activeTab === 'inventory' && <InventoryView currentUser={currentUser} onExportPDF={handleExportPDF} />}
 
           {/* TAB: LOTES & ADUANA */}
           {activeTab === 'batches' && <ImportBatchesView />}

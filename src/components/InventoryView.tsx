@@ -20,7 +20,8 @@ import {
   ChevronRight,
   CheckCircle,
   AlertCircle,
-  Edit2
+  Edit2,
+  FileDown
 } from 'lucide-react';
 import {
   InventoryProduct,
@@ -37,13 +38,15 @@ import {
   updateCategory,
   deleteCategory
 } from '../services/api';
+import { exportInventoryPdf } from '../utils/pdfGenerator';
 
 interface InventoryViewProps {
   currentUser?: User | null;
   readOnly?: boolean;
+  onExportPDF?: () => void;
 }
 
-export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readOnly }) => {
+export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readOnly, onExportPDF }) => {
   const isVendedor = readOnly || currentUser?.role === 'Vendedor';
   const [inventory, setInventory] = useState<InventoryProduct[]>(() => {
     try {
@@ -527,6 +530,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const totalInventoryValueGtq = totalInventoryValue * 7.80;
   const totalUniqueSkus = inventory.length;
 
+  const handleExportPDF = () => {
+    if (onExportPDF) {
+      onExportPDF();
+    } else {
+      exportInventoryPdf(inventory, currentUser);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 min-h-[500px] animate-pulse">
@@ -547,10 +558,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   return (
     <div className="space-y-4 pb-24 sm:pb-32 min-h-[500px]">
       {/* Compact Minimal Header */}
-      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Stock e Inventario</h2>
         {!isVendedor && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleExportPDF}
+              title="Exportar PDF Inventario"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-medium text-slate-300 bg-slate-900 border border-slate-700 hover:border-slate-600 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer active:scale-95 shadow-sm"
+            >
+              <FileDown className="w-4 h-4 text-blue-400" />
+              <span>Exportar PDF</span>
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -558,10 +578,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 setCategoryError('');
                 setShowCategoryModal(true);
               }}
-              className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold px-3 py-1.5 rounded-xl text-xs transition border border-blue-500/40 shadow-sm active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-medium text-blue-400 bg-slate-900 hover:bg-slate-800 border border-blue-500/40 rounded-lg transition-colors cursor-pointer active:scale-95 shadow-sm"
               title="Crear nueva categoría"
             >
-              <Plus size={16} />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Nueva Categoría</span>
             </button>
             <button
@@ -570,9 +590,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 setErrorMessage('');
                 setShowAddModal(true);
               }}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
             >
-              <Plus size={16} />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Nuevo SKU</span>
             </button>
           </div>
