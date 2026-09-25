@@ -12,3 +12,7 @@ yarn-debug.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Environment variables
+.env
+.env.*
