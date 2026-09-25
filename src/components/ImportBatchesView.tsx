@@ -299,11 +299,11 @@ export const ImportBatchesView: React.FC = () => {
   }, [batches]);
 
   const filteredAndSortedBatches = useMemo(() => {
-    const query = batchSearchTerm.trim().toLowerCase();
+    const query = String(batchSearchTerm || '').trim().toLowerCase();
     const result = batches.filter(batch => {
       if (!query) return true;
-      const matchesName = (batch.name || '').toLowerCase().includes(query);
-      const matchesId = (batch.id || '').toLowerCase().includes(query);
+      const matchesName = String(batch.name ?? '').toLowerCase().includes(query);
+      const matchesId = String(batch.id ?? '').toLowerCase().includes(query);
       return matchesName || matchesId;
     });
 
@@ -440,8 +440,10 @@ export const ImportBatchesView: React.FC = () => {
       const cost = Math.max(0, parseFloat(item.unitCostFob) || 0);
       const totalItemFob = qty * cost;
       totalFob += totalItemFob;
-      const sku = item.sku && item.sku.trim() !== '' ? item.sku.trim().toUpperCase() : `PROD-00${idx + 1}`;
-      const productName = item.productName && item.productName.trim() !== '' ? item.productName.trim() : `Producto #${idx + 1}`;
+      const rawSku = String(item.sku ?? '').trim();
+      const sku = rawSku !== '' ? rawSku.toUpperCase() : `PROD-00${idx + 1}`;
+      const rawName = String(item.productName ?? '').trim();
+      const productName = rawName !== '' ? rawName : `Producto #${idx + 1}`;
       return { sku, productName, quantity: qty, unitCostFob: cost, totalFobValue: totalItemFob, image: item.image || '' };
     });
     return { previewItems: items, totalBatchFob: totalFob };
@@ -477,9 +479,9 @@ export const ImportBatchesView: React.FC = () => {
   // Check if any item being imported currently has stock > 0 in inventory AND has a price variation
   const detectedPriceVariations = useMemo(() => {
     return proratedPreview.filter(item => {
-      const cleanSku = item.sku.trim().toUpperCase();
+      const cleanSku = String(item.sku ?? '').trim().toUpperCase();
       if (!cleanSku) return false;
-      const existingInStock = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanSku && inv.stock > 0);
+      const existingInStock = inventoryList.find(inv => String(inv.sku ?? '').toUpperCase() === cleanSku && inv.stock > 0);
       if (!existingInStock) return false;
       return Math.abs(item.finalUnitCost - existingInStock.unitCost) >= 0.01;
     });
@@ -502,14 +504,14 @@ export const ImportBatchesView: React.FC = () => {
     updated[index][field] = value;
 
     if (field === 'sku') {
-      const cleanTyped = value.trim().toUpperCase();
+      const cleanTyped = String(value ?? '').trim().toUpperCase();
       if (cleanTyped.length >= 1) {
         setOpenSkuDropdownIndex(index);
       } else {
         setOpenSkuDropdownIndex(null);
       }
 
-      const match = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanTyped);
+      const match = inventoryList.find(inv => String(inv.sku ?? '').toUpperCase() === cleanTyped);
       if (match) {
         updated[index].productName = match.name;
         if (match.image) updated[index].image = match.image;
@@ -571,11 +573,12 @@ export const ImportBatchesView: React.FC = () => {
       return;
     }
 
+    const rawFormSku = String(singleProductForm.sku ?? '').trim();
     const cleanItem = {
-      sku: singleProductForm.sku.trim() ? singleProductForm.sku.trim().toUpperCase() : `PROD-00${inputItems.length + 1}`,
-      productName: singleProductForm.productName.trim(),
-      brand: singleProductForm.brand.trim(),
-      model: singleProductForm.model.trim(),
+      sku: rawFormSku ? rawFormSku.toUpperCase() : `PROD-00${inputItems.length + 1}`,
+      productName: String(singleProductForm.productName ?? '').trim(),
+      brand: String(singleProductForm.brand ?? '').trim(),
+      model: String(singleProductForm.model ?? '').trim(),
       quantity: singleProductForm.quantity,
       unitCostFob: singleProductForm.unitCostFob,
       image: ''
@@ -1046,8 +1049,8 @@ export const ImportBatchesView: React.FC = () => {
                         const taxSurchargePct = valFobNoTax > 0 ? (totalTaxPerUnit / valFobNoTax) * 100 : 0;
                         const sharePct = item.sharePercentage !== undefined ? item.sharePercentage : (batchFobTotal > 0 ? ((item.quantity * item.unitCostFob) / batchFobTotal) * 100 : 0);
 
-                        const cleanBrand = item.brand ? item.brand.trim() : '';
-                        const cleanModel = item.model ? item.model.trim() : '';
+                        const cleanBrand = String(item.brand ?? '').trim();
+                        const cleanModel = String(item.model ?? '').trim();
 
                         let brandModelCombined = '';
                         if (cleanBrand && cleanModel) {
@@ -1063,8 +1066,8 @@ export const ImportBatchesView: React.FC = () => {
                         }
 
                         const displayTitle = brandModelCombined
-                          ? `${brandModelCombined} - ${item.productName.trim()}`
-                          : item.productName.trim();
+                          ? `${brandModelCombined} - ${String(item.productName ?? '').trim()}`
+                          : String(item.productName ?? '').trim();
 
                         const itemSku = item.sku || `PROD-00${idx+1}`;
                         const unitProfitUsd = valFinalSellingUsd - valLandedFull;
@@ -1233,8 +1236,8 @@ export const ImportBatchesView: React.FC = () => {
                               const taxSurchargePct = valFobNoTax > 0 ? (totalTaxPerUnit / valFobNoTax) * 100 : 0;
                               const sharePct = item.sharePercentage !== undefined ? item.sharePercentage : (batchFobTotal > 0 ? ((item.quantity * item.unitCostFob) / batchFobTotal) * 100 : 0);
 
-                              const cleanBrand = item.brand ? item.brand.trim() : '';
-                              const cleanModel = item.model ? item.model.trim() : '';
+                              const cleanBrand = String(item.brand ?? '').trim();
+                              const cleanModel = String(item.model ?? '').trim();
 
                               let brandModelCombined = '';
                               if (cleanBrand && cleanModel) {
@@ -1250,8 +1253,8 @@ export const ImportBatchesView: React.FC = () => {
                               }
 
                               const displayTitle = brandModelCombined
-                                ? `${brandModelCombined} - ${item.productName.trim()}`
-                                : item.productName.trim();
+                                ? `${brandModelCombined} - ${String(item.productName ?? '').trim()}`
+                                : String(item.productName ?? '').trim();
 
                               const metadataSubtitle = [
                                 cleanBrand ? `Marca: ${cleanBrand}` : null,
@@ -1764,17 +1767,17 @@ export const ImportBatchesView: React.FC = () => {
                             onChange={(e) => {
                               const val = e.target.value;
                               setSingleProductForm({ ...singleProductForm, sku: val });
-                              const cleanTyped = val.trim().toUpperCase();
+                              const cleanTyped = String(val ?? '').trim().toUpperCase();
                               if (cleanTyped.length >= 1) {
                                 setOpenSkuDropdownIndex(-1);
                               } else {
                                 setOpenSkuDropdownIndex(null);
                               }
-                              const match = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanTyped);
+                              const match = inventoryList.find(inv => String(inv.sku ?? '').toUpperCase() === cleanTyped);
                               if (match) {
                                 setSingleProductForm(prev => ({
                                   ...prev,
-                                  productName: match.name,
+                                  productName: String(match.name ?? ''),
                                   image: match.image || prev.image,
                                   unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
                                 }));
@@ -1788,9 +1791,9 @@ export const ImportBatchesView: React.FC = () => {
                             <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
                               {inventoryList
                                 .filter(inv => {
-                                  const s = (inv.sku || '').toUpperCase();
-                                  const n = (inv.name || '').toUpperCase();
-                                  const q = singleProductForm.sku.trim().toUpperCase();
+                                  const s = String(inv.sku ?? '').toUpperCase();
+                                  const n = String(inv.name ?? '').toUpperCase();
+                                  const q = String(singleProductForm.sku ?? '').trim().toUpperCase();
                                   return s.includes(q) || n.includes(q);
                                 })
                                 .map(inv => (
@@ -2549,8 +2552,8 @@ export const ImportBatchesView: React.FC = () => {
 
                       <div className="space-y-3">
                         {itemsDetailed.map((item, idx) => {
-                          const cleanBrand = item.brand ? item.brand.trim() : '';
-                          const cleanModel = item.model ? item.model.trim() : '';
+                          const cleanBrand = String(item.brand ?? '').trim();
+                          const cleanModel = String(item.model ?? '').trim();
 
                           let brandModelCombined = '';
                           if (cleanBrand && cleanModel) {
@@ -2566,8 +2569,8 @@ export const ImportBatchesView: React.FC = () => {
                           }
 
                           const displayTitle = brandModelCombined
-                            ? `${brandModelCombined} - ${item.productName.trim()}`
-                            : item.productName.trim();
+                            ? `${brandModelCombined} - ${String(item.productName ?? '').trim()}`
+                            : String(item.productName ?? '').trim();
 
                           const metadataSubtitle = [
                             cleanBrand ? `Marca: ${cleanBrand}` : null,

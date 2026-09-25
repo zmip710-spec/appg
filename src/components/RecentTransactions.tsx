@@ -134,7 +134,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
   // When a product is selected from search dropdown -> Add to Cart or Increment Quantity (in Quetzales)
   const handleSelectProduct = (product: InventoryProduct) => {
-    const existingIndex = cartItems.findIndex(item => (item.sku || '').toLowerCase() === (product.sku || '').toLowerCase());
+    const existingIndex = cartItems.findIndex(item => String(item.sku ?? '').toLowerCase() === String(product.sku ?? '').toLowerCase());
     if (existingIndex >= 0) {
       const updatedCart = [...cartItems];
       updatedCart[existingIndex].quantity += 1;
@@ -142,10 +142,10 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
     } else {
       const priceGtq = product.unitCost * 1.15 * 7.80;
       const newItem: CartItem = {
-        id: product.sku,
-        sku: product.sku,
-        name: product.name,
-        category: product.category,
+        id: String(product.sku ?? ''),
+        sku: String(product.sku ?? ''),
+        name: String(product.name ?? ''),
+        category: String(product.category ?? ''),
         stock: product.stock,
         unitCost: product.unitCost,
         quantity: 1,
@@ -173,14 +173,14 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   };
 
   // Filtered Inventory List for Search
-  const cleanSearch = (productSearch || '').trim().toLowerCase();
+  const cleanSearch = String(productSearch || '').trim().toLowerCase();
   const matchingProducts = cleanSearch.length >= 1
     ? inventoryList.filter(p => {
-        const sku = (p.sku || '').toLowerCase();
-        const name = (p.name || '').toLowerCase();
-        const brand = (p.brand || '').toLowerCase();
-        const model = (p.model || '').toLowerCase();
-        const category = (p.category || '').toLowerCase();
+        const sku = String(p.sku ?? '').toLowerCase();
+        const name = String(p.name ?? '').toLowerCase();
+        const brand = String(p.brand ?? '').toLowerCase();
+        const model = String(p.model ?? '').toLowerCase();
+        const category = String(p.category ?? '').toLowerCase();
         return (
           sku.includes(cleanSearch) ||
           name.includes(cleanSearch) ||
@@ -267,11 +267,11 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
     setTransactions(transactions.filter(t => t.id !== id));
   };
 
-  const cleanTerm = (searchTerm || '').trim().toLowerCase();
+  const cleanTerm = String(searchTerm || '').trim().toLowerCase();
   const filteredData = transactions.filter((item) => {
-    const client = (item.client || '').toLowerCase();
-    const id = (item.id || '').toLowerCase();
-    const service = (item.service || '').toLowerCase();
+    const client = String(item.client ?? '').toLowerCase();
+    const id = String(item.id ?? '').toLowerCase();
+    const service = String(item.service ?? '').toLowerCase();
     const matchesSearch =
       client.includes(cleanTerm) ||
       id.includes(cleanTerm) ||
@@ -581,7 +581,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                       ) : (
                         matchingProducts.map((prod) => {
                           const sellingGtq = prod.unitCost * 1.15 * 7.80;
-                          const inCart = cartItems.find(i => (i.sku || '').toLowerCase() === (prod.sku || '').toLowerCase());
+                          const inCart = cartItems.find(i => String(i.sku ?? '').toLowerCase() === String(prod.sku ?? '').toLowerCase());
 
                           return (
                             <div

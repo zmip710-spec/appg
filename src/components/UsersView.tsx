@@ -31,8 +31,9 @@ export const UsersView: React.FC = () => {
     loadDataFromDb();
   }, []);
 
+  const searchLower = String(search || '').toLowerCase();
   const filteredUsers = users.filter((u) => {
-    const matchesSearch = (u.name || '').toLowerCase().includes((search || '').toLowerCase());
+    const matchesSearch = String(u.name ?? '').toLowerCase().includes(searchLower);
     const matchesRole = filterRole === 'all' || u.role === filterRole;
     return matchesSearch && matchesRole;
   });

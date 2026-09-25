@@ -378,20 +378,20 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   };
 
   // Real-time Search & Filter Chips (Includes match by Brand & Model)
+  const searchLower = String(search || '').toLowerCase();
   const filteredInventory = inventory.filter((item) => {
-    const query = (search || '').toLowerCase();
-    const brand = (item.brand || '').toLowerCase();
-    const model = (item.model || '').toLowerCase();
-    const name = (item.name || '').toLowerCase();
-    const sku = (item.sku || '').toLowerCase();
-    const category = (item.category || '').toLowerCase();
+    const sku = String(item.sku ?? '').toLowerCase();
+    const name = String(item.name ?? '').toLowerCase();
+    const brand = String(item.brand ?? '').toLowerCase();
+    const model = String(item.model ?? '').toLowerCase();
+    const category = String(item.category ?? '').toLowerCase();
 
     const matchesSearch =
-      sku.includes(query) ||
-      name.includes(query) ||
-      brand.includes(query) ||
-      model.includes(query) ||
-      category.includes(query);
+      sku.includes(searchLower) ||
+      name.includes(searchLower) ||
+      brand.includes(searchLower) ||
+      model.includes(searchLower) ||
+      category.includes(searchLower);
 
     let matchesFilter = true;
     if (filterStatus === 'in_stock') matchesFilter = item.stock > 10;
@@ -583,15 +583,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               >
                 {/* Product Info: Name in Bold + SKU & Brand */}
                 {(() => {
-                  const brandModelStr = [item.brand, item.model].filter(Boolean).join(' ');
-                  const fullTitle = brandModelStr ? `${brandModelStr} - ${item.name}` : item.name;
+                  const brandStr = item.brand != null ? String(item.brand).trim() : '';
+                  const modelStr = item.model != null ? String(item.model).trim() : '';
+                  const brandModelStr = [brandStr, modelStr].filter(Boolean).join(' ');
+                  const fullTitle = brandModelStr ? `${brandModelStr} - ${String(item.name ?? '')}` : String(item.name ?? '');
                   return (
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-slate-900 dark:text-white text-xs truncate leading-tight">{fullTitle}</h4>
                       <div className="flex items-center space-x-1.5 text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.sku} {item.brand ? `| ${item.brand}` : ''}</span>
+                        <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{String(item.sku ?? '')} {brandStr ? `| ${brandStr}` : ''}</span>
                         <span>•</span>
-                        <span className="truncate">{item.category || 'General'}</span>
+                        <span className="truncate">{String(item.category || 'General')}</span>
                       </div>
                     </div>
                   );
@@ -655,16 +657,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
-                      <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{item.sku}</td>
+                      <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{String(item.sku ?? '')}</td>
                       <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
-                        <span className="block truncate">
-                          {[item.brand, item.model].filter(Boolean).join(' ')
-                            ? `${[item.brand, item.model].filter(Boolean).join(' ')} - ${item.name}`
-                            : item.name}
-                        </span>
-                        {item.brand && (
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-normal">Marca: {item.brand} {item.model ? `• Modelo: ${item.model}` : ''}</span>
-                        )}
+                        {(() => {
+                          const bStr = item.brand != null ? String(item.brand).trim() : '';
+                          const mStr = item.model != null ? String(item.model).trim() : '';
+                          const bmStr = [bStr, mStr].filter(Boolean).join(' ');
+                          const title = bmStr ? `${bmStr} - ${String(item.name ?? '')}` : String(item.name ?? '');
+                          return (
+                            <>
+                              <span className="block truncate">{title}</span>
+                              {bStr && (
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-normal">Marca: {bStr} {mStr ? `• Modelo: ${mStr}` : ''}</span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </td>
                       <td className="px-5 py-3">
                         <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-md font-medium border border-slate-200 dark:border-slate-600">
@@ -744,8 +752,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 </button>
                 <div className="min-w-0 flex-1">
                   {(() => {
-                    const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
-                    const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
+                    const cleanBrand = String(selectedDetailProduct.brand ?? '').trim();
+                    const cleanModel = String(selectedDetailProduct.model ?? '').trim();
 
                     let brandModelCombined = '';
                     if (cleanBrand && cleanModel) {
@@ -761,8 +769,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                     }
 
                     const displayTitle = brandModelCombined
-                      ? `${brandModelCombined} - ${selectedDetailProduct.name.trim()}`
-                      : selectedDetailProduct.name.trim();
+                      ? `${brandModelCombined} - ${String(selectedDetailProduct.name ?? '').trim()}`
+                      : String(selectedDetailProduct.name ?? '').trim();
 
                     return (
                       <div className="min-w-0">

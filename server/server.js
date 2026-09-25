@@ -509,7 +509,15 @@ app.delete('/api/batches/:id', (req, res) => {
 app.get('/api/inventory', (req, res) => {
   db.all('SELECT * FROM inventory ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
+    const normalized = (rows || []).map(r => ({
+      ...r,
+      sku: String(r.sku ?? ''),
+      name: String(r.name ?? ''),
+      brand: String(r.brand ?? ''),
+      model: String(r.model ?? ''),
+      category: String(r.category ?? 'General')
+    }));
+    res.json(normalized);
   });
 });
 
