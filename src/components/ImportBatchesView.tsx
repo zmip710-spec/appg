@@ -1316,115 +1316,105 @@ export const ImportBatchesView: React.FC = () => {
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-[#0b1329] flex flex-col overflow-hidden text-slate-100 animate-in fade-in duration-150">
           
-          {/* Header Superior Fijo */}
-          <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/90 bg-[#0d1733]/95 backdrop-blur-md flex items-center justify-between shrink-0 z-30 shadow-md">
-            {/* Lado Izquierdo: Volver al Historial + Título + Badges */}
-            <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition shrink-0 cursor-pointer shadow-sm"
-                title="Volver al Historial de Lotes"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Volver al Historial</span>
-              </button>
+          {/* Header Superior Fijo y 100% Responsive */}
+          <header className="px-4 sm:px-6 lg:px-8 py-3.5 border-b border-slate-800/90 bg-[#0d1733]/95 backdrop-blur-md shrink-0 z-30 shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 max-w-7xl mx-auto w-full">
+              {/* Fila 1 (Identificación y Navegación izquierda) */}
+              <div className="flex items-center space-x-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition shrink-0 cursor-pointer shadow-sm"
+                  title="Volver al Historial de Lotes"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Volver al Historial</span>
+                </button>
 
-              <div className="min-w-0">
-                <div className="flex items-center space-x-2 flex-wrap">
-                  <h2 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate">
-                    Registrar Nuevo Lote de Importación
-                  </h2>
-                  <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                    Paso {addBatchStep} de 2: {addBatchStep === 1 ? 'Parámetros Generales' : 'Carga de Productos'}
-                  </span>
-                  {(batchName.trim() !== '' || inputItems.length > 0) && (
-                    <span className="hidden md:inline-flex text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                      📝 Borrador autoguardado
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                    <h2 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate">
+                      Registrar Nuevo Lote
+                    </h2>
+                    <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                      Paso {addBatchStep} de 2
                     </span>
-                  )}
+                    {(batchName.trim() !== '' || inputItems.length > 0) && (
+                      <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        📝 Borrador autoguardado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 truncate hidden sm:block">
+                    {addBatchStep === 1
+                      ? 'Define los parámetros financieros, arancelarios y tipo de cambio para el cálculo del lote.'
+                      : 'Ingresa los productos importados para prorratear los costos y calcular el precio de venta.'}
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-400 truncate hidden sm:block">
-                  {addBatchStep === 1
-                    ? 'Define los parámetros financieros, arancelarios y tipo de cambio para el cálculo del lote.'
-                    : 'Ingresa los productos importados para prorratear los costos y calcular el precio de venta.'}
-                </p>
               </div>
-            </div>
 
-            {/* Lado Derecho: Acciones Principales Siempre Visibles */}
-            <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
-              {addBatchStep === 1 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="px-3.5 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!batchName.trim()) {
-                        alert('Por favor ingresa un nombre para el lote.');
-                        return;
-                      }
-                      setAddBatchStep(2);
-                      if (inputItems.length === 0) {
-                        setIsAddingProduct(true);
-                      }
-                    }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/25 active:scale-95 cursor-pointer"
-                  >
-                    <span>Continuar al Paso 2</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setAddBatchStep(1)}
-                    className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
-                  >
-                    <span>← Volver a Parámetros</span>
-                  </button>
-
-                  {!isAddingProduct && (
+              {/* Fila 2 / Extremo derecho (Acciones principales) */}
+              <div className="flex items-center justify-end gap-2.5 shrink-0 w-full md:w-auto">
+                {addBatchStep === 1 ? (
+                  <>
                     <button
                       type="button"
-                      onClick={() => handleOpenSingleProductForm(null)}
-                      className="px-3.5 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                      onClick={() => setShowAddModal(false)}
+                      className="px-3.5 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition cursor-pointer"
                     >
-                      <Plus size={15} />
-                      <span className="hidden sm:inline">Agregar Producto</span>
+                      Cancelar
                     </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (inputItems.length === 0) {
-                        alert('Debes agregar al menos un producto al lote.');
-                        return;
-                      }
-                      setShowConfirmModal(true);
-                    }}
-                    disabled={inputItems.length === 0 || isSavingBatch}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center space-x-1.5 active:scale-95"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length})`}</span>
-                  </button>
-                </>
-              )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!batchName.trim()) {
+                          alert('Por favor ingresa un nombre para el lote.');
+                          return;
+                        }
+                        setAddBatchStep(2);
+                        if (inputItems.length === 0) {
+                          setIsAddingProduct(true);
+                        }
+                      }}
+                      className="flex-1 md:flex-initial px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-lg shadow-blue-600/25 active:scale-95 cursor-pointer"
+                    >
+                      <span>Continuar al Paso 2</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAddBatchStep(1)}
+                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
+                    >
+                      <span>← Volver a Parámetros</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (inputItems.length === 0) {
+                          alert('Debes agregar al menos un producto al lote.');
+                          return;
+                        }
+                        setShowConfirmModal(true);
+                      }}
+                      disabled={inputItems.length === 0 || isSavingBatch}
+                      className="flex-1 md:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length})`}</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </header>
 
           {/* Cuerpo Scrolleable Expansivo */}
-          <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto overscroll-contain pb-28">
+          <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto overscroll-contain pb-12">
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
               
               {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
@@ -1647,35 +1637,6 @@ export const ImportBatchesView: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Step 1 Action Bar */}
-                  <div className="flex justify-between items-center pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition cursor-pointer"
-                    >
-                      Cancelar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!batchName.trim()) {
-                          alert('Por favor ingresa un nombre para el lote.');
-                          return;
-                        }
-                        setAddBatchStep(2);
-                        if (inputItems.length === 0) {
-                          setIsAddingProduct(true);
-                        }
-                      }}
-                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/25 cursor-pointer active:scale-95"
-                    >
-                      <span>Continuar a Carga de Productos</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               )}
@@ -2266,25 +2227,6 @@ export const ImportBatchesView: React.FC = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* Step 2 Sticky Actions Footer */}
-                  <div className="sticky bottom-0 bg-slate-900/95 backdrop-blur-md p-4 border border-slate-800 rounded-2xl flex justify-between items-center z-30 shadow-2xl">
-                    <button
-                      type="button"
-                      onClick={() => setAddBatchStep(1)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
-                    >
-                      ← Volver al Paso 1
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={inputItems.length === 0 || isSavingBatch}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center space-x-2 active:scale-95"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length} producto${inputItems.length > 1 ? 's' : ''})`}</span>
-                    </button>
-                  </div>
                 </div>
               )}
 
