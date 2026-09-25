@@ -263,20 +263,11 @@ export const ImportBatchesView: React.FC = () => {
   const [batchSearchTerm, setBatchSearchTerm] = useState<string>('');
   const [batchSortOrder, setBatchSortOrder] = useState<BatchSortOption>('date-desc');
 
+  // La etiqueta dorada de ÚLTIMO LOTE se asigna exclusivamente al primer elemento
+  // de la lista ordenada por created_at DESC, id DESC (el creado de último en tiempo real)
   const latestBatchId = useMemo(() => {
     if (!batches || batches.length === 0) return null;
-    let newest = batches[0];
-    let newestTime = parseBatchDateToMillis(newest.importDate);
-
-    for (let i = 1; i < batches.length; i++) {
-      const current = batches[i];
-      const currentTime = parseBatchDateToMillis(current.importDate);
-      if (currentTime > newestTime) {
-        newest = current;
-        newestTime = currentTime;
-      }
-    }
-    return newest.id;
+    return batches[0].id;
   }, [batches]);
 
   const filteredAndSortedBatches = useMemo(() => {
@@ -290,28 +281,28 @@ export const ImportBatchesView: React.FC = () => {
 
     return [...result].sort((a, b) => {
       if (batchSortOrder === 'date-desc') {
-        const timeA = parseBatchDateToMillis(a.importDate);
-        const timeB = parseBatchDateToMillis(b.importDate);
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
         if (timeA !== timeB) return timeB - timeA;
-        return batches.indexOf(a) - batches.indexOf(b);
+        return (b.id || '').localeCompare(a.id || '');
       }
       if (batchSortOrder === 'date-asc') {
-        const timeA = parseBatchDateToMillis(a.importDate);
-        const timeB = parseBatchDateToMillis(b.importDate);
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
         if (timeA !== timeB) return timeA - timeB;
-        return batches.indexOf(b) - batches.indexOf(a);
+        return (a.id || '').localeCompare(b.id || '');
       }
       if (batchSortOrder === 'cost-desc') {
         const costA = getBatchTotalAmount(a);
         const costB = getBatchTotalAmount(b);
         if (costA !== costB) return costB - costA;
-        return batches.indexOf(a) - batches.indexOf(b);
+        return (b.id || '').localeCompare(a.id || '');
       }
       if (batchSortOrder === 'cost-asc') {
         const costA = getBatchTotalAmount(a);
         const costB = getBatchTotalAmount(b);
         if (costA !== costB) return costA - costB;
-        return batches.indexOf(b) - batches.indexOf(a);
+        return (a.id || '').localeCompare(b.id || '');
       }
       return 0;
     });
@@ -376,9 +367,15 @@ export const ImportBatchesView: React.FC = () => {
       const data = await fetchBatches();
       const invData = await fetchInventory();
       if (Array.isArray(data)) {
-        setBatches(data);
+        const sorted = [...data].sort((a, b) => {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
+          if (timeA !== timeB) return timeB - timeA;
+          return (b.id || '').localeCompare(a.id || '');
+        });
+        setBatches(sorted);
         setIsDbConnected(true);
-        if (data.length > 0) setExpandedBatchId(data[0].id);
+        if (sorted.length > 0) setExpandedBatchId(sorted[0].id);
       }
       if (Array.isArray(invData)) {
         setInventoryList(invData);
@@ -2238,7 +2235,7 @@ export const ImportBatchesView: React.FC = () => {
       {/* Modal de Confirmación de Seguridad antes de Guardar Lote */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-3xl max-h-[90vh] mx-4 my-6 p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-4xl max-h-[90vh] mx-4 my-6 p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
             {/* Header */}
             <div className="flex items-center space-x-3 border-b border-slate-700 pb-3 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">

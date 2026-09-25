@@ -48,6 +48,7 @@ export interface ImportBatch {
   id: string;
   name: string;
   importDate: string;
+  created_at?: string;
   totalCustomsTax: number;
   totalShippingCost: number;
   exchangeRateGtq?: number;

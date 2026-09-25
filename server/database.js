@@ -35,6 +35,7 @@ function normalizeRow(row) {
     if (lowerKey === 'exchangerategtq') targetKey = 'exchangeRateGtq';
     if (lowerKey === 'profitmarginpct') targetKey = 'profitMarginPct';
     if (lowerKey === 'costupdatestrategy') targetKey = 'costUpdateStrategy';
+    if (lowerKey === 'created_at') targetKey = 'created_at';
 
     // Batch Items
     if (lowerKey === 'batchid') targetKey = 'batchId';
@@ -141,7 +142,8 @@ async function initPgTables() {
         exchangeRateGtq NUMERIC DEFAULT 7.80,
         profitMarginPct NUMERIC DEFAULT 15.0,
         costUpdateStrategy VARCHAR(50) DEFAULT 'weighted',
-        status VARCHAR(255) DEFAULT 'Procesado'
+        status VARCHAR(255) DEFAULT 'Procesado',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -203,6 +205,8 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS exchangeRateGtq NUMERIC DEFAULT 7.80");
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS profitMarginPct NUMERIC DEFAULT 15.0");
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS costUpdateStrategy VARCHAR(50) DEFAULT 'weighted'");
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+    await pgPool.query("UPDATE batches SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS sku VARCHAR(255) DEFAULT 'PROD-001'");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedCustoms NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedShipping NUMERIC DEFAULT 0.0");
@@ -261,7 +265,8 @@ if (isPg) {
         importDate TEXT NOT NULL,
         totalCustomsTax REAL NOT NULL DEFAULT 0.0,
         totalShippingCost REAL NOT NULL DEFAULT 0.0,
-        status TEXT DEFAULT 'Procesado'
+        status TEXT DEFAULT 'Procesado',
+        created_at TEXT DEFAULT (datetime('now'))
       )
     `);
 
@@ -317,6 +322,8 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE batches ADD COLUMN exchangeRateGtq REAL DEFAULT 7.80", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN profitMarginPct REAL DEFAULT 15.0", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN costUpdateStrategy TEXT DEFAULT 'weighted'", () => {});
+    sqliteDb.run("ALTER TABLE batches ADD COLUMN created_at TEXT DEFAULT (datetime('now'))", () => {});
+    sqliteDb.run("UPDATE batches SET created_at = datetime('now') WHERE created_at IS NULL", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN sku TEXT DEFAULT 'PROD-001'", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN brand TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN model TEXT DEFAULT ''", () => {});

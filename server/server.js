@@ -292,7 +292,7 @@ app.delete('/api/transactions/:id', (req, res) => {
 // ==========================================
 
 app.get('/api/batches', (req, res) => {
-  db.all('SELECT * FROM batches ORDER BY importDate DESC', [], (err, batches) => {
+  db.all('SELECT * FROM batches ORDER BY created_at DESC, id DESC', [], (err, batches) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!batches || batches.length === 0) return res.json([]);
 
@@ -391,11 +391,13 @@ app.post('/api/batches', (req, res) => {
     };
   });
 
+  const nowIso = new Date().toISOString();
+
   // 3. Guardar Lote, Artículos y Actualizar/Insertar Inventario Consolidado
   db.serialize(() => {
     db.run(
-      'INSERT INTO batches (id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [batchId, name, importDate, taxFloat, shippingFloat, gtqFloat, marginFloat, costStrategy, 'Procesado'],
+      'INSERT INTO batches (id, name, importDate, totalCustomsTax, totalShippingCost, exchangeRateGtq, profitMarginPct, costUpdateStrategy, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [batchId, name, importDate, taxFloat, shippingFloat, gtqFloat, marginFloat, costStrategy, 'Procesado', nowIso],
       function (err) {
         if (err) {
           console.error('Error al insertar lote en BD:', err);
@@ -423,6 +425,7 @@ app.post('/api/batches', (req, res) => {
               id: batchId,
               name,
               importDate,
+              created_at: nowIso,
               totalCustomsTax: taxFloat,
               totalShippingCost: shippingFloat,
               exchangeRateGtq: gtqFloat,

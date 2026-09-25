@@ -725,7 +725,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       {/* Detail Bottom Sheet / Modal */}
       {selectedDetailProduct && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             {/* Sheet Header */}
             <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
               <div className="min-w-0 flex-1 pr-3">
@@ -779,8 +779,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(85vh-130px)] space-y-3 pt-3 pb-8 pr-1.5">
-              {/* Step-by-Step Vertical Financial Receipt */}
+            <div className="overflow-y-auto max-h-[calc(90vh-140px)] space-y-4 pt-3 pb-3 pr-1.5 flex-1">
+              {/* Price Delta Alert */}
+              {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
+                <div className={`p-3 rounded-xl border text-xs font-semibold ${
+                  selectedDetailProduct.priceChangeDelta > 0
+                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                }`}>
+                  {selectedDetailProduct.priceChangeDelta > 0
+                    ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
+                    : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
+                </div>
+              )}
+
+              {/* Step-by-Step 2-Column Financial Receipt */}
               {(() => {
                 const stockQty = selectedDetailProduct.stock;
                 const landedUsd = selectedProductImportDetails?.landedUsd || selectedDetailProduct.unitCost;
@@ -805,148 +818,145 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 const profitGtq = profitUsd * 7.80;
 
                 return (
-                  <div className="space-y-2.5 text-xs">
+                  <div className="space-y-3 text-xs">
                     <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200 dark:border-slate-700/80">
                       <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Estructura de Costos del Producto</span>
                       {selectedProductImportDetails?.batchName && (
-                        <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                          📦 {selectedProductImportDetails.batchName}
+                        <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
+                          📦 Lote: {selectedProductImportDetails.batchName}
                         </span>
                       )}
                     </div>
 
-                    {/* Step 1: Costo Base (Compra China / FOB) */}
-                    <div className="bg-slate-50 dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900 dark:text-slate-200">1. Costo Base (Compra China / FOB)</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Por Unidad</span>
-                      </div>
-                      <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-sm font-mono font-bold text-slate-900 dark:text-white">${fobUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                        <span className="text-xs font-mono font-extrabold text-slate-700 dark:text-slate-300">Q {fobGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800 flex justify-between">
-                        <span>Total Lote ({stockQty} uds):</span>
-                        <span className="font-mono">${(fobUsd * stockQty).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {(fobGtq * stockQty).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
-                      </div>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                      {/* Columna Izquierda: 1. Costo Base FOB, 2. Recargo Aduana, 3. Recargo Flete */}
+                      <div className="space-y-3">
+                        {/* Step 1: Costo Base (Compra China / FOB) */}
+                        <div className="bg-slate-50 dark:bg-slate-900/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs">1. Costo Base (Compra China / FOB)</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Por Unidad</span>
+                          </div>
+                          <div className="flex justify-between items-baseline pt-0.5">
+                            <span className="text-base font-mono font-bold text-slate-900 dark:text-white">${fobUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                            <span className="text-xs font-mono font-extrabold text-slate-700 dark:text-slate-300">Q {fobGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-800 flex justify-between">
+                            <span>Total Lote ({stockQty} uds):</span>
+                            <span className="font-mono">${(fobUsd * stockQty).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {(fobGtq * stockQty).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
+                          </div>
+                        </div>
 
-                    {/* Step 2: Recargo Aduana */}
-                    <div className="bg-amber-50/70 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-slate-700/80 space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-amber-800 dark:text-amber-300">2. Recargo Aduana</span>
-                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 font-mono bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
-                          +{customsPct.toFixed(1)}% s/FOB
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-xs font-mono font-semibold text-amber-800 dark:text-amber-200">+$ {unitCustomsUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
-                        <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300">+Q {unitCustomsGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
-                      </div>
-                    </div>
+                        {/* Step 2: Recargo Aduana */}
+                        <div className="bg-amber-50/70 dark:bg-slate-900/90 p-3.5 rounded-xl border border-amber-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-amber-800 dark:text-amber-300 text-xs">2. Recargo Aduana</span>
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 font-mono bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
+                              +{customsPct.toFixed(1)}% s/FOB
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-baseline pt-0.5">
+                            <span className="text-xs font-mono font-semibold text-amber-800 dark:text-amber-200">+$ {unitCustomsUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                            <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300">+Q {unitCustomsGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
+                          </div>
+                        </div>
 
-                    {/* Step 3: Recargo Flete */}
-                    <div className="bg-indigo-50/70 dark:bg-slate-900/90 p-3 rounded-xl border border-indigo-200 dark:border-slate-700/80 space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-indigo-800 dark:text-indigo-300">3. Recargo Flete</span>
-                        <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 font-mono bg-indigo-100 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
-                          +{shippingPct.toFixed(1)}% s/FOB
-                        </span>
+                        {/* Step 3: Recargo Flete */}
+                        <div className="bg-indigo-50/70 dark:bg-slate-900/90 p-3.5 rounded-xl border border-indigo-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-indigo-800 dark:text-indigo-300 text-xs">3. Recargo Flete</span>
+                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 font-mono bg-indigo-100 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
+                              +{shippingPct.toFixed(1)}% s/FOB
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-baseline pt-0.5">
+                            <span className="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-200">+$ {unitShippingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
+                            <span className="text-xs font-mono font-bold text-indigo-800 dark:text-indigo-300">+Q {unitShippingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-baseline pt-0.5">
-                        <span className="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-200">+$ {unitShippingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
-                        <span className="text-xs font-mono font-bold text-indigo-800 dark:text-indigo-300">+Q {unitShippingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
-                      </div>
-                    </div>
 
-                    {/* Step 4: Costo Aquí (Landed Final) */}
-                    <div className="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-500/40 space-y-1.5 shadow-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-blue-800 dark:text-blue-300 text-xs">4. Costo Aquí (Costo Base + Aduana + Flete = Landed Final)</span>
-                      </div>
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-sm font-mono font-bold text-slate-900 dark:text-white">${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                        <span className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300">Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                      </div>
-                      <div className="text-[10px] text-blue-700 dark:text-blue-300/80 pt-1 border-t border-blue-200 dark:border-blue-900/50 flex justify-between">
-                        <span>Valoración Almacén ({stockQty} uds):</span>
-                        <span className="font-mono font-bold text-indigo-700 dark:text-indigo-200">${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
-                      </div>
-                    </div>
+                      {/* Columna Derecha: 4. Costo Landed Final, 5. Precio Venta Sugerido con margen */}
+                      <div className="space-y-3">
+                        {/* Step 4: Costo Aquí (Landed Final) */}
+                        <div className="bg-blue-50 dark:bg-blue-950/40 p-3.5 rounded-xl border border-blue-200 dark:border-blue-500/40 space-y-2 shadow-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="font-extrabold text-blue-800 dark:text-blue-300 text-xs">4. Costo Aquí (Landed Final)</span>
+                            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 px-2 py-0.5 rounded">FOB + Ad + Fl</span>
+                          </div>
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-base font-mono font-bold text-slate-900 dark:text-white">${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                            <span className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300">Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                          </div>
+                          <div className="text-[10px] text-blue-700 dark:text-blue-300/80 pt-1.5 border-t border-blue-200 dark:border-blue-900/50 flex justify-between">
+                            <span>Valoración Almacén ({stockQty} uds):</span>
+                            <span className="font-mono font-bold text-indigo-700 dark:text-indigo-200">${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
+                          </div>
+                        </div>
 
-                    {/* Step 5: Precio Venta Final */}
-                    <div className="bg-emerald-50 dark:bg-emerald-950/70 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-500/50 space-y-2 shadow-md">
-                      <div className="flex justify-between items-center">
-                        <span className="font-extrabold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Final (Costo Aquí + 15% Margen)</span>
-                      </div>
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-base font-mono font-extrabold text-slate-900 dark:text-white">${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                        <span className="text-base font-mono font-black text-emerald-600 dark:text-emerald-400">Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                      </div>
-                      <div className="text-[10px] text-emerald-800 dark:text-emerald-300 pt-1.5 border-t border-emerald-200 dark:border-emerald-800/60 flex justify-between items-center">
-                        <span>Ganancia Estimada por Unidad:</span>
-                        <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-300 text-xs">+Q {profitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ (+${profitUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                        {/* Step 5: Precio Venta Final */}
+                        <div className="bg-emerald-50 dark:bg-emerald-950/70 p-4 rounded-xl border border-emerald-200 dark:border-emerald-500/50 space-y-2.5 shadow-md">
+                          <div className="flex justify-between items-center">
+                            <span className="font-extrabold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Sugerido (+15% Margen)</span>
+                          </div>
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-lg font-mono font-black text-slate-900 dark:text-white">${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                            <span className="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400">Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                          </div>
+                          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 pt-2 border-t border-emerald-200 dark:border-emerald-800/60 flex justify-between items-center">
+                            <span>Ganancia Estimada por Unidad:</span>
+                            <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+Q {profitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ (+${profitUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })()}
-
-              {/* Price Delta Alert */}
-              {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
-                <div className={`p-3 rounded-xl border text-xs font-semibold ${
-                  selectedDetailProduct.priceChangeDelta > 0
-                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-                }`}>
-                  {selectedDetailProduct.priceChangeDelta > 0
-                    ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
-                    : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
-                </div>
-              )}
-
-              {/* Quick Actions Grid */}
-              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Acciones Rápidas</span>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {!isVendedor && (
-                    <button
-                      onClick={() => {
-                        setStockManageProduct(selectedDetailProduct);
-                        setStockChangeAmount('1');
-                      }}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
-                    >
-                      <Sliders className="w-4 h-4 shrink-0" />
-                      <span>Ajustar Stock</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
-                    className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer ${isVendedor ? 'col-span-2' : ''}`}
-                  >
-                    <Eye className="w-4 h-4 shrink-0" />
-                    <span>Histórico Precios</span>
-                  </button>
-
-                  {!isVendedor && (
-                    <button
-                      onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-xl font-bold transition active:scale-95 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4 shrink-0" />
-                      <span>Eliminar SKU</span>
-                    </button>
-                  )}
-                </div>
-              </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-700 shrink-0">
+            {/* Barra Horizontal Fija de Acciones Rápidas (Ajustar Stock, Histórico Precios, Eliminar SKU, Cerrar) */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 shrink-0 flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-slate-800">
+              <div className="flex items-center flex-wrap gap-2">
+                {!isVendedor && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockManageProduct(selectedDetailProduct);
+                      setStockChangeAmount('1');
+                    }}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                  >
+                    <Sliders className="w-3.5 h-3.5 shrink-0" />
+                    <span>Ajustar Stock</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <Eye className="w-3.5 h-3.5 shrink-0" />
+                  <span>Histórico Precios</span>
+                </button>
+
+                {!isVendedor && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Eliminar SKU</span>
+                  </button>
+                )}
+              </div>
+
               <button
+                type="button"
                 onClick={() => setSelectedDetailProduct(null)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm ml-auto"
               >
                 Cerrar
               </button>
