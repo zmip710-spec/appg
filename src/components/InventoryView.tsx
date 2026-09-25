@@ -379,13 +379,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
   // Real-time Search & Filter Chips (Includes match by Brand & Model)
   const filteredInventory = inventory.filter((item) => {
-    const query = search.toLowerCase();
+    const query = (search || '').toLowerCase();
+    const brand = (item.brand || '').toLowerCase();
+    const model = (item.model || '').toLowerCase();
+    const name = (item.name || '').toLowerCase();
+    const sku = (item.sku || '').toLowerCase();
+    const category = (item.category || '').toLowerCase();
+
     const matchesSearch =
-      item.sku.toLowerCase().includes(query) ||
-      item.name.toLowerCase().includes(query) ||
-      (item.brand && item.brand.toLowerCase().includes(query)) ||
-      (item.model && item.model.toLowerCase().includes(query)) ||
-      (item.category && item.category.toLowerCase().includes(query));
+      sku.includes(query) ||
+      name.includes(query) ||
+      brand.includes(query) ||
+      model.includes(query) ||
+      category.includes(query);
 
     let matchesFilter = true;
     if (filterStatus === 'in_stock') matchesFilter = item.stock > 10;
@@ -722,64 +728,80 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
         </div>
       )}
 
-      {/* Detail Bottom Sheet / Modal */}
+      {/* Vista Pantalla Completa Detalle de SKU y Estructura de Costos */}
       {selectedDetailProduct && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
-            {/* Sheet Header */}
-            <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
-              <div className="min-w-0 flex-1 pr-3">
-                {(() => {
-                  const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
-                  const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
+        <div className="fixed inset-0 z-50 w-full h-full bg-[#0b1329] p-4 md:p-8 overflow-y-auto flex flex-col text-slate-100 animate-in fade-in duration-150">
+          <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col space-y-5">
+            {/* Header */}
+            <div className="flex justify-between items-start border-b border-slate-700/80 pb-4 shrink-0 gap-4">
+              <div className="flex items-start space-x-3 min-w-0 flex-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetailProduct(null)}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition font-medium text-xs border border-slate-700 cursor-pointer shrink-0 mt-0.5"
+                >
+                  <span>← Volver</span>
+                </button>
+                <div className="min-w-0 flex-1">
+                  {(() => {
+                    const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
+                    const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
 
-                  let brandModelCombined = '';
-                  if (cleanBrand && cleanModel) {
-                    if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
+                    let brandModelCombined = '';
+                    if (cleanBrand && cleanModel) {
+                      if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
+                        brandModelCombined = cleanModel;
+                      } else {
+                        brandModelCombined = `${cleanBrand} ${cleanModel}`;
+                      }
+                    } else if (cleanModel) {
                       brandModelCombined = cleanModel;
-                    } else {
-                      brandModelCombined = `${cleanBrand} ${cleanModel}`;
+                    } else if (cleanBrand) {
+                      brandModelCombined = cleanBrand;
                     }
-                  } else if (cleanModel) {
-                    brandModelCombined = cleanModel;
-                  } else if (cleanBrand) {
-                    brandModelCombined = cleanBrand;
-                  }
 
-                  const displayTitle = brandModelCombined
-                    ? `${brandModelCombined} - ${selectedDetailProduct.name.trim()}`
-                    : selectedDetailProduct.name.trim();
+                    const displayTitle = brandModelCombined
+                      ? `${brandModelCombined} - ${selectedDetailProduct.name.trim()}`
+                      : selectedDetailProduct.name.trim();
 
-                  return (
-                    <div className="min-w-0">
-                      <div className="flex items-center flex-wrap gap-1.5 mb-1">
-                        <span className="font-mono text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
-                          {selectedDetailProduct.sku}
-                        </span>
-                        {cleanBrand && (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                            {cleanBrand}
+                    return (
+                      <div className="min-w-0">
+                        <div className="flex items-center flex-wrap gap-1.5 mb-1.5">
+                          <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                            {selectedDetailProduct.sku}
                           </span>
-                        )}
-                        {selectedProductImportDetails?.sharePercentage ? (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
-                            {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
-                          </span>
-                        ) : (
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                            {selectedDetailProduct.stock} uds disponibles
-                          </span>
-                        )}
+                          {cleanBrand && (
+                            <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
+                              {cleanBrand}
+                            </span>
+                          )}
+                          {selectedProductImportDetails?.sharePercentage ? (
+                            <span className="text-xs font-bold text-slate-400 bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                              {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
+                              {selectedDetailProduct.stock} uds disponibles
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-white text-base sm:text-lg leading-snug break-words">{displayTitle}</h3>
                       </div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug break-words">{displayTitle}</h3>
-                    </div>
-                  );
-                })()}
+                    );
+                  })()}
+                </div>
               </div>
-              <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 text-base font-bold shrink-0 cursor-pointer">✕</button>
+              <button
+                type="button"
+                onClick={() => setSelectedDetailProduct(null)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition font-bold text-base cursor-pointer border border-slate-700 shrink-0"
+                title="Cerrar vista"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(90vh-140px)] space-y-4 pt-3 pb-3 pr-1.5 flex-1">
+            <div className="space-y-4 pt-1 pb-4 flex-1">
               {/* Price Delta Alert */}
               {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
                 <div className={`p-3 rounded-xl border text-xs font-semibold ${
@@ -916,8 +938,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             </div>
 
             {/* Barra Horizontal Fija de Acciones Rápidas (Ajustar Stock, Histórico Precios, Eliminar SKU, Cerrar) */}
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-700/80 shrink-0 flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-slate-800">
-              <div className="flex items-center flex-wrap gap-2">
+            <div className="pt-4 border-t border-slate-700/80 shrink-0 flex flex-wrap items-center justify-between gap-3 bg-transparent">
+              <div className="flex items-center flex-wrap gap-2.5">
                 {!isVendedor && (
                   <button
                     type="button"
@@ -925,7 +947,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                       setStockManageProduct(selectedDetailProduct);
                       setStockChangeAmount('1');
                     }}
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
                   >
                     <Sliders className="w-3.5 h-3.5 shrink-0" />
                     <span>Ajustar Stock</span>
@@ -935,7 +957,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 <button
                   type="button"
                   onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
                 >
                   <Eye className="w-3.5 h-3.5 shrink-0" />
                   <span>Histórico Precios</span>
@@ -945,7 +967,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
                   >
                     <Trash2 className="w-3.5 h-3.5 shrink-0" />
                     <span>Eliminar SKU</span>
@@ -956,7 +978,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <button
                 type="button"
                 onClick={() => setSelectedDetailProduct(null)}
-                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm ml-auto"
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm border border-slate-700 ml-auto"
               >
                 Cerrar
               </button>

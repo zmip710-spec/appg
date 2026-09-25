@@ -68,6 +68,34 @@ export const getBatchTotalAmount = (batch: ImportBatch): number => {
   return fob + expenses;
 };
 
+export const getBatchRealTimestamp = (batch?: ImportBatch | null): number => {
+  if (!batch) return 0;
+  if (batch.created_at) {
+    const raw = String(batch.created_at).trim();
+    const isoLike = raw.includes(' ') && !raw.includes('T') ? raw.replace(' ', 'T') : raw;
+    const t = new Date(isoLike).getTime();
+    if (!isNaN(t) && t > 0) return t;
+    const direct = Date.parse(raw);
+    if (!isNaN(direct) && direct > 0) return direct;
+  }
+  if (batch.importDate) {
+    const t = parseBatchDateToMillis(batch.importDate);
+    if (!isNaN(t) && t > 0) return t;
+  }
+  const numId = parseInt(String(batch.id || '').replace(/\D/g, ''), 10);
+  return isNaN(numId) ? 0 : numId;
+};
+
+export const compareBatchesDesc = (a: ImportBatch, b: ImportBatch): number => {
+  const timeA = getBatchRealTimestamp(a);
+  const timeB = getBatchRealTimestamp(b);
+  if (timeA !== timeB) return timeB - timeA;
+  const numIdA = parseInt(String(a.id || '').replace(/\D/g, ''), 10) || 0;
+  const numIdB = parseInt(String(b.id || '').replace(/\D/g, ''), 10) || 0;
+  if (numIdA !== numIdB) return numIdB - numIdA;
+  return String(b.id || '').localeCompare(String(a.id || ''));
+};
+
 const fallbackBatches: ImportBatch[] = [
   {
     id: '#5555',
@@ -263,11 +291,11 @@ export const ImportBatchesView: React.FC = () => {
   const [batchSearchTerm, setBatchSearchTerm] = useState<string>('');
   const [batchSortOrder, setBatchSortOrder] = useState<BatchSortOption>('date-desc');
 
-  // La etiqueta dorada de ÚLTIMO LOTE se asigna exclusivamente al primer elemento
-  // de la lista ordenada por created_at DESC, id DESC (el creado de último en tiempo real)
+  // La etiqueta dorada de ÚLTIMO LOTE se asigna exclusivamente al lote con el timestamp real más reciente
   const latestBatchId = useMemo(() => {
     if (!batches || batches.length === 0) return null;
-    return batches[0].id;
+    const sorted = [...batches].sort(compareBatchesDesc);
+    return sorted[0]?.id || null;
   }, [batches]);
 
   const filteredAndSortedBatches = useMemo(() => {
@@ -281,28 +309,28 @@ export const ImportBatchesView: React.FC = () => {
 
     return [...result].sort((a, b) => {
       if (batchSortOrder === 'date-desc') {
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
-        if (timeA !== timeB) return timeB - timeA;
-        return (b.id || '').localeCompare(a.id || '');
+        return compareBatchesDesc(a, b);
       }
       if (batchSortOrder === 'date-asc') {
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
+        const timeA = getBatchRealTimestamp(a);
+        const timeB = getBatchRealTimestamp(b);
         if (timeA !== timeB) return timeA - timeB;
-        return (a.id || '').localeCompare(b.id || '');
+        const numIdA = parseInt(String(a.id || '').replace(/\D/g, ''), 10) || 0;
+        const numIdB = parseInt(String(b.id || '').replace(/\D/g, ''), 10) || 0;
+        if (numIdA !== numIdB) return numIdA - numIdB;
+        return String(a.id || '').localeCompare(String(b.id || ''));
       }
       if (batchSortOrder === 'cost-desc') {
         const costA = getBatchTotalAmount(a);
         const costB = getBatchTotalAmount(b);
         if (costA !== costB) return costB - costA;
-        return (b.id || '').localeCompare(a.id || '');
+        return compareBatchesDesc(a, b);
       }
       if (batchSortOrder === 'cost-asc') {
         const costA = getBatchTotalAmount(a);
         const costB = getBatchTotalAmount(b);
         if (costA !== costB) return costA - costB;
-        return (a.id || '').localeCompare(b.id || '');
+        return compareBatchesDesc(b, a);
       }
       return 0;
     });
@@ -367,12 +395,7 @@ export const ImportBatchesView: React.FC = () => {
       const data = await fetchBatches();
       const invData = await fetchInventory();
       if (Array.isArray(data)) {
-        const sorted = [...data].sort((a, b) => {
-          const timeA = a.created_at ? new Date(a.created_at).getTime() : parseBatchDateToMillis(a.importDate);
-          const timeB = b.created_at ? new Date(b.created_at).getTime() : parseBatchDateToMillis(b.importDate);
-          if (timeA !== timeB) return timeB - timeA;
-          return (b.id || '').localeCompare(a.id || '');
-        });
+        const sorted = [...data].sort(compareBatchesDesc);
         setBatches(sorted);
         setIsDbConnected(true);
         if (sorted.length > 0) setExpandedBatchId(sorted[0].id);
@@ -456,7 +479,7 @@ export const ImportBatchesView: React.FC = () => {
     return proratedPreview.filter(item => {
       const cleanSku = item.sku.trim().toUpperCase();
       if (!cleanSku) return false;
-      const existingInStock = inventoryList.find(inv => inv.sku.toUpperCase() === cleanSku && inv.stock > 0);
+      const existingInStock = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanSku && inv.stock > 0);
       if (!existingInStock) return false;
       return Math.abs(item.finalUnitCost - existingInStock.unitCost) >= 0.01;
     });
@@ -486,7 +509,7 @@ export const ImportBatchesView: React.FC = () => {
         setOpenSkuDropdownIndex(null);
       }
 
-      const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
+      const match = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanTyped);
       if (match) {
         updated[index].productName = match.name;
         if (match.image) updated[index].image = match.image;
@@ -689,7 +712,10 @@ export const ImportBatchesView: React.FC = () => {
 
       // Actualización inmediata del estado local para visualización sin F5
       if (createdBatch && createdBatch.id) {
-        setBatches(prev => [createdBatch, ...prev.filter(b => b.id !== createdBatch.id)]);
+        setBatches(prev => {
+          const updated = [createdBatch, ...prev.filter(b => b.id !== createdBatch.id)];
+          return updated.sort(compareBatchesDesc);
+        });
         setExpandedBatchId(createdBatch.id);
       }
 
@@ -1744,7 +1770,7 @@ export const ImportBatchesView: React.FC = () => {
                               } else {
                                 setOpenSkuDropdownIndex(null);
                               }
-                              const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
+                              const match = inventoryList.find(inv => (inv.sku || '').toUpperCase() === cleanTyped);
                               if (match) {
                                 setSingleProductForm(prev => ({
                                   ...prev,
@@ -1761,7 +1787,12 @@ export const ImportBatchesView: React.FC = () => {
                           {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
                             <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
                               {inventoryList
-                                .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
+                                .filter(inv => {
+                                  const s = (inv.sku || '').toUpperCase();
+                                  const n = (inv.name || '').toUpperCase();
+                                  const q = singleProductForm.sku.trim().toUpperCase();
+                                  return s.includes(q) || n.includes(q);
+                                })
                                 .map(inv => (
                                   <div
                                     key={inv.id}

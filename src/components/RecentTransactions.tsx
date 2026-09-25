@@ -134,7 +134,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
 
   // When a product is selected from search dropdown -> Add to Cart or Increment Quantity (in Quetzales)
   const handleSelectProduct = (product: InventoryProduct) => {
-    const existingIndex = cartItems.findIndex(item => item.sku.toLowerCase() === product.sku.toLowerCase());
+    const existingIndex = cartItems.findIndex(item => (item.sku || '').toLowerCase() === (product.sku || '').toLowerCase());
     if (existingIndex >= 0) {
       const updatedCart = [...cartItems];
       updatedCart[existingIndex].quantity += 1;
@@ -173,14 +173,22 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
   };
 
   // Filtered Inventory List for Search
-  const cleanSearch = productSearch.trim().toLowerCase();
+  const cleanSearch = (productSearch || '').trim().toLowerCase();
   const matchingProducts = cleanSearch.length >= 1
-    ? inventoryList.filter(p =>
-        p.sku.toLowerCase().includes(cleanSearch) ||
-        p.name.toLowerCase().includes(cleanSearch) ||
-        (p.brand && p.brand.toLowerCase().includes(cleanSearch)) ||
-        (p.model && p.model.toLowerCase().includes(cleanSearch))
-      )
+    ? inventoryList.filter(p => {
+        const sku = (p.sku || '').toLowerCase();
+        const name = (p.name || '').toLowerCase();
+        const brand = (p.brand || '').toLowerCase();
+        const model = (p.model || '').toLowerCase();
+        const category = (p.category || '').toLowerCase();
+        return (
+          sku.includes(cleanSearch) ||
+          name.includes(cleanSearch) ||
+          brand.includes(cleanSearch) ||
+          model.includes(cleanSearch) ||
+          category.includes(cleanSearch)
+        );
+      })
     : inventoryList;
 
   // Grand Totals Calculation (Primarily in Quetzales)
@@ -259,11 +267,15 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
     setTransactions(transactions.filter(t => t.id !== id));
   };
 
+  const cleanTerm = (searchTerm || '').trim().toLowerCase();
   const filteredData = transactions.filter((item) => {
+    const client = (item.client || '').toLowerCase();
+    const id = (item.id || '').toLowerCase();
+    const service = (item.service || '').toLowerCase();
     const matchesSearch =
-      item.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.service.toLowerCase().includes(searchTerm.toLowerCase());
+      client.includes(cleanTerm) ||
+      id.includes(cleanTerm) ||
+      service.includes(cleanTerm);
 
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -454,24 +466,40 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
         </table>
       </div>
 
-      {/* Modal POS Add Multi-Product Transaction */}
+      {/* Vista de Pantalla Completa POS Registrar Venta */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-5xl max-h-[94vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden space-y-4">
+        <div className="fixed inset-0 z-50 w-full h-full bg-[#0b1329] p-4 md:p-8 overflow-y-auto flex flex-col text-slate-100 animate-in fade-in duration-150">
+          <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col space-y-5">
             {/* Header */}
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span>Punto de Venta - Registrar Venta en Quetzales (GTQ)</span>
-                </h3>
-                {(clientName.trim() !== '' || cartItems.length > 0) && (
-                  <span className="text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                    📝 Borrador autoguardado
-                  </span>
-                )}
+            <div className="flex justify-between items-center border-b border-slate-700/80 pb-4 shrink-0">
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition font-medium text-xs border border-slate-700 cursor-pointer"
+                >
+                  <span>← Volver</span>
+                </button>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
+                    <ShoppingCart className="w-5 h-5 text-blue-400" />
+                    <span>Punto de Venta - Registrar Venta en Quetzales (GTQ)</span>
+                  </h3>
+                  {(clientName.trim() !== '' || cartItems.length > 0) && (
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      📝 Borrador autoguardado
+                    </span>
+                  )}
+                </div>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold text-base cursor-pointer">✕</button>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition font-bold text-base cursor-pointer border border-slate-700"
+                title="Cerrar vista"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleAddTransaction} className="flex-1 flex flex-col min-h-0 overflow-hidden text-xs space-y-4">
@@ -553,7 +581,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ searchTe
                       ) : (
                         matchingProducts.map((prod) => {
                           const sellingGtq = prod.unitCost * 1.15 * 7.80;
-                          const inCart = cartItems.find(i => i.sku.toLowerCase() === prod.sku.toLowerCase());
+                          const inCart = cartItems.find(i => (i.sku || '').toLowerCase() === (prod.sku || '').toLowerCase());
 
                           return (
                             <div

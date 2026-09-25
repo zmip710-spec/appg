@@ -322,7 +322,7 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE batches ADD COLUMN exchangeRateGtq REAL DEFAULT 7.80", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN profitMarginPct REAL DEFAULT 15.0", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN costUpdateStrategy TEXT DEFAULT 'weighted'", () => {});
-    sqliteDb.run("ALTER TABLE batches ADD COLUMN created_at TEXT DEFAULT (datetime('now'))", () => {});
+    sqliteDb.run("ALTER TABLE batches ADD COLUMN created_at TEXT", () => {});
     sqliteDb.run("UPDATE batches SET created_at = datetime('now') WHERE created_at IS NULL", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN sku TEXT DEFAULT 'PROD-001'", () => {});
     sqliteDb.run("ALTER TABLE batch_items ADD COLUMN brand TEXT DEFAULT ''", () => {});

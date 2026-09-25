@@ -306,6 +306,7 @@ app.get('/api/batches', (req, res) => {
 
         const result = batches.map(batch => ({
           ...batch,
+          created_at: batch.created_at || (batch.importDate ? new Date(batch.importDate).toISOString() : new Date().toISOString()),
           totalCustomsTax: batch.totalCustomsTax || 0,
           totalShippingCost: batch.totalShippingCost || 0,
           exchangeRateGtq: batch.exchangeRateGtq || 7.80,

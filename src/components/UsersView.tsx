@@ -32,7 +32,7 @@ export const UsersView: React.FC = () => {
   }, []);
 
   const filteredUsers = users.filter((u) => {
-    const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (u.name || '').toLowerCase().includes((search || '').toLowerCase());
     const matchesRole = filterRole === 'all' || u.role === filterRole;
     return matchesSearch && matchesRole;
   });
