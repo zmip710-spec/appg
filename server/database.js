@@ -200,6 +200,24 @@ async function initPgTables() {
       );
     `);
 
+    // 7. Categorías Dinámicas
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    const catCount = await pgPool.query('SELECT COUNT(*) as count FROM categories');
+    if (parseInt(catCount.rows[0].count) === 0) {
+      await pgPool.query(`
+        INSERT INTO categories (name) VALUES
+        ('Repuestos'), ('Accesorios'), ('Pantallas'), ('General')
+        ON CONFLICT (name) DO NOTHING;
+      `);
+    }
+
     // Garantizar que todas las columnas existan en tablas PostgreSQL creadas previamente
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS totalShippingCost NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS exchangeRateGtq NUMERIC DEFAULT 7.80");
@@ -332,6 +350,23 @@ if (isPg) {
         changeDate TEXT NOT NULL
       )
     `);
+
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `, () => {
+      sqliteDb.get("SELECT COUNT(*) as count FROM categories", (err, row) => {
+        if (!err && row && row.count === 0) {
+          sqliteDb.run(`
+            INSERT INTO categories (name) VALUES
+            ('Repuestos'), ('Accesorios'), ('Pantallas'), ('General')
+          `, () => {});
+        }
+      });
+    });
 
     sqliteDb.run("ALTER TABLE batches ADD COLUMN totalShippingCost REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE batches ADD COLUMN exchangeRateGtq REAL DEFAULT 7.80", () => {});

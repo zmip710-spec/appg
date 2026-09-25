@@ -74,6 +74,12 @@ export interface InventoryProduct {
   lastUpdated: string;
 }
 
+export interface Category {
+  id: number | string;
+  name: string;
+  created_at?: string;
+}
+
 export interface PriceHistoryEntry {
   id: number;
   sku: string;
@@ -432,3 +438,42 @@ export const checkHealthApi = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const fetchCategories = async (): Promise<Category[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories`);
+    if (response.ok) {
+      const data = await response.json();
+      try { localStorage.setItem('appg_cache_categories', JSON.stringify(data)); } catch {}
+      return data;
+    }
+  } catch {}
+  const cached = localStorage.getItem('appg_cache_categories');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  return [
+    { id: 1, name: 'Repuestos' },
+    { id: 2, name: 'Accesorios' },
+    { id: 3, name: 'Pantallas' },
+    { id: 4, name: 'General' }
+  ];
+};
+
+export const fetchCategoriesApi = fetchCategories;
+
+export const createCategory = async (name: string): Promise<Category> => {
+  const response = await fetch(`${API_BASE_URL}/categories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim() })
+  });
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.error || 'Error al crear la categoría');
+  }
+  return response.json();
+};
+
+export const createCategoryApi = createCategory;
+

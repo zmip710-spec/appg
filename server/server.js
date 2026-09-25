@@ -503,6 +503,60 @@ app.delete('/api/batches/:id', (req, res) => {
 });
 
 // ==========================================
+// CATEGORÍAS DINÁMICAS
+// ==========================================
+
+app.get('/api/categories', (req, res) => {
+  db.all('SELECT id, name, created_at FROM categories ORDER BY name ASC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const defaultCategories = [
+      { id: 1, name: 'Repuestos' },
+      { id: 2, name: 'Accesorios' },
+      { id: 3, name: 'Pantallas' },
+      { id: 4, name: 'General' }
+    ];
+    res.json(rows && rows.length > 0 ? rows : defaultCategories);
+  });
+});
+
+app.post('/api/categories', (req, res) => {
+  const { name } = req.body;
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'El nombre de la categoría es requerido.' });
+  }
+
+  const cleanName = name.trim();
+
+  // Validar si ya existe (evitando duplicados insensible a mayúsculas)
+  db.get('SELECT * FROM categories WHERE LOWER(TRIM(name)) = LOWER(?)', [cleanName], (err, existing) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (existing) {
+      return res.json(existing);
+    }
+
+    if (db.isPg) {
+      db.run('INSERT INTO categories (name, created_at) VALUES (?, NOW()) ON CONFLICT (name) DO NOTHING', [cleanName], function (insertErr) {
+        if (insertErr) return res.status(500).json({ error: insertErr.message });
+        db.get('SELECT * FROM categories WHERE LOWER(TRIM(name)) = LOWER(?)', [cleanName], (findErr, row) => {
+          if (!findErr && row) return res.status(201).json(row);
+          res.status(201).json({ id: this.lastID || Date.now(), name: cleanName });
+        });
+      });
+    } else {
+      db.run('INSERT INTO categories (name) VALUES (?)', [cleanName], function (insertErr) {
+        if (insertErr) {
+          return db.get('SELECT * FROM categories WHERE LOWER(TRIM(name)) = LOWER(?)', [cleanName], (findErr, row) => {
+            if (!findErr && row) return res.json(row);
+            return res.status(500).json({ error: insertErr.message });
+          });
+        }
+        res.status(201).json({ id: this.lastID || Date.now(), name: cleanName });
+      });
+    }
+  });
+});
+
+// ==========================================
 // INVENTARIO & HISTORIAL DE PRECIOS
 // ==========================================
 

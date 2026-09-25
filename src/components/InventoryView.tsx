@@ -29,7 +29,10 @@ import {
   updateStockApi,
   PriceHistoryEntry,
   fetchPriceHistoryApi,
-  User
+  User,
+  Category,
+  fetchCategories,
+  createCategory
 } from '../services/api';
 
 interface InventoryViewProps {
@@ -83,6 +86,31 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     recargoPct: number;
     batchName?: string;
   } | null>(null);
+
+  // Categorías Dinámicas
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const cached = localStorage.getItem('appg_cache_categories');
+      return cached ? JSON.parse(cached) : [
+        { id: 1, name: 'Repuestos' },
+        { id: 2, name: 'Accesorios' },
+        { id: 3, name: 'Pantallas' },
+        { id: 4, name: 'General' }
+      ];
+    } catch {
+      return [
+        { id: 1, name: 'Repuestos' },
+        { id: 2, name: 'Accesorios' },
+        { id: 3, name: 'Pantallas' },
+        { id: 4, name: 'General' }
+      ];
+    }
+  });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryToastMessage, setCategoryToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedDetailProduct) {
@@ -275,9 +303,46 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const data = await fetchCategories();
+      if (Array.isArray(data) && data.length > 0) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.warn('Error cargando categorías:', err);
+    }
+  };
+
   useEffect(() => {
     loadInventory();
+    loadCategories();
   }, []);
+
+  const handleCreateCategory = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setCategoryError('');
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      setCategoryError('El nombre de la categoría es requerido.');
+      return;
+    }
+
+    setIsSavingCategory(true);
+    try {
+      const created = await createCategory(trimmed);
+      await loadCategories();
+      setCategory(created.name || trimmed);
+      setNewCategoryName('');
+      setShowCategoryModal(false);
+      setCategoryToastMessage(`¡Categoría "${created.name || trimmed}" creada con éxito!`);
+      setTimeout(() => setCategoryToastMessage(null), 3500);
+    } catch (err: any) {
+      setCategoryError(err.message || 'Error al crear la categoría.');
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
 
   const handleOpenPriceHistory = async (product: InventoryProduct) => {
     setHistoryProduct(product);
@@ -434,16 +499,32 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       <div className="flex items-center justify-between py-2 px-1 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Stock e Inventario</h2>
         {!isVendedor && (
-          <button
-            onClick={() => {
-              setErrorMessage('');
-              setShowAddModal(true);
-            }}
-            className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
-          >
-            <Plus size={16} />
-            <span>Nuevo SKU</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => {
+                setNewCategoryName('');
+                setCategoryError('');
+                setShowCategoryModal(true);
+              }}
+              className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold px-3 py-1.5 rounded-xl text-xs transition border border-blue-500/40 shadow-sm active:scale-95 cursor-pointer"
+              title="Crear nueva categoría"
+            >
+              <Plus size={16} />
+              <span>Nueva Categoría</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage('');
+                setShowAddModal(true);
+              }}
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
+            >
+              <Plus size={16} />
+              <span>Nuevo SKU</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -1069,13 +1150,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-slate-400 font-semibold uppercase mb-1">Categoría</label>
-                  <input
-                    type="text"
-                    placeholder="General"
+                  <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500"
-                  />
+                    onChange={(e) => {
+                      if (e.target.value === '__NEW__') {
+                        setNewCategoryName('');
+                        setCategoryError('');
+                        setShowCategoryModal(true);
+                      } else {
+                        setCategory(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500 cursor-pointer text-sm"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id || c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                    <option value="__NEW__" className="text-blue-400 font-bold bg-slate-800">
+                      + Crear nueva categoría...
+                    </option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-slate-400 font-semibold uppercase mb-1">Stock Inicial</label>
@@ -1280,6 +1376,71 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal Nueva Categoría */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100005] flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-5 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-700 pb-3">
+              <h3 className="font-bold text-white text-base">Nueva Categoría</h3>
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="text-slate-400 hover:text-white text-base font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {categoryError && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-lg font-medium">
+                {categoryError}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="block text-slate-400 font-semibold uppercase text-xs mb-1">
+                  Nombre de la Categoría
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Baterías, Cargadores, Carcasas"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  autoFocus
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-blue-500 text-sm font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold rounded-lg text-xs cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCategory}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition shadow-md shadow-blue-600/20 cursor-pointer"
+                >
+                  {isSavingCategory ? 'Guardando...' : 'Guardar Categoría'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notificación Categoría */}
+      {categoryToastMessage && (
+        <div className="fixed bottom-6 right-6 z-[100006] bg-slate-900 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-bold animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{categoryToastMessage}</span>
         </div>
       )}
     </div>
