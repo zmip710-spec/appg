@@ -1314,7 +1314,7 @@ export const ImportBatchesView: React.FC = () => {
       {/* Add New Batch Modal (2-Step Guided Stepper Flow with Fixed Touch Scroll) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden">
-          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-4xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-5xl xl:max-w-6xl max-h-[90vh] mx-0 sm:mx-4 my-0 sm:my-6 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
             
             {/* Modal Header with Stepper Progress */}
             <div className="p-4 sm:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/80 shrink-0">
@@ -1346,7 +1346,7 @@ export const ImportBatchesView: React.FC = () => {
             </div>
 
             {/* Modal Form Container with Touch Pan Y Scroll */}
-            <form onSubmit={handleFormSubmit} className="p-3 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain touch-pan-y max-h-[calc(92vh-120px)]">
+            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 md:p-8 overflow-y-auto space-y-5 flex-1 overscroll-contain touch-pan-y max-h-[calc(90vh-130px)]">
               
               {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
               {batchNetworkError && (
@@ -1378,25 +1378,25 @@ export const ImportBatchesView: React.FC = () => {
               
               {/* PASO 1: Parámetros Generales del Lote */}
               {addBatchStep === 1 && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-700/80">
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-start bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-slate-700/80">
                     <div>
-                      <label className="block text-xs font-medium text-slate-300 mb-1">Nombre del Lote *</label>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Lote *</label>
                       <input
                         type="text"
                         required
                         placeholder="Ej. Lote Calzado Septiembre"
                         value={batchName}
                         onChange={(e) => setBatchName(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
                       />
                     </div>
 
                     {/* IMPUESTO ADUANA */}
                     <div>
-                      <label className="text-xs font-medium text-slate-300 block mb-1">Impuesto Aduana</label>
-                      <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden focus-within:border-blue-500">
-                        <span className="pl-2.5 text-slate-400 text-xs font-bold select-none">
+                      <label className="text-xs font-semibold text-slate-300 block mb-1.5">Impuesto Aduana</label>
+                      <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
+                        <span className="pl-3 text-slate-400 text-sm font-bold select-none">
                           {customsCurrency === 'GTQ' ? 'Q' : '$'}
                         </span>
                         <input
@@ -1405,26 +1405,26 @@ export const ImportBatchesView: React.FC = () => {
                           value={customsTax}
                           onChange={(e) => setCustomsTax(e.target.value)}
                           placeholder="0.00"
-                          className="w-full px-2 py-1.5 bg-transparent text-slate-100 text-sm focus:outline-none"
+                          className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
                         />
-                        <div className="flex p-0.5 bg-slate-800 border-l border-slate-700 shrink-0">
+                        <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
                           <button
                             type="button"
                             onClick={() => setCustomsCurrency('USD')}
-                            className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${customsCurrency === 'USD' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}
+                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                           >
                             USD
                           </button>
                           <button
                             type="button"
                             onClick={() => setCustomsCurrency('GTQ')}
-                            className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${customsCurrency === 'GTQ' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}
+                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                           >
                             GTQ
                           </button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 h-3 font-mono">
+                      <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
                         {Number(customsTax) > 0 && (
                           customsCurrency === 'GTQ'
                             ? `≈ $${((Number(customsTax) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
@@ -1435,9 +1435,9 @@ export const ImportBatchesView: React.FC = () => {
 
                     {/* COSTO FLETE */}
                     <div>
-                      <label className="text-xs font-medium text-slate-300 block mb-1">Costo Flete</label>
-                      <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden focus-within:border-blue-500">
-                        <span className="pl-2.5 text-slate-400 text-xs font-bold select-none">
+                      <label className="text-xs font-semibold text-slate-300 block mb-1.5">Costo Flete</label>
+                      <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
+                        <span className="pl-3 text-slate-400 text-sm font-bold select-none">
                           {shippingCurrency === 'GTQ' ? 'Q' : '$'}
                         </span>
                         <input
@@ -1446,26 +1446,26 @@ export const ImportBatchesView: React.FC = () => {
                           value={shippingCost}
                           onChange={(e) => setShippingCost(e.target.value)}
                           placeholder="0.00"
-                          className="w-full px-2 py-1.5 bg-transparent text-slate-100 text-sm focus:outline-none"
+                          className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
                         />
-                        <div className="flex p-0.5 bg-slate-800 border-l border-slate-700 shrink-0">
+                        <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
                           <button
                             type="button"
                             onClick={() => setShippingCurrency('USD')}
-                            className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${shippingCurrency === 'USD' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}
+                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                           >
                             USD
                           </button>
                           <button
                             type="button"
                             onClick={() => setShippingCurrency('GTQ')}
-                            className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${shippingCurrency === 'GTQ' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}
+                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
                           >
                             GTQ
                           </button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 h-3 font-mono">
+                      <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
                         {Number(shippingCost) > 0 && (
                           shippingCurrency === 'GTQ'
                             ? `≈ $${((Number(shippingCost) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
@@ -1475,7 +1475,7 @@ export const ImportBatchesView: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Margen de Venta (%)</label>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Margen de Venta (%)</label>
                       <input
                         type="number"
                         step="0.1"
@@ -1483,23 +1483,26 @@ export const ImportBatchesView: React.FC = () => {
                         placeholder="15.0"
                         value={profitMarginPct}
                         onChange={(e) => setProfitMarginPct(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500 shadow-inner"
                       />
                     </div>
                   </div>
 
                   {/* Exchange Rate GTQ & Stock Price Variation Strategy */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/80">
-                      <label className="text-xs font-medium text-slate-300">Tipo de Cambio (USD a GTQ):</label>
-                      <div className="w-36">
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-700/80">
+                      <div>
+                        <label className="text-sm font-semibold text-slate-200 block">Tipo de Cambio (USD a GTQ):</label>
+                        <p className="text-xs text-slate-400">Tasa de conversión aplicada a los cálculos en moneda local.</p>
+                      </div>
+                      <div className="w-36 sm:w-44">
                         <input
                           type="number"
                           step="0.01"
                           min="0.1"
                           value={exchangeRateGtq}
                           onChange={(e) => setExchangeRateGtq(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white font-mono font-semibold text-right focus:outline-none focus:border-blue-500"
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white font-mono font-bold text-right focus:outline-none focus:border-blue-500 shadow-inner"
                         />
                       </div>
                     </div>
@@ -1631,9 +1634,9 @@ export const ImportBatchesView: React.FC = () => {
 
                     {/* Single Active Product Form Card (Compact & Fixed Button Bar) */}
                     {isAddingProduct && (
-                      <div className="bg-slate-900 border-2 border-blue-500/80 p-3 sm:p-4 rounded-2xl space-y-3 shadow-xl relative z-40">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                          <span className="text-xs font-extrabold text-blue-400">
+                      <div className="bg-slate-900 border-2 border-blue-500/80 p-4 sm:p-6 rounded-2xl space-y-4 shadow-xl relative z-40">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+                          <span className="text-sm font-bold text-blue-400">
                             {editingItemIndex !== null ? `Editando Producto #${editingItemIndex + 1}` : 'Ingresar Datos del Producto'}
                           </span>
                           {inputItems.length > 0 && (
@@ -1648,10 +1651,10 @@ export const ImportBatchesView: React.FC = () => {
                         </div>
 
                         {/* Input Fields Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-start">
                           {/* SKU */}
-                          <div className="sm:col-span-4 relative">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Código SKU</label>
+                          <div className="sm:col-span-1 lg:col-span-3 relative">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Código SKU</label>
                             <input
                               type="text"
                               placeholder="Ej. PROD-001"
@@ -1675,7 +1678,7 @@ export const ImportBatchesView: React.FC = () => {
                                   }));
                                 }
                               }}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500 uppercase"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-blue-500 uppercase shadow-inner"
                             />
 
                             {/* Sku Dropdown Suggestions */}
@@ -1717,44 +1720,44 @@ export const ImportBatchesView: React.FC = () => {
                           </div>
 
                           {/* Nombre Producto */}
-                          <div className="sm:col-span-8">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Nombre del Producto *</label>
+                          <div className="sm:col-span-1 lg:col-span-5">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Producto *</label>
                             <input
                               type="text"
                               required
                               placeholder="Ej. Smartwatch Ultra L5 / Smartphone"
                               value={singleProductForm.productName}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
                             />
                           </div>
 
                           {/* Marca & Modelo (Fila de 2 columnas) */}
-                          <div className="sm:col-span-6">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Marca (Opcional)</label>
+                          <div className="sm:col-span-1 lg:col-span-2">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Marca (Opcional)</label>
                             <input
                               type="text"
                               placeholder="Ej. Xiaomi, Honda, Samsung"
                               value={singleProductForm.brand}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, brand: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
                             />
                           </div>
 
-                          <div className="sm:col-span-6">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Modelo (Opcional)</label>
+                          <div className="sm:col-span-1 lg:col-span-2">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Modelo (Opcional)</label>
                             <input
                               type="text"
                               placeholder="Ej. Redmi Note 13, CG125"
                               value={singleProductForm.model}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, model: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
                             />
                           </div>
 
                           {/* Cantidad */}
-                          <div className="sm:col-span-4">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Cantidad *</label>
+                          <div className="sm:col-span-1 lg:col-span-3">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cantidad *</label>
                             <input
                               type="number"
                               min="1"
@@ -1762,13 +1765,13 @@ export const ImportBatchesView: React.FC = () => {
                               placeholder="1"
                               value={singleProductForm.quantity}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium text-center focus:outline-none focus:border-blue-500"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium text-center focus:outline-none focus:border-blue-500 shadow-inner"
                             />
                           </div>
 
                           {/* Costo FOB */}
-                          <div className="sm:col-span-4">
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">Costo FOB (USD) *</label>
+                          <div className="sm:col-span-1 lg:col-span-3">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Costo FOB (USD) *</label>
                             <input
                               type="number"
                               step="0.01"
@@ -1777,12 +1780,12 @@ export const ImportBatchesView: React.FC = () => {
                               placeholder="0.00"
                               value={singleProductForm.unitCostFob}
                               onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium focus:outline-none focus:border-blue-500 shadow-inner"
                             />
                           </div>
 
                           {/* Total FOB Preview & Live Financial Breakdown */}
-                          <div className="sm:col-span-12">
+                          <div className="sm:col-span-2 lg:col-span-12">
                             {(() => {
                               const liveQty = parseInt(singleProductForm.quantity) || 0;
                               const liveFobUsd = parseFloat(singleProductForm.unitCostFob) || 0;
@@ -1832,37 +1835,37 @@ export const ImportBatchesView: React.FC = () => {
                                     </span>
                                   </div>
 
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                                     {/* Total FOB */}
-                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                                       <span className="text-[10px] text-slate-400 block font-medium">Total FOB ({liveQty} uds)</span>
-                                      <span className="text-xs font-mono font-bold text-white block">${liveTotalFobUsd.toFixed(2)} USD</span>
+                                      <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveTotalFobUsd.toFixed(2)} USD</span>
                                       <span className="text-[10px] font-mono text-slate-400 block">Q {liveTotalFobGtq.toFixed(2)} GTQ</span>
                                     </div>
 
                                     {/* Recargos Aduana / Flete */}
-                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                                       <span className="text-[10px] text-slate-400 block font-medium">Recargos Estimados</span>
-                                      <span className="text-[11px] font-mono text-amber-400 block font-semibold">
+                                      <span className="text-[11px] sm:text-xs font-mono text-amber-400 block font-semibold">
                                         🏛️ Ad: +{liveCustomsIncrPct.toFixed(1)}% (${liveUnitTaxUsd.toFixed(2)}/ud)
                                       </span>
-                                      <span className="text-[11px] font-mono text-indigo-400 block font-semibold">
+                                      <span className="text-[11px] sm:text-xs font-mono text-indigo-400 block font-semibold">
                                         🚚 Fl: +{liveShippingIncrPct.toFixed(1)}% (${liveUnitShippingUsd.toFixed(2)}/ud)
                                       </span>
                                     </div>
 
                                     {/* Costo Landed Final */}
-                                    <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
                                       <span className="text-[10px] text-slate-400 block font-medium">Costo Landed Final Unit.</span>
-                                      <span className="text-xs font-mono font-bold text-indigo-300 block">${liveUnitLandedUsd.toFixed(2)} USD</span>
+                                      <span className="text-xs sm:text-sm font-mono font-bold text-indigo-300 block">${liveUnitLandedUsd.toFixed(2)} USD</span>
                                       <span className="text-[11px] font-mono font-extrabold text-indigo-400 block">Q {liveUnitLandedGtq.toFixed(2)} GTQ</span>
                                     </div>
 
                                     {/* Precio Venta Sugerido */}
-                                    <div className="bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-500/30">
+                                    <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/30">
                                       <span className="text-[10px] text-emerald-400 block font-medium">Precio Venta (+{parsedMargin}%)</span>
-                                      <span className="text-xs font-mono font-bold text-white block">${liveUnitSellingUsd.toFixed(2)} USD</span>
-                                      <span className="text-xs font-mono font-extrabold text-emerald-400 block">Q {liveUnitSellingGtq.toFixed(2)} GTQ</span>
+                                      <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveUnitSellingUsd.toFixed(2)} USD</span>
+                                      <span className="text-xs sm:text-sm font-mono font-extrabold text-emerald-400 block">Q {liveUnitSellingGtq.toFixed(2)} GTQ</span>
                                     </div>
                                   </div>
 
@@ -1938,7 +1941,7 @@ export const ImportBatchesView: React.FC = () => {
                           )}
                         </div>
 
-                        <div className="space-y-2.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
                           {inputItems.map((item, index) => {
                             const qty = parseInt(item.quantity) || 0;
                             const fobCost = parseFloat(item.unitCostFob) || 0;
@@ -1956,7 +1959,7 @@ export const ImportBatchesView: React.FC = () => {
                             const itemSellingGtq = itemSellingUsd * parsedGtqRate;
 
                             return (
-                              <div key={index} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-sm">
+                              <div key={index} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-sm flex flex-col justify-between">
                                 {/* Header: Photo, SKU, Name & Qty */}
                                 <div className="flex items-center space-x-3 pb-2 border-b border-slate-800/80">
                                   {item.image ? (
@@ -2055,10 +2058,10 @@ export const ImportBatchesView: React.FC = () => {
 
       {/* Modal de Confirmación de Seguridad antes de Guardar Lote */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-4">
-          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-4xl lg:max-w-5xl max-h-[90vh] mx-4 my-6 p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
             {/* Header */}
-            <div className="flex items-center space-x-3 border-b border-slate-700 pb-3">
+            <div className="flex items-center space-x-3 border-b border-slate-700 pb-3 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                 <AlertCircle className="w-6 h-6" />
               </div>
@@ -2068,81 +2071,84 @@ export const ImportBatchesView: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-slate-300 text-xs leading-relaxed">
-              Por favor revisa cuidadosamente los datos del lote antes de guardar en la base de datos SQLite. Esta acción actualizará el stock y los costos del inventario.
+            <p className="text-slate-300 text-xs leading-relaxed shrink-0">
+              Por favor revisa cuidadosamente los datos del lote antes de guardar en la base de datos. Esta acción actualizará el stock y los costos del inventario.
             </p>
 
             {/* Summary Box */}
-            <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-700/80 space-y-2 text-xs">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                <span className="text-slate-400 font-semibold">Nombre del Lote:</span>
-                <span className="font-bold text-white text-sm">{batchName}</span>
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs shrink-0">
+              <div className="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800/80">
+                <span className="text-slate-400 block font-semibold text-[11px] mb-1">Nombre del Lote:</span>
+                <span className="font-bold text-white text-sm truncate block">{batchName}</span>
               </div>
-              <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                <span className="text-slate-400 font-semibold">Gastos Landed Totales:</span>
-                <span className="font-bold text-amber-400">${totalLandedExpenses.toFixed(2)} USD <span className="text-emerald-400 text-[11px] font-mono">(Q {(totalLandedExpenses * parsedGtqRate).toFixed(2)} GTQ)</span></span>
+              <div className="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800/80">
+                <span className="text-slate-400 block font-semibold text-[11px] mb-1">Gastos Landed Totales:</span>
+                <span className="font-bold text-amber-400 text-sm block">${totalLandedExpenses.toFixed(2)} USD</span>
+                <span className="text-emerald-400 text-[10px] font-mono block">Q {(totalLandedExpenses * parsedGtqRate).toFixed(2)} GTQ</span>
               </div>
-              <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                <span className="text-slate-400 font-semibold">Ítems a Procesar:</span>
-                <span className="font-bold text-blue-400">{proratedPreview.length} Productos</span>
+              <div className="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800/80">
+                <span className="text-slate-400 block font-semibold text-[11px] mb-1">Ítems a Procesar:</span>
+                <span className="font-bold text-blue-400 text-sm block">{proratedPreview.length} Productos</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-semibold">Estrategia de Costo:</span>
-                <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                  {costUpdateStrategy === 'weighted' ? '📊 Promedio Ponderado' : '🏷️ Reemplazar Último Costo'}
+              <div className="p-2.5 bg-slate-950/60 rounded-lg border border-slate-800/80">
+                <span className="text-slate-400 block font-semibold text-[11px] mb-1">Estrategia de Costo:</span>
+                <span className="font-bold text-white text-xs bg-slate-800 px-2 py-0.5 rounded border border-slate-700 inline-block">
+                  {costUpdateStrategy === 'weighted' ? '📊 Promedio Ponderado' : '🏷️ Reemplazar Último'}
                 </span>
               </div>
             </div>
 
             {/* Item List Enriched Preview */}
-            <div className="space-y-2 max-h-56 overflow-y-auto bg-slate-900/80 p-2.5 rounded-xl border border-slate-700/80">
+            <div className="flex-1 overflow-y-auto max-h-[calc(90vh-320px)] bg-slate-900/80 p-3 rounded-xl border border-slate-700/80 space-y-2.5">
               <span className="text-[11px] uppercase font-bold text-slate-300 block px-1 pb-1 border-b border-slate-800">
                 Detalle de Productos a Registrar ({proratedPreview.length}):
               </span>
-              {proratedPreview.map((item, idx) => {
-                const qty = item.quantity;
-                const fobUsd = item.unitCostFob;
-                const fobGtq = fobUsd * parsedGtqRate;
-                const landedUsd = item.finalUnitCost;
-                const landedGtq = landedUsd * parsedGtqRate;
-                const recargoPct = fobUsd > 0 ? ((landedUsd - fobUsd) / fobUsd) * 100 : 0;
-                const sellingUsd = item.finalSellingPrice;
-                const sellingGtq = sellingUsd * parsedGtqRate;
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {proratedPreview.map((item, idx) => {
+                  const qty = item.quantity;
+                  const fobUsd = item.unitCostFob;
+                  const fobGtq = fobUsd * parsedGtqRate;
+                  const landedUsd = item.finalUnitCost;
+                  const landedGtq = landedUsd * parsedGtqRate;
+                  const recargoPct = fobUsd > 0 ? ((landedUsd - fobUsd) / fobUsd) * 100 : 0;
+                  const sellingUsd = item.finalSellingPrice;
+                  const sellingGtq = sellingUsd * parsedGtqRate;
 
-                return (
-                  <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1.5 text-xs">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <Package className="w-4 h-4 text-slate-400 shrink-0" />
+                  return (
+                    <div key={idx} className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs flex flex-col justify-between">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <Package className="w-4 h-4 text-slate-400 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="font-mono text-blue-400 font-bold mr-1.5">{item.sku}</span>
+                            <span className="text-white font-semibold truncate inline-block align-bottom">{item.productName}</span>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0 ml-2">
+                          {qty} uds
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-800/80">
                         <div>
-                          <span className="font-mono text-blue-400 font-bold mr-1.5">{item.sku}</span>
-                          <span className="text-white font-semibold truncate max-w-[140px] sm:max-w-[180px] inline-block align-bottom">{item.productName}</span>
+                          <span className="text-slate-400 block text-[10px]">FOB ➔ Landed (+{recargoPct.toFixed(1)}%):</span>
+                          <span className="font-mono font-medium text-slate-300 block">${fobUsd.toFixed(2)} ➔ ${landedUsd.toFixed(2)} USD</span>
+                          <span className="font-mono text-indigo-300 block">Q {fobGtq.toFixed(2)} ➔ Q {landedGtq.toFixed(2)} GTQ</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-emerald-400 font-bold block uppercase text-[10px]">Precio Venta GTQ</span>
+                          <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {sellingGtq.toFixed(2)} GTQ</span>
+                          <span className="font-mono text-slate-400 text-[10px] block">(${sellingUsd.toFixed(2)} USD)</span>
                         </div>
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-                        {qty} uds
-                      </span>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-800/80">
-                      <div>
-                        <span className="text-slate-400 block text-[10px]">FOB ➔ Landed (+{recargoPct.toFixed(1)}%):</span>
-                        <span className="font-mono font-medium text-slate-300 block">${fobUsd.toFixed(2)} ➔ ${landedUsd.toFixed(2)} USD</span>
-                        <span className="font-mono text-indigo-300 block">Q {fobGtq.toFixed(2)} ➔ Q {landedGtq.toFixed(2)} GTQ</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-emerald-400 font-bold block uppercase text-[10px]">Precio Venta GTQ</span>
-                        <span className="font-mono font-extrabold text-emerald-400 text-xs block">Q {sellingGtq.toFixed(2)} GTQ</span>
-                        <span className="font-mono text-slate-400 text-[10px] block">(${sellingUsd.toFixed(2)} USD)</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Actions Buttons */}
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-700">
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-700 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
@@ -2167,7 +2173,7 @@ export const ImportBatchesView: React.FC = () => {
       {/* Modal Exhaustivo de Informe Completo del Lote */}
       {selectedBatchForFullDetails && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-5xl xl:max-w-6xl max-h-[90vh] mx-4 my-6 flex flex-col p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs overflow-hidden animate-in fade-in duration-200">
             {/* Header */}
             <div className="flex justify-between items-start border-b border-slate-700 pb-3 shrink-0">
               <div className="flex items-center space-x-3">
@@ -2196,7 +2202,7 @@ export const ImportBatchesView: React.FC = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(92vh-130px)] space-y-4 pr-1">
+            <div className="overflow-y-auto max-h-[calc(90vh-130px)] space-y-4 pr-1">
               {/* Batch Metadata Configuration Ribbon */}
               {(() => {
                 const b = selectedBatchForFullDetails;
