@@ -173,14 +173,13 @@ export const exportViewPdf = ({ activeTab, user, stats, inventory, transactions,
     case 'inventory':
       reportTitle = 'Reporte Oficial de Inventario & Stock Físico';
       bodyContent = `
-        <div class="section-title">Catálogo Consolidado por SKU y Salud de Stock (${inventory.length} Productos)</div>
+        <div class="section-title">Catálogo Consolidado de Inventario (${inventory.length} Productos)</div>
         <table>
           <thead>
             <tr>
               <th>Código SKU</th>
               <th>Nombre del Producto</th>
               <th>Categoría</th>
-              <th>Salud Stock</th>
               <th>Stock Físico</th>
               <th>Costo Landed</th>
               <th>Valor Total USD</th>
@@ -188,19 +187,18 @@ export const exportViewPdf = ({ activeTab, user, stats, inventory, transactions,
           </thead>
           <tbody>
             ${inventory.map(p => {
-              let healthBadge = '<span class="badge badge-green">🟢 Saludable</span>';
-              if (p.stock === 0) healthBadge = '<span class="badge badge-rose">🔴 Agotado</span>';
-              else if (p.stock <= 5) healthBadge = '<span class="badge badge-amber">🟡 Reordenar</span>';
+              const unitCostGtq = (p.unitCost * 7.80).toFixed(2);
+              const totalValUsd = (p.stock * p.unitCost).toFixed(2);
+              const totalValGtq = (p.stock * p.unitCost * 7.80).toFixed(2);
 
               return `
                 <tr>
                   <td><strong>${p.sku}</strong></td>
                   <td><strong>${p.name}</strong></td>
                   <td>${p.category || 'General'}</td>
-                  <td>${healthBadge}</td>
                   <td><strong>${p.stock} uds</strong></td>
-                  <td>$${p.unitCost.toFixed(2)} USD</td>
-                  <td><strong>$${(p.stock * p.unitCost).toFixed(2)} USD</strong></td>
+                  <td>$${p.unitCost.toFixed(2)} USD<br/><span style="font-size: 8px; color: #64748b;">Q ${unitCostGtq}</span></td>
+                  <td><strong>$${totalValUsd} USD</strong><br/><span style="font-size: 8px; color: #15803d; font-weight: bold;">Q ${totalValGtq}</span></td>
                 </tr>
               `;
             }).join('')}
@@ -481,5 +479,5 @@ export const exportViewPdf = ({ activeTab, user, stats, inventory, transactions,
   printWindow.document.close();
 };
 
-export { exportSingleBatchPdf } from './pdfGenerator';
+export { exportSingleBatchPdf, exportInventoryPdf } from './pdfGenerator';
 

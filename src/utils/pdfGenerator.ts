@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { ImportBatch, User } from '../services/api';
+import { ImportBatch, User, InventoryProduct } from '../services/api';
 
 /**
  * Genera y descarga directamente el Informe Oficial de un Lote en PDF multipágina
@@ -275,3 +275,116 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
     alert('Ocurrió un error al generar el PDF del lote. Por favor intenta de nuevo.');
   }
 };
+
+/**
+ * Genera y descarga directamente el Reporte Oficial de Inventario & Stock Físico en PDF multipágina
+ * con jspdf y jspdf-autotable, con columnas limpias (sin Salud Stock).
+ */
+export const exportInventoryPdf = (inventory: InventoryProduct[], user?: User | null) => {
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const totalStock = inventory.reduce((sum, p) => sum + (p.stock || 0), 0);
+    const totalValUsd = inventory.reduce((sum, p) => sum + ((p.stock || 0) * (p.unitCost || 0)), 0);
+    const totalValGtq = totalValUsd * 7.80;
+
+    // Barra superior decorativa
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(14, 10, 182, 1.5, 'F');
+
+    // Logo / Marca
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(37, 99, 235); // blue-600
+    doc.text('AppG', 14, 20);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Sistema de Gestión e Importaciones', 34, 20);
+
+    // Metadatos
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Emisión: ${new Date().toLocaleDateString('es-GT')} ${new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}`, 196, 20, { align: 'right' });
+    doc.text(`Generado: ${user?.name || 'Administrador'} (${user?.role || 'Admin'})`, 196, 25, { align: 'right' });
+
+    // Título de la sección
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Reporte Oficial de Inventario & Stock Físico', 14, 30);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Catálogo Consolidado de Inventario (${inventory.length} Productos) • ${totalStock} Unidades • Valoración: $${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD (Q ${totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2 })} GTQ)`, 14, 35);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['CÓDIGO SKU', 'NOMBRE DEL PRODUCTO', 'CATEGORÍA', 'STOCK FÍSICO', 'COSTO LANDED', 'VALOR TOTAL USD']],
+      body: inventory.map(p => {
+        const uCostGtq = (p.unitCost * 7.80).toFixed(2);
+        const tValUsd = ((p.stock || 0) * (p.unitCost || 0)).toFixed(2);
+        const tValGtq = ((p.stock || 0) * (p.unitCost || 0) * 7.80).toFixed(2);
+
+        return [
+          String(p.sku || ''),
+          String(p.name || ''),
+          String(p.category || 'General'),
+          `${p.stock || 0} uds`,
+          `$${Number(p.unitCost || 0).toFixed(2)} (Q ${uCostGtq})`,
+          `$${tValUsd} USD (Q ${tValGtq})`
+        ];
+      }),
+      margin: { top: 18, bottom: 18, left: 14, right: 14 },
+      styles: { fontSize: 7.5, cellPadding: 2.2, overflow: 'linebreak' },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 24, fontStyle: 'bold' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 26 },
+        3: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+        4: { cellWidth: 28, halign: 'right' },
+        5: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: [21, 128, 61] }
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] }
+    });
+
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(148, 163, 184);
+      doc.text(
+        `AppG v0.1 (beta) • Catálogo Consolidado de Inventario (${inventory.length} Productos) • Página ${p} de ${totalPages}`,
+        14,
+        doc.internal.pageSize.height - 10
+      );
+    }
+
+    const fileName = `Reporte_Inventario_${new Date().toISOString().slice(0, 10)}.pdf`;
+    try {
+      doc.save(fileName);
+    } catch {
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  } catch (error) {
+    console.error('Error generando PDF de inventario:', error);
+    alert('Ocurrió un error al generar el PDF de inventario. Por favor intenta de nuevo.');
+  }
+};
+
