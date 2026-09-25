@@ -96,6 +96,43 @@ export const compareBatchesDesc = (a: ImportBatch, b: ImportBatch): number => {
   return String(b.id || '').localeCompare(String(a.id || ''));
 };
 
+export const formatBatchDateTime = (batch?: { importDate?: string; created_at?: string } | null): string => {
+  if (!batch) return '';
+  const dateStr = batch.created_at || batch.importDate;
+  if (!dateStr) return '';
+
+  const clean = String(dateStr).trim();
+  const isoLike = clean.includes(' ') && !clean.includes('T') ? clean.replace(' ', 'T') : clean;
+  const d = new Date(isoLike);
+
+  if (isNaN(d.getTime())) {
+    const millis = parseBatchDateToMillis(clean);
+    if (millis > 0) {
+      const dFallback = new Date(millis);
+      return dFallback.toLocaleString('es-GT', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).replace(', ', ' • ');
+    }
+    return clean;
+  }
+
+  const formatted = d.toLocaleString('es-GT', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  return formatted.replace(', ', ' • ');
+};
+
 const fallbackBatches: ImportBatch[] = [
   {
     id: '#5555',
@@ -934,7 +971,7 @@ export const ImportBatchesView: React.FC = () => {
                       <span className="text-slate-400">•</span>
                       <span className="text-amber-600 dark:text-amber-400 font-bold">Margen: +{marginPct}%</span>
                       <span className="text-slate-400">•</span>
-                      <span className="text-slate-500 dark:text-slate-400">{batch.importDate}</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">{formatBatchDateTime(batch)}</span>
                       <span className="text-slate-400">•</span>
                       <span className="text-blue-700 dark:text-blue-300 font-semibold">{batch.items.length} prods</span>
                     </div>
@@ -2400,7 +2437,7 @@ export const ImportBatchesView: React.FC = () => {
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-white leading-tight mt-0.5">{selectedBatchForFullDetails.name}</h3>
-                  <span className="text-[11px] text-slate-400 block font-medium">Registrado el {selectedBatchForFullDetails.importDate}</span>
+                  <span className="text-[11px] text-slate-400 block font-medium">Registrado el {formatBatchDateTime(selectedBatchForFullDetails)}</span>
                 </div>
               </div>
               <button

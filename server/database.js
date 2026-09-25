@@ -143,7 +143,7 @@ async function initPgTables() {
         profitMarginPct NUMERIC DEFAULT 15.0,
         costUpdateStrategy VARCHAR(50) DEFAULT 'weighted',
         status VARCHAR(255) DEFAULT 'Procesado',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
@@ -205,8 +205,23 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS exchangeRateGtq NUMERIC DEFAULT 7.80");
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS profitMarginPct NUMERIC DEFAULT 15.0");
     await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS costUpdateStrategy VARCHAR(50) DEFAULT 'weighted'");
-    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
-    await pgPool.query("UPDATE batches SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL");
+    await pgPool.query("ALTER TABLE batches ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()");
+    await pgPool.query("ALTER TABLE batches ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at::timestamptz").catch(() => {});
+    await pgPool.query("ALTER TABLE batches ALTER COLUMN created_at SET DEFAULT NOW()").catch(() => {});
+    await pgPool.query("UPDATE batches SET created_at = NOW() WHERE created_at IS NULL");
+
+    // Compatibilidad adicional si la tabla se llama import_batches
+    await pgPool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'import_batches') THEN
+          ALTER TABLE import_batches ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+          ALTER TABLE import_batches ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at::timestamptz;
+          ALTER TABLE import_batches ALTER COLUMN created_at SET DEFAULT NOW();
+          UPDATE import_batches SET created_at = NOW() WHERE created_at IS NULL;
+        END IF;
+      END $$;
+    `).catch(() => {});
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS sku VARCHAR(255) DEFAULT 'PROD-001'");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedCustoms NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedShipping NUMERIC DEFAULT 0.0");

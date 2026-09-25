@@ -576,7 +576,7 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
           <div class="subbrand">Informe Oficial de Lote: ${batch.name} (${batch.id})</div>
         </div>
         <div class="meta">
-          <div><strong>Fecha Lote:</strong> ${batch.importDate}</div>
+          <div><strong>Fecha y Hora:</strong> ${batch.created_at ? new Date(String(batch.created_at).includes(' ') && !String(batch.created_at).includes('T') ? String(batch.created_at).replace(' ', 'T') : batch.created_at).toLocaleString('es-GT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).replace(', ', ' • ') : batch.importDate}</div>
           <div><strong>Fecha Emisión:</strong> ${currentDate}</div>
           <div><strong>Generado Por:</strong> ${user?.name || 'Administrador'} (${user?.role || 'Admin'})</div>
         </div>
