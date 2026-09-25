@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle,
   ArrowRight,
+  ArrowLeft,
   FileText,
   Download,
   Search
@@ -1311,46 +1312,124 @@ export const ImportBatchesView: React.FC = () => {
         )}
       </div>
 
-      {/* Add New Batch Modal (2-Step Guided Stepper Flow with Fixed Touch Scroll) */}
+      {/* Full View / Full Screen: Registrar Nuevo Lote de Importación */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden">
-          <div className="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-5xl xl:max-w-6xl max-h-[90vh] mx-0 sm:mx-4 my-0 sm:my-6 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
-            
-            {/* Modal Header with Stepper Progress */}
-            <div className="p-4 sm:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/80 shrink-0">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="font-bold text-white text-sm sm:text-base">Registrar Nuevo Lote de Importación</h3>
-                  <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    Paso {addBatchStep} de 2
+        <div className="fixed inset-0 z-50 bg-[#0b1329] flex flex-col overflow-hidden text-slate-100 animate-in fade-in duration-150">
+          
+          {/* Header Superior Fijo */}
+          <header className="h-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/90 bg-[#0d1733]/95 backdrop-blur-md flex items-center justify-between shrink-0 z-30 shadow-md">
+            {/* Lado Izquierdo: Volver al Historial + Título + Badges */}
+            <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition shrink-0 cursor-pointer shadow-sm"
+                title="Volver al Historial de Lotes"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Volver al Historial</span>
+              </button>
+
+              <div className="min-w-0">
+                <div className="flex items-center space-x-2 flex-wrap">
+                  <h2 className="font-extrabold text-white text-sm sm:text-base tracking-tight truncate">
+                    Registrar Nuevo Lote de Importación
+                  </h2>
+                  <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                    Paso {addBatchStep} de 2: {addBatchStep === 1 ? 'Parámetros Generales' : 'Carga de Productos'}
                   </span>
                   {(batchName.trim() !== '' || inputItems.length > 0) && (
-                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    <span className="hidden md:inline-flex text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                       📝 Borrador autoguardado
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-400 truncate hidden sm:block">
                   {addBatchStep === 1
-                    ? 'Paso 1: Parámetros Generales y Financieros del Lote'
-                    : 'Paso 2: Vista Previa Comprimida y Carga de Productos'}
+                    ? 'Define los parámetros financieros, arancelarios y tipo de cambio para el cálculo del lote.'
+                    : 'Ingresa los productos importados para prorratear los costos y calcular el precio de venta.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="p-1.5 text-slate-400 hover:text-white text-base font-bold rounded-lg transition shrink-0"
-              >
-                ✕
-              </button>
             </div>
 
-            {/* Modal Form Container with Touch Pan Y Scroll */}
-            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 md:p-8 overflow-y-auto space-y-5 flex-1 overscroll-contain touch-pan-y max-h-[calc(90vh-130px)]">
+            {/* Lado Derecho: Acciones Principales Siempre Visibles */}
+            <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+              {addBatchStep === 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-3.5 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!batchName.trim()) {
+                        alert('Por favor ingresa un nombre para el lote.');
+                        return;
+                      }
+                      setAddBatchStep(2);
+                      if (inputItems.length === 0) {
+                        setIsAddingProduct(true);
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/25 active:scale-95 cursor-pointer"
+                  >
+                    <span>Continuar al Paso 2</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setAddBatchStep(1)}
+                    className="px-3 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
+                  >
+                    <span>← Volver a Parámetros</span>
+                  </button>
+
+                  {!isAddingProduct && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSingleProductForm(null)}
+                      className="px-3.5 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                    >
+                      <Plus size={15} />
+                      <span className="hidden sm:inline">Agregar Producto</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (inputItems.length === 0) {
+                        alert('Debes agregar al menos un producto al lote.');
+                        return;
+                      }
+                      setShowConfirmModal(true);
+                    }}
+                    disabled={inputItems.length === 0 || isSavingBatch}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center space-x-1.5 active:scale-95"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length})`}</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </header>
+
+          {/* Cuerpo Scrolleable Expansivo */}
+          <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto overscroll-contain pb-28">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
               
               {/* Notificación de Error de Red / Conexión en Modal de Lotes */}
               {batchNetworkError && (
-                <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+                <div className="p-4 bg-rose-500/15 border border-rose-500/40 rounded-2xl text-rose-300 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
                   <div className="flex items-center space-x-2.5">
                     <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
                     <span className="font-semibold">
@@ -1378,190 +1457,204 @@ export const ImportBatchesView: React.FC = () => {
               
               {/* PASO 1: Parámetros Generales del Lote */}
               {addBatchStep === 1 && (
-                <div className="space-y-5 animate-in fade-in duration-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-start bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-slate-700/80">
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl space-y-6">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Lote *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ej. Lote Calzado Septiembre"
-                        value={batchName}
-                        onChange={(e) => setBatchName(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
-                      />
+                      <h3 className="text-base font-extrabold text-white">1. Parámetros Generales & Costos Base</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Ingresa el nombre del lote, gastos aduanales, fletes y porcentaje de ganancia esperado.</p>
                     </div>
 
-                    {/* IMPUESTO ADUANA */}
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1.5">Impuesto Aduana</label>
-                      <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
-                        <span className="pl-3 text-slate-400 text-sm font-bold select-none">
-                          {customsCurrency === 'GTQ' ? 'Q' : '$'}
-                        </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Lote *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ej. Lote Calzado Septiembre"
+                          value={batchName}
+                          onChange={(e) => setBatchName(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
+                        />
+                      </div>
+
+                      {/* IMPUESTO ADUANA */}
+                      <div>
+                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">Impuesto Aduana</label>
+                        <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
+                          <span className="pl-3 text-slate-400 text-sm font-bold select-none">
+                            {customsCurrency === 'GTQ' ? 'Q' : '$'}
+                          </span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={customsTax}
+                            onChange={(e) => setCustomsTax(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
+                          />
+                          <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setCustomsCurrency('USD')}
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                              USD
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCustomsCurrency('GTQ')}
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                              GTQ
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
+                          {Number(customsTax) > 0 && (
+                            customsCurrency === 'GTQ'
+                              ? `≈ $${((Number(customsTax) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
+                              : `≈ Q${((Number(customsTax) || 0) * (Number(exchangeRateGtq) || 7.80)).toFixed(2)} GTQ`
+                          )}
+                        </p>
+                      </div>
+
+                      {/* COSTO FLETE */}
+                      <div>
+                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">Costo Flete</label>
+                        <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
+                          <span className="pl-3 text-slate-400 text-sm font-bold select-none">
+                            {shippingCurrency === 'GTQ' ? 'Q' : '$'}
+                          </span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={shippingCost}
+                            onChange={(e) => setShippingCost(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
+                          />
+                          <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setShippingCurrency('USD')}
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                              USD
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShippingCurrency('GTQ')}
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                              GTQ
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
+                          {Number(shippingCost) > 0 && (
+                            shippingCurrency === 'GTQ'
+                              ? `≈ $${((Number(shippingCost) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
+                              : `≈ Q${((Number(shippingCost) || 0) * (Number(exchangeRateGtq) || 7.80)).toFixed(2)} GTQ`
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">Margen de Venta (%)</label>
                         <input
                           type="number"
-                          step="any"
-                          value={customsTax}
-                          onChange={(e) => setCustomsTax(e.target.value)}
-                          placeholder="0.00"
-                          className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
+                          step="0.1"
+                          min="0"
+                          placeholder="15.0"
+                          value={profitMarginPct}
+                          onChange={(e) => setProfitMarginPct(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500 shadow-inner"
                         />
-                        <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setCustomsCurrency('USD')}
-                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                          >
-                            USD
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCustomsCurrency('GTQ')}
-                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${customsCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                          >
-                            GTQ
-                          </button>
-                        </div>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
-                        {Number(customsTax) > 0 && (
-                          customsCurrency === 'GTQ'
-                            ? `≈ $${((Number(customsTax) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
-                            : `≈ Q${((Number(customsTax) || 0) * (Number(exchangeRateGtq) || 7.80)).toFixed(2)} GTQ`
-                        )}
-                      </p>
-                    </div>
-
-                    {/* COSTO FLETE */}
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1.5">Costo Flete</label>
-                      <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500 shadow-inner">
-                        <span className="pl-3 text-slate-400 text-sm font-bold select-none">
-                          {shippingCurrency === 'GTQ' ? 'Q' : '$'}
-                        </span>
-                        <input
-                          type="number"
-                          step="any"
-                          value={shippingCost}
-                          onChange={(e) => setShippingCost(e.target.value)}
-                          placeholder="0.00"
-                          className="w-full px-2.5 py-2.5 bg-transparent text-slate-100 text-sm focus:outline-none"
-                        />
-                        <div className="flex p-1 bg-slate-800 border-l border-slate-700 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setShippingCurrency('USD')}
-                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'USD' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                          >
-                            USD
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShippingCurrency('GTQ')}
-                            className={`px-2 py-1 text-xs font-bold rounded-lg transition ${shippingCurrency === 'GTQ' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                          >
-                            GTQ
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-slate-400 mt-1.5 h-3 font-mono">
-                        {Number(shippingCost) > 0 && (
-                          shippingCurrency === 'GTQ'
-                            ? `≈ $${((Number(shippingCost) || 0) / (Number(exchangeRateGtq) || 7.80)).toFixed(2)} USD`
-                            : `≈ Q${((Number(shippingCost) || 0) * (Number(exchangeRateGtq) || 7.80)).toFixed(2)} GTQ`
-                        )}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Margen de Venta (%)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        placeholder="15.0"
-                        value={profitMarginPct}
-                        onChange={(e) => setProfitMarginPct(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500 shadow-inner"
-                      />
                     </div>
                   </div>
 
                   {/* Exchange Rate GTQ & Stock Price Variation Strategy */}
-                  <div className="space-y-3.5">
-                    <div className="flex items-center justify-between bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-700/80">
-                      <div>
-                        <label className="text-sm font-semibold text-slate-200 block">Tipo de Cambio (USD a GTQ):</label>
-                        <p className="text-xs text-slate-400">Tasa de conversión aplicada a los cálculos en moneda local.</p>
-                      </div>
-                      <div className="w-36 sm:w-44">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0.1"
-                          value={exchangeRateGtq}
-                          onChange={(e) => setExchangeRateGtq(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white font-mono font-bold text-right focus:outline-none focus:border-blue-500 shadow-inner"
-                        />
-                      </div>
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl space-y-4">
+                    <div>
+                      <h3 className="text-base font-extrabold text-white">2. Conversión Monetaria & Estrategia de Inventario</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Define la tasa de cambio local y el comportamiento contable del costo de existencias.</p>
                     </div>
 
-                    {hasStockWithPriceVariation ? (
-                      <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-2xl space-y-2.5">
-                        <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
-                          <AlertCircle className="w-4 h-4 shrink-0" />
-                          <span>Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-950/70 p-4 sm:p-5 rounded-2xl border border-slate-800 gap-3">
+                        <div>
+                          <label className="text-sm font-semibold text-slate-200 block">Tipo de Cambio (USD a GTQ):</label>
+                          <p className="text-xs text-slate-400">Tasa de conversión aplicada a los cálculos en moneda local Quetzales.</p>
                         </div>
-                        <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                          Detectamos que aún hay unidades guardadas en almacén y el nuevo lote presenta una variación de costo. Elige cómo actualizar el precio del inventario:
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                          <div
-                            onClick={() => setCostUpdateStrategy('weighted')}
-                            className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
-                              costUpdateStrategy === 'weighted'
-                                ? 'bg-blue-600/20 border-blue-500 text-white shadow'
-                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                            }`}
-                          >
-                            <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'weighted'} onChange={() => {}} className="mt-0.5" />
-                            <div>
-                              <span className="font-bold text-white block">Promedio Ponderado</span>
-                              <span className="text-[11px] text-slate-400 block mt-0.5">Combina las existencias en stock con el nuevo costo del lote.</span>
-                            </div>
-                          </div>
+                        <div className="w-full sm:w-44">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.1"
+                            value={exchangeRateGtq}
+                            onChange={(e) => setExchangeRateGtq(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono font-bold text-right focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
+                      </div>
 
-                          <div
-                            onClick={() => setCostUpdateStrategy('latest')}
-                            className={`p-3 rounded-xl border cursor-pointer transition flex items-start space-x-2.5 ${
-                              costUpdateStrategy === 'latest'
-                                ? 'bg-emerald-600/20 border-emerald-500 text-white shadow'
-                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                            }`}
-                          >
-                            <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'latest'} onChange={() => {}} className="mt-0.5" />
-                            <div>
-                              <span className="font-bold text-white block">Reemplazar con Último Costo</span>
-                              <span className="text-[11px] text-slate-400 block mt-0.5">Actualiza el precio del producto al 100% con la nueva importación.</span>
+                      {hasStockWithPriceVariation ? (
+                        <div className="bg-amber-500/10 border border-amber-500/30 p-4 sm:p-5 rounded-2xl space-y-3">
+                          <div className="flex items-center space-x-2 text-amber-400 font-bold text-sm">
+                            <AlertCircle className="w-5 h-5 shrink-0" />
+                            <span>Variación de Precio en Existencias ({detectedPriceVariations.length} producto{detectedPriceVariations.length > 1 ? 's' : ''} en stock)</span>
+                          </div>
+                          <p className="text-xs text-amber-200/90 leading-relaxed">
+                            Detectamos que aún hay unidades guardadas en almacén y el nuevo lote presenta una variación de costo. Elige cómo actualizar el precio del inventario:
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs pt-1">
+                            <div
+                              onClick={() => setCostUpdateStrategy('weighted')}
+                              className={`p-4 rounded-xl border cursor-pointer transition flex items-start space-x-3 ${
+                                costUpdateStrategy === 'weighted'
+                                  ? 'bg-blue-600/20 border-blue-500 text-white shadow'
+                                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                              }`}
+                            >
+                              <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'weighted'} onChange={() => {}} className="mt-1" />
+                              <div>
+                                <span className="font-bold text-white text-sm block">Promedio Ponderado</span>
+                                <span className="text-xs text-slate-400 block mt-0.5">Combina las existencias actuales en stock con el nuevo costo de este lote.</span>
+                              </div>
+                            </div>
+
+                            <div
+                              onClick={() => setCostUpdateStrategy('latest')}
+                              className={`p-4 rounded-xl border cursor-pointer transition flex items-start space-x-3 ${
+                                costUpdateStrategy === 'latest'
+                                  ? 'bg-emerald-600/20 border-emerald-500 text-white shadow'
+                                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                              }`}
+                            >
+                              <input type="radio" name="costStrategy" checked={costUpdateStrategy === 'latest'} onChange={() => {}} className="mt-1" />
+                              <div>
+                                <span className="font-bold text-white text-sm block">Reemplazar con Último Costo</span>
+                                <span className="text-xs text-slate-400 block mt-0.5">Actualiza el costo del producto al 100% con la nueva importación.</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/50 text-[11px] text-slate-400 flex items-center space-x-2">
-                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Sin variación de precio sobre existencias activas en stock. El costo se asignará directamente.</span>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 text-xs text-slate-400 flex items-center space-x-2.5">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>Sin variación de precio sobre existencias activas en stock. El costo se asignará directamente.</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Step 1 Action Bar */}
-                  <div className="pt-3 border-t border-slate-700 flex justify-between items-center sticky bottom-0 bg-slate-800 z-20 py-2">
+                  <div className="flex justify-between items-center pt-2">
                     <button
                       type="button"
                       onClick={() => setShowAddModal(false)}
-                      className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold rounded-xl transition"
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -1578,488 +1671,632 @@ export const ImportBatchesView: React.FC = () => {
                           setIsAddingProduct(true);
                         }
                       }}
-                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/20 cursor-pointer active:scale-95"
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/25 cursor-pointer active:scale-95"
                     >
-                      <span>Continuar a Agregar Productos</span>
+                      <span>Continuar a Carga de Productos</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* PASO 2: Vista Previa Comprimida y Carga de Productos */}
+              {/* PASO 2: Carga de Productos y Vista Previa Completa */}
               {addBatchStep === 2 && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  {/* Vista Previa Comprimida de Parámetros */}
-                  <div className="bg-slate-950 p-2.5 sm:p-3 rounded-xl border border-slate-800 flex items-center justify-between gap-2 shadow-sm text-xs">
-                    <div className="flex items-center space-x-2 flex-wrap gap-1 min-w-0">
-                      <span className="font-bold text-white truncate">📦 {batchName}</span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-amber-400 font-semibold font-mono text-[11px]">Aduana: ${parseFloat(customsTax || '0').toFixed(2)}</span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-indigo-400 font-semibold font-mono text-[11px]">Flete: ${parseFloat(shippingCost || '0').toFixed(2)}</span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-emerald-400 font-semibold text-[11px]">Margen: +{profitMarginPct}%</span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-blue-400 font-semibold font-mono text-[11px]">TC: Q{parseFloat(exchangeRateGtq || '7.80').toFixed(2)}</span>
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  {/* Resumen Superior de Parámetros Globales (Barra Horizontal Completa) */}
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    <div className="flex items-center space-x-3 shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg shrink-0">
+                        📦
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Lote en Proceso</span>
+                        <h4 className="text-sm sm:text-base font-extrabold text-white truncate max-w-xs">{batchName}</h4>
+                      </div>
                     </div>
 
+                    {/* Métricas clave en fila horizontal */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 lg:max-w-3xl">
+                      <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
+                        <span className="text-[10px] text-slate-400 block font-medium">Aduana</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-amber-400">
+                          ${parseFloat(customsTax || '0').toFixed(2)} USD
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 block">
+                          Q {(parseFloat(customsTax || '0') * parsedGtqRate).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
+                        <span className="text-[10px] text-slate-400 block font-medium">Flete</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-indigo-400">
+                          ${parseFloat(shippingCost || '0').toFixed(2)} USD
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 block">
+                          Q {(parseFloat(shippingCost || '0') * parsedGtqRate).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
+                        <span className="text-[10px] text-slate-400 block font-medium">Margen Esperado</span>
+                        <span className="text-xs sm:text-sm font-bold text-emerald-400">
+                          +{profitMarginPct}%
+                        </span>
+                        <span className="text-[10px] text-slate-500 block">Sobre Landed</span>
+                      </div>
+
+                      <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
+                        <span className="text-[10px] text-slate-400 block font-medium">Tipo de Cambio</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-blue-400">
+                          Q {parseFloat(exchangeRateGtq || '7.80').toFixed(2)}
+                        </span>
+                        <span className="text-[10px] text-slate-500 block">por 1.00 USD</span>
+                      </div>
+                    </div>
+
+                    {/* Botón editar parámetros */}
                     <button
                       type="button"
                       onClick={() => setAddBatchStep(1)}
-                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 rounded-lg text-[10px] sm:text-[11px] font-bold shrink-0 transition"
+                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer"
                     >
-                      ✏️ Editar parámetros
+                      <span>✏️</span>
+                      <span>Editar Parámetros</span>
                     </button>
                   </div>
 
-                  {/* Product Entry Section */}
-                  <div className="space-y-3.5">
-                    <div className="flex justify-between items-center px-1">
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-200">Productos Agregados al Lote ({inputItems.length})</h4>
-                        <p className="text-[11px] text-slate-400">Ingresa los datos del producto y presiona confirmar para agregarlo a la lista.</p>
-                      </div>
-                      {!isAddingProduct && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenSingleProductForm(null)}
-                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
-                        >
-                          <Plus size={16} />
-                          <span>Agregar Producto</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Single Active Product Form Card (Compact & Fixed Button Bar) */}
-                    {isAddingProduct && (
-                      <div className="bg-slate-900 border-2 border-blue-500/80 p-4 sm:p-6 rounded-2xl space-y-4 shadow-xl relative z-40">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-                          <span className="text-sm font-bold text-blue-400">
+                  {/* Formulario para agregar productos (Ingresar Datos del Producto) */}
+                  {isAddingProduct && (
+                    <div className="bg-slate-900 border-2 border-blue-500/80 p-5 sm:p-7 rounded-2xl space-y-5 shadow-2xl relative z-40">
+                      <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+                        <div>
+                          <span className="text-sm sm:text-base font-extrabold text-blue-400 block">
                             {editingItemIndex !== null ? `Editando Producto #${editingItemIndex + 1}` : 'Ingresar Datos del Producto'}
                           </span>
-                          {inputItems.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setIsAddingProduct(false)}
-                              className="text-xs text-slate-400 hover:text-white"
-                            >
-                              ✕ Cerrar Formulario
-                            </button>
-                          )}
+                          <span className="text-xs text-slate-400">
+                            Completa los datos del producto para calcular el prorrateo automático y precio de venta.
+                          </span>
                         </div>
-
-                        {/* Input Fields Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-start">
-                          {/* SKU */}
-                          <div className="sm:col-span-1 lg:col-span-3 relative">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Código SKU</label>
-                            <input
-                              type="text"
-                              placeholder="Ej. PROD-001"
-                              value={singleProductForm.sku}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setSingleProductForm({ ...singleProductForm, sku: val });
-                                const cleanTyped = val.trim().toUpperCase();
-                                if (cleanTyped.length >= 1) {
-                                  setOpenSkuDropdownIndex(-1);
-                                } else {
-                                  setOpenSkuDropdownIndex(null);
-                                }
-                                const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
-                                if (match) {
-                                  setSingleProductForm(prev => ({
-                                    ...prev,
-                                    productName: match.name,
-                                    image: match.image || prev.image,
-                                    unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
-                                  }));
-                                }
-                              }}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-blue-500 uppercase shadow-inner"
-                            />
-
-                            {/* Sku Dropdown Suggestions */}
-                            {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
-                              <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
-                                {inventoryList
-                                  .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
-                                  .map(inv => (
-                                    <div
-                                      key={inv.id}
-                                      onClick={() => {
-                                        setSingleProductForm(prev => ({
-                                          ...prev,
-                                          sku: inv.sku,
-                                          productName: inv.name,
-                                          image: inv.image || prev.image,
-                                          unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
-                                        }));
-                                        setOpenSkuDropdownIndex(null);
-                                      }}
-                                      className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
-                                    >
-                                      <div className="flex items-center space-x-2">
-                                        {inv.image ? (
-                                          <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover" />
-                                        ) : (
-                                          <div className="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-[10px]">📦</div>
-                                        )}
-                                        <div>
-                                          <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
-                                          <span className="text-[11px] text-slate-200">{inv.name}</span>
-                                        </div>
-                                      </div>
-                                      <span className="text-[10px] text-emerald-400">Stock: {inv.stock}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Nombre Producto */}
-                          <div className="sm:col-span-1 lg:col-span-5">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Producto *</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Ej. Smartwatch Ultra L5 / Smartphone"
-                              value={singleProductForm.productName}
-                              onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
-                            />
-                          </div>
-
-                          {/* Marca & Modelo (Fila de 2 columnas) */}
-                          <div className="sm:col-span-1 lg:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Marca (Opcional)</label>
-                            <input
-                              type="text"
-                              placeholder="Ej. Xiaomi, Honda, Samsung"
-                              value={singleProductForm.brand}
-                              onChange={(e) => setSingleProductForm({ ...singleProductForm, brand: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
-                            />
-                          </div>
-
-                          <div className="sm:col-span-1 lg:col-span-2">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Modelo (Opcional)</label>
-                            <input
-                              type="text"
-                              placeholder="Ej. Redmi Note 13, CG125"
-                              value={singleProductForm.model}
-                              onChange={(e) => setSingleProductForm({ ...singleProductForm, model: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
-                            />
-                          </div>
-
-                          {/* Cantidad */}
-                          <div className="sm:col-span-1 lg:col-span-3">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cantidad *</label>
-                            <input
-                              type="number"
-                              min="1"
-                              required
-                              placeholder="1"
-                              value={singleProductForm.quantity}
-                              onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium text-center focus:outline-none focus:border-blue-500 shadow-inner"
-                            />
-                          </div>
-
-                          {/* Costo FOB */}
-                          <div className="sm:col-span-1 lg:col-span-3">
-                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Costo FOB (USD) *</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              required
-                              placeholder="0.00"
-                              value={singleProductForm.unitCostFob}
-                              onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium focus:outline-none focus:border-blue-500 shadow-inner"
-                            />
-                          </div>
-
-                          {/* Total FOB Preview & Live Financial Breakdown */}
-                          <div className="sm:col-span-2 lg:col-span-12">
-                            {(() => {
-                              const liveQty = parseInt(singleProductForm.quantity) || 0;
-                              const liveFobUsd = parseFloat(singleProductForm.unitCostFob) || 0;
-                              if (liveQty <= 0 || liveFobUsd <= 0) return null;
-
-                              const liveTotalFobUsd = liveQty * liveFobUsd;
-                              const liveTotalFobGtq = liveTotalFobUsd * parsedGtqRate;
-
-                              const existingItemsFob = inputItems.reduce((sum, item, idx) => {
-                                if (editingItemIndex !== null && idx === editingItemIndex) return sum;
-                                return sum + ((parseInt(item.quantity) || 0) * (parseFloat(item.unitCostFob) || 0));
-                              }, 0);
-
-                              const estimatedBatchFob = existingItemsFob + liveTotalFobUsd;
-                              const liveSharePct = estimatedBatchFob > 0 ? (liveTotalFobUsd / estimatedBatchFob) * 100 : 100;
-
-                              const liveAllocatedTax = (liveSharePct / 100) * parsedTax;
-                              const liveAllocatedShipping = (liveSharePct / 100) * parsedShipping;
-
-                              const liveUnitTaxUsd = liveQty > 0 ? liveAllocatedTax / liveQty : 0;
-                              const liveUnitShippingUsd = liveQty > 0 ? liveAllocatedShipping / liveQty : 0;
-
-                              const liveCustomsIncrPct = liveFobUsd > 0 ? (liveUnitTaxUsd / liveFobUsd) * 100 : 0;
-                              const liveShippingIncrPct = liveFobUsd > 0 ? (liveUnitShippingUsd / liveFobUsd) * 100 : 0;
-                              const liveTotalRecargoPct = liveCustomsIncrPct + liveShippingIncrPct;
-
-                              const liveUnitLandedUsd = liveFobUsd + liveUnitTaxUsd + liveUnitShippingUsd;
-                              const liveUnitLandedGtq = liveUnitLandedUsd * parsedGtqRate;
-
-                              const liveUnitSellingUsd = liveUnitLandedUsd * (1 + parsedMargin / 100);
-                              const liveUnitSellingGtq = liveUnitSellingUsd * parsedGtqRate;
-
-                              const liveUnitGrossProfitUsd = liveUnitSellingUsd - liveUnitLandedUsd;
-                              const liveUnitGrossProfitGtq = liveUnitGrossProfitUsd * parsedGtqRate;
-
-                              const liveTotalGrossProfitUsd = liveUnitGrossProfitUsd * liveQty;
-                              const liveTotalGrossProfitGtq = liveTotalGrossProfitUsd * liveQty;
-
-                              return (
-                                <div className="bg-slate-950 border border-blue-500/40 rounded-xl p-3.5 space-y-3 shadow-inner mt-1">
-                                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">
-                                      📊 Desglose Financiero en Vivo
-                                    </span>
-                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                      Recargo Total: +{liveTotalRecargoPct.toFixed(1)}%
-                                    </span>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                                    {/* Total FOB */}
-                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                                      <span className="text-[10px] text-slate-400 block font-medium">Total FOB ({liveQty} uds)</span>
-                                      <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveTotalFobUsd.toFixed(2)} USD</span>
-                                      <span className="text-[10px] font-mono text-slate-400 block">Q {liveTotalFobGtq.toFixed(2)} GTQ</span>
-                                    </div>
-
-                                    {/* Recargos Aduana / Flete */}
-                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                                      <span className="text-[10px] text-slate-400 block font-medium">Recargos Estimados</span>
-                                      <span className="text-[11px] sm:text-xs font-mono text-amber-400 block font-semibold">
-                                        🏛️ Ad: +{liveCustomsIncrPct.toFixed(1)}% (${liveUnitTaxUsd.toFixed(2)}/ud)
-                                      </span>
-                                      <span className="text-[11px] sm:text-xs font-mono text-indigo-400 block font-semibold">
-                                        🚚 Fl: +{liveShippingIncrPct.toFixed(1)}% (${liveUnitShippingUsd.toFixed(2)}/ud)
-                                      </span>
-                                    </div>
-
-                                    {/* Costo Landed Final */}
-                                    <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                                      <span className="text-[10px] text-slate-400 block font-medium">Costo Landed Final Unit.</span>
-                                      <span className="text-xs sm:text-sm font-mono font-bold text-indigo-300 block">${liveUnitLandedUsd.toFixed(2)} USD</span>
-                                      <span className="text-[11px] font-mono font-extrabold text-indigo-400 block">Q {liveUnitLandedGtq.toFixed(2)} GTQ</span>
-                                    </div>
-
-                                    {/* Precio Venta Sugerido */}
-                                    <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/30">
-                                      <span className="text-[10px] text-emerald-400 block font-medium">Precio Venta (+{parsedMargin}%)</span>
-                                      <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveUnitSellingUsd.toFixed(2)} USD</span>
-                                      <span className="text-xs sm:text-sm font-mono font-extrabold text-emerald-400 block">Q {liveUnitSellingGtq.toFixed(2)} GTQ</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Ganancia Bruta Estimada */}
-                                  <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
-                                    <span className="text-slate-300 font-semibold">Ganancia Bruta Estimada:</span>
-                                    <div className="text-right">
-                                      <span className="text-emerald-400 font-mono font-extrabold block">
-                                        +Q {liveUnitGrossProfitGtq.toFixed(2)} / ud (+${liveUnitGrossProfitUsd.toFixed(2)})
-                                      </span>
-                                      <span className="text-[10px] text-slate-400 font-mono block">
-                                        Total Lote: +Q {liveTotalGrossProfitGtq.toFixed(2)} (+${liveTotalGrossProfitUsd.toFixed(2)} USD)
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-
-                        {/* Sticky Action Button inside Card */}
-                        <div className="sticky bottom-0 bg-slate-900 pt-2 pb-1 border-t border-slate-800 flex justify-end space-x-2 z-20">
-                          {inputItems.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setIsAddingProduct(false)}
-                              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
-                            >
-                              Cancelar
-                            </button>
-                          )}
+                        {inputItems.length > 0 && (
                           <button
                             type="button"
-                            onClick={handleConfirmSingleProduct}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-emerald-600/20 cursor-pointer active:scale-95"
+                            onClick={() => setIsAddingProduct(false)}
+                            className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 transition cursor-pointer"
                           >
-                            <CheckCircle className="w-4 h-4" />
-                            <span>{editingItemIndex !== null ? 'Guardar Cambios' : 'Confirmar e Incluir en el Lote'}</span>
+                            ✕ Cerrar Formulario
                           </button>
-                        </div>
+                        )}
                       </div>
-                    )}
 
-                    {/* Empty State when no products added */}
-                    {inputItems.length === 0 && !isAddingProduct && (
-                      <div className="bg-slate-900/60 border border-dashed border-slate-700 rounded-2xl p-5 text-center text-slate-400 text-xs space-y-2">
-                        <p>Aún no has agregado productos a este lote.</p>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenSingleProductForm(null)}
-                          className="inline-flex items-center space-x-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Haz clic aquí para ingresar el primer producto</span>
-                        </button>
-                      </div>
-                    )}
+                      {/* Input Fields Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-start">
+                        {/* SKU */}
+                        <div className="sm:col-span-1 lg:col-span-3 relative">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Código SKU *</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. PROD-001"
+                            value={singleProductForm.sku}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSingleProductForm({ ...singleProductForm, sku: val });
+                              const cleanTyped = val.trim().toUpperCase();
+                              if (cleanTyped.length >= 1) {
+                                setOpenSkuDropdownIndex(-1);
+                              } else {
+                                setOpenSkuDropdownIndex(null);
+                              }
+                              const match = inventoryList.find(inv => inv.sku.toUpperCase() === cleanTyped);
+                              if (match) {
+                                setSingleProductForm(prev => ({
+                                  ...prev,
+                                  productName: match.name,
+                                  image: match.image || prev.image,
+                                  unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
+                                }));
+                              }
+                            }}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-blue-500 uppercase shadow-inner"
+                          />
 
-                    {/* Confirmed Products Summary List (Stacked Mobile Cards) */}
-                    {inputItems.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center px-1 text-xs font-bold text-slate-300">
-                          <span>Lista de Productos Confirmados ({inputItems.length})</span>
-                          {!isAddingProduct && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenSingleProductForm(null)}
-                              className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
-                            >
-                              + Agregar Otro Producto
-                            </button>
+                          {/* Sku Dropdown Suggestions */}
+                          {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (
+                            <div className="absolute left-0 w-full sm:w-80 top-full mt-1 bg-slate-900 border-2 border-blue-500 rounded-xl shadow-2xl z-[99999] max-h-52 overflow-y-auto text-xs divide-y divide-slate-800">
+                              {inventoryList
+                                .filter(inv => inv.sku.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()) || inv.name.toUpperCase().includes(singleProductForm.sku.trim().toUpperCase()))
+                                .map(inv => (
+                                  <div
+                                    key={inv.id}
+                                    onClick={() => {
+                                      setSingleProductForm(prev => ({
+                                        ...prev,
+                                        sku: inv.sku,
+                                        productName: inv.name,
+                                        image: inv.image || prev.image,
+                                        unitCostFob: inv.unitCost ? inv.unitCost.toString() : prev.unitCostFob
+                                      }));
+                                      setOpenSkuDropdownIndex(null);
+                                    }}
+                                    className="p-2.5 hover:bg-blue-600/30 hover:text-white cursor-pointer flex items-center justify-between transition"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      {inv.image ? (
+                                        <img src={inv.image} alt={inv.name} className="w-7 h-7 rounded-lg object-cover" />
+                                      ) : (
+                                        <div className="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-[10px]">📦</div>
+                                      )}
+                                      <div>
+                                        <span className="font-mono font-bold text-blue-400 block">{inv.sku}</span>
+                                        <span className="text-[11px] text-slate-200">{inv.name}</span>
+                                      </div>
+                                    </div>
+                                    <span className="text-[10px] text-emerald-400">Stock: {inv.stock}</span>
+                                  </div>
+                                ))}
+                            </div>
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
-                          {inputItems.map((item, index) => {
-                            const qty = parseInt(item.quantity) || 0;
-                            const fobCost = parseFloat(item.unitCostFob) || 0;
-                            const totalFob = qty * fobCost;
+                        {/* Nombre Producto */}
+                        <div className="sm:col-span-1 lg:col-span-5">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nombre del Producto *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Ej. Smartwatch Ultra L5 / Smartphone"
+                            value={singleProductForm.productName}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, productName: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
 
-                            const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
-                            const itemTaxVal = (itemSharePct / 100) * parsedTax;
-                            const itemShipVal = (itemSharePct / 100) * parsedShipping;
-                            const itemUnitTax = qty > 0 ? itemTaxVal / qty : 0;
-                            const itemUnitShip = qty > 0 ? itemShipVal / qty : 0;
-                            const itemUnitLandedUsd = fobCost + itemUnitTax + itemUnitShip;
-                            const itemUnitLandedGtq = itemUnitLandedUsd * parsedGtqRate;
-                            const itemRecargoPct = fobCost > 0 ? ((itemUnitLandedUsd - fobCost) / fobCost) * 100 : 0;
-                            const itemSellingUsd = itemUnitLandedUsd * (1 + parsedMargin / 100);
-                            const itemSellingGtq = itemSellingUsd * parsedGtqRate;
+                        {/* Marca */}
+                        <div className="sm:col-span-1 lg:col-span-2">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Marca (Opcional)</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Xiaomi, Honda, Samsung"
+                            value={singleProductForm.brand}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, brand: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
+
+                        {/* Modelo */}
+                        <div className="sm:col-span-1 lg:col-span-2">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Modelo (Opcional)</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Redmi Note 13, CG125"
+                            value={singleProductForm.model}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, model: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
+
+                        {/* Cantidad */}
+                        <div className="sm:col-span-1 lg:col-span-3">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cantidad *</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            placeholder="1"
+                            value={singleProductForm.quantity}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, quantity: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-bold text-center focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
+
+                        {/* Costo FOB */}
+                        <div className="sm:col-span-1 lg:col-span-3">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Costo FOB (USD) *</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            placeholder="0.00"
+                            value={singleProductForm.unitCostFob}
+                            onChange={(e) => setSingleProductForm({ ...singleProductForm, unitCostFob: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-medium focus:outline-none focus:border-blue-500 shadow-inner"
+                          />
+                        </div>
+
+                        {/* Total FOB Preview & Live Financial Breakdown */}
+                        <div className="sm:col-span-2 lg:col-span-12">
+                          {(() => {
+                            const liveQty = parseInt(singleProductForm.quantity) || 0;
+                            const liveFobUsd = parseFloat(singleProductForm.unitCostFob) || 0;
+                            if (liveQty <= 0 || liveFobUsd <= 0) return null;
+
+                            const liveTotalFobUsd = liveQty * liveFobUsd;
+                            const liveTotalFobGtq = liveTotalFobUsd * parsedGtqRate;
+
+                            const existingItemsFob = inputItems.reduce((sum, item, idx) => {
+                              if (editingItemIndex !== null && idx === editingItemIndex) return sum;
+                              return sum + ((parseInt(item.quantity) || 0) * (parseFloat(item.unitCostFob) || 0));
+                            }, 0);
+
+                            const estimatedBatchFob = existingItemsFob + liveTotalFobUsd;
+                            const liveSharePct = estimatedBatchFob > 0 ? (liveTotalFobUsd / estimatedBatchFob) * 100 : 100;
+
+                            const liveAllocatedTax = (liveSharePct / 100) * parsedTax;
+                            const liveAllocatedShipping = (liveSharePct / 100) * parsedShipping;
+
+                            const liveUnitTaxUsd = liveQty > 0 ? liveAllocatedTax / liveQty : 0;
+                            const liveUnitShippingUsd = liveQty > 0 ? liveAllocatedShipping / liveQty : 0;
+
+                            const liveCustomsIncrPct = liveFobUsd > 0 ? (liveUnitTaxUsd / liveFobUsd) * 100 : 0;
+                            const liveShippingIncrPct = liveFobUsd > 0 ? (liveUnitShippingUsd / liveFobUsd) * 100 : 0;
+                            const liveTotalRecargoPct = liveCustomsIncrPct + liveShippingIncrPct;
+
+                            const liveUnitLandedUsd = liveFobUsd + liveUnitTaxUsd + liveUnitShippingUsd;
+                            const liveUnitLandedGtq = liveUnitLandedUsd * parsedGtqRate;
+
+                            const liveUnitSellingUsd = liveUnitLandedUsd * (1 + parsedMargin / 100);
+                            const liveUnitSellingGtq = liveUnitSellingUsd * parsedGtqRate;
+
+                            const liveUnitGrossProfitUsd = liveUnitSellingUsd - liveUnitLandedUsd;
+                            const liveUnitGrossProfitGtq = liveUnitGrossProfitUsd * parsedGtqRate;
+
+                            const liveTotalGrossProfitUsd = liveUnitGrossProfitUsd * liveQty;
+                            const liveTotalGrossProfitGtq = liveTotalGrossProfitUsd * liveQty;
 
                             return (
-                              <div key={index} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-sm flex flex-col justify-between">
-                                {/* Header: Photo, SKU, Name & Qty */}
-                                <div className="flex items-center space-x-3 pb-2 border-b border-slate-800/80">
-                                  {item.image ? (
-                                    <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-sm shrink-0">📦</div>
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between">
-                                      <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
-                                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">
-                                        {item.quantity} uds
-                                      </span>
-                                    </div>
-                                    <h4 className="text-xs font-semibold text-white truncate mt-0.5">{item.productName}</h4>
-                                  </div>
+                              <div className="bg-slate-950 border border-blue-500/40 rounded-xl p-4 space-y-3.5 shadow-inner mt-2">
+                                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">
+                                    📊 Desglose Financiero en Vivo
+                                  </span>
+                                  <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
+                                    Recargo Total Prorrateado: +{liveTotalRecargoPct.toFixed(1)}%
+                                  </span>
                                 </div>
 
-                                {/* Financial Comparison Row */}
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                                    <span className="text-[10px] text-slate-400 block font-medium">Costo FOB Unit.</span>
-                                    <span className="text-xs font-mono font-bold text-slate-200">${fobCost.toFixed(2)} USD</span>
-                                    <span className="text-[10px] font-mono text-slate-400 block">Q {(fobCost * parsedGtqRate).toFixed(2)} GTQ</span>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                                  {/* Total FOB */}
+                                  <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Total FOB ({liveQty} uds)</span>
+                                    <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveTotalFobUsd.toFixed(2)} USD</span>
+                                    <span className="text-[10px] font-mono text-slate-400 block">Q {liveTotalFobGtq.toFixed(2)} GTQ</span>
                                   </div>
 
-                                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-[10px] text-slate-400 font-medium">Costo Landed</span>
-                                      <span className="text-[10px] font-bold text-amber-400 font-mono">+{itemRecargoPct.toFixed(1)}%</span>
-                                    </div>
-                                    <span className="text-xs font-mono font-bold text-indigo-300">${itemUnitLandedUsd.toFixed(2)} USD</span>
-                                    <span className="text-[10px] font-mono text-indigo-400 font-semibold block">Q {itemUnitLandedGtq.toFixed(2)} GTQ</span>
-                                  </div>
-                                </div>
-
-                                {/* Selling Price & Quick Action Buttons */}
-                                <div className="flex items-center justify-between pt-1">
-                                  <div>
-                                    <span className="text-[10px] text-emerald-400 font-bold block uppercase">Precio Venta Sugerido</span>
-                                    <span className="text-xs font-mono font-extrabold text-emerald-400">
-                                      Q {itemSellingGtq.toFixed(2)} GTQ <span className="text-slate-400 font-normal text-[10px]">(${itemSellingUsd.toFixed(2)} USD)</span>
+                                  {/* Recargos Aduana / Flete */}
+                                  <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Recargos Estimados</span>
+                                    <span className="text-[11px] sm:text-xs font-mono text-amber-400 block font-semibold">
+                                      🏛️ Ad: +{liveCustomsIncrPct.toFixed(1)}% (${liveUnitTaxUsd.toFixed(2)}/ud)
+                                    </span>
+                                    <span className="text-[11px] sm:text-xs font-mono text-indigo-400 block font-semibold">
+                                      🚚 Fl: +{liveShippingIncrPct.toFixed(1)}% (${liveUnitShippingUsd.toFixed(2)}/ud)
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center space-x-1.5 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenSingleProductForm(index)}
-                                      className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
-                                    >
-                                      Editar
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveConfirmedItem(index)}
-                                      className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
-                                    >
-                                      Eliminar
-                                    </button>
+                                  {/* Costo Landed Final */}
+                                  <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Costo Landed Final Unit.</span>
+                                    <span className="text-xs sm:text-sm font-mono font-bold text-indigo-300 block">${liveUnitLandedUsd.toFixed(2)} USD</span>
+                                    <span className="text-[11px] font-mono font-extrabold text-indigo-400 block">Q {liveUnitLandedGtq.toFixed(2)} GTQ</span>
+                                  </div>
+
+                                  {/* Precio Venta Sugerido */}
+                                  <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/30">
+                                    <span className="text-[10px] text-emerald-400 block font-medium">Precio Venta (+{parsedMargin}%)</span>
+                                    <span className="text-xs sm:text-sm font-mono font-bold text-white block">${liveUnitSellingUsd.toFixed(2)} USD</span>
+                                    <span className="text-xs font-mono font-extrabold text-emerald-400 block">Q {liveUnitSellingGtq.toFixed(2)} GTQ</span>
+                                  </div>
+                                </div>
+
+                                {/* Ganancia Bruta Estimada */}
+                                <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                  <span className="text-slate-300 font-semibold">Ganancia Bruta Estimada:</span>
+                                  <div className="sm:text-right">
+                                    <span className="text-emerald-400 font-mono font-extrabold block">
+                                      +Q {liveUnitGrossProfitGtq.toFixed(2)} / ud (+${liveUnitGrossProfitUsd.toFixed(2)} USD)
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono block">
+                                      Total Lote ({liveQty} uds): +Q {liveTotalGrossProfitGtq.toFixed(2)} (+${liveTotalGrossProfitUsd.toFixed(2)} USD)
+                                    </span>
                                   </div>
                                 </div>
                               </div>
                             );
-                          })}
+                          })()}
                         </div>
                       </div>
-                    )}
-                  </div>
+
+                      {/* Action buttons inside form card */}
+                      <div className="pt-3 border-t border-slate-800 flex justify-end space-x-3">
+                        {inputItems.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingProduct(false)}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition cursor-pointer"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleConfirmSingleProduct}
+                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-emerald-600/20 cursor-pointer active:scale-95"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span>{editingItemIndex !== null ? 'Guardar Cambios del Producto' : 'Confirmar e Incluir en el Lote'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State when no products added */}
+                  {inputItems.length === 0 && !isAddingProduct && (
+                    <div className="bg-slate-900/60 border-2 border-dashed border-slate-700/80 rounded-2xl p-8 text-center text-slate-400 text-xs space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto text-xl">
+                        📦
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-200">Aún no has agregado productos a este lote.</p>
+                        <p className="text-xs text-slate-400 mt-1">Ingresa el primer SKU para comenzar a prorratear los costos de importación.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSingleProductForm(null)}
+                        className="inline-flex items-center space-x-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Ingresar Primer Producto</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Confirmed Products Full-Width View */}
+                  {inputItems.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center px-1">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center space-x-2">
+                            <span>Productos Confirmados en el Lote</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-mono font-bold">
+                              {inputItems.length}
+                            </span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Lista detallada de costos unitarios prorrateados y precios de venta sugeridos.
+                          </p>
+                        </div>
+                        {!isAddingProduct && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSingleProductForm(null)}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
+                          >
+                            <Plus size={16} />
+                            <span>Agregar Otro Producto</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Desktop: Elegant Full-Width Table */}
+                      <div className="hidden lg:block w-full bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                        <table className="w-full text-left text-xs divide-y divide-slate-800">
+                          <thead className="bg-slate-950/80 text-slate-400 font-bold uppercase text-[11px] tracking-wider">
+                            <tr>
+                              <th className="py-3.5 px-4 w-12 text-center text-slate-500">#</th>
+                              <th className="py-3.5 px-4">SKU / Producto</th>
+                              <th className="py-3.5 px-4 text-center">Cantidad</th>
+                              <th className="py-3.5 px-4 text-right">Costo FOB</th>
+                              <th className="py-3.5 px-4 text-right">Recargos (Ad + Fl)</th>
+                              <th className="py-3.5 px-4 text-right">Costo Landed Final</th>
+                              <th className="py-3.5 px-4 text-right">Precio Venta Sugerido</th>
+                              <th className="py-3.5 px-4 text-center w-28">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/80">
+                            {inputItems.map((item, index) => {
+                              const qty = parseInt(item.quantity) || 0;
+                              const fobCost = parseFloat(item.unitCostFob) || 0;
+                              const totalFob = qty * fobCost;
+
+                              const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
+                              const itemTaxVal = (itemSharePct / 100) * parsedTax;
+                              const itemShipVal = (itemSharePct / 100) * parsedShipping;
+                              const itemUnitTax = qty > 0 ? itemTaxVal / qty : 0;
+                              const itemUnitShip = qty > 0 ? itemShipVal / qty : 0;
+                              const itemUnitLandedUsd = fobCost + itemUnitTax + itemUnitShip;
+                              const itemUnitLandedGtq = itemUnitLandedUsd * parsedGtqRate;
+                              const itemRecargoPct = fobCost > 0 ? ((itemUnitLandedUsd - fobCost) / fobCost) * 100 : 0;
+                              const itemSellingUsd = itemUnitLandedUsd * (1 + parsedMargin / 100);
+                              const itemSellingGtq = itemSellingUsd * parsedGtqRate;
+
+                              return (
+                                <tr key={index} className="hover:bg-slate-800/40 transition">
+                                  <td className="py-3.5 px-4 text-center font-mono text-slate-500 font-bold">
+                                    {index + 1}
+                                  </td>
+                                  <td className="py-3.5 px-4">
+                                    <div className="flex items-center space-x-3">
+                                      {item.image ? (
+                                        <img src={item.image} alt={item.productName} className="w-9 h-9 rounded-lg object-cover border border-slate-700 shrink-0" />
+                                      ) : (
+                                        <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-sm shrink-0">📦</div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <span className="font-mono text-xs font-bold text-blue-400 block">{item.sku}</span>
+                                        <span className="text-white font-semibold text-xs block truncate max-w-xs">{item.productName}</span>
+                                        {(item.brand || item.model) && (
+                                          <span className="text-[10px] text-slate-400 block truncate">
+                                            {[item.brand, item.model].filter(Boolean).join(' • ')}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-center">
+                                    <span className="inline-block px-2.5 py-1 rounded-full bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700">
+                                      {qty} uds
+                                    </span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-right">
+                                    <span className="font-mono font-bold text-slate-200 text-xs block">${fobCost.toFixed(2)} USD</span>
+                                    <span className="font-mono text-[10px] text-slate-400 block">Q {(fobCost * parsedGtqRate).toFixed(2)}</span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-right">
+                                    <span className="font-mono font-semibold text-amber-400 text-xs block">+{itemRecargoPct.toFixed(1)}%</span>
+                                    <span className="font-mono text-[10px] text-slate-400 block">+${(itemUnitTax + itemUnitShip).toFixed(2)} / ud</span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-right">
+                                    <span className="font-mono font-bold text-indigo-300 text-xs block">${itemUnitLandedUsd.toFixed(2)} USD</span>
+                                    <span className="font-mono font-extrabold text-indigo-400 text-xs block">Q {itemUnitLandedGtq.toFixed(2)} GTQ</span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-right">
+                                    <span className="font-mono font-extrabold text-emerald-400 text-sm block">Q {itemSellingGtq.toFixed(2)} GTQ</span>
+                                    <span className="font-mono text-[10px] text-slate-400 block">(${itemSellingUsd.toFixed(2)} USD)</span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-center">
+                                    <div className="flex items-center justify-center space-x-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenSingleProductForm(index)}
+                                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
+                                      >
+                                        Editar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveConfirmedItem(index)}
+                                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile & Tablet: Cards layout */}
+                      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {inputItems.map((item, index) => {
+                          const qty = parseInt(item.quantity) || 0;
+                          const fobCost = parseFloat(item.unitCostFob) || 0;
+                          const totalFob = qty * fobCost;
+
+                          const itemSharePct = totalBatchFob > 0 ? (totalFob / totalBatchFob) * 100 : 0;
+                          const itemTaxVal = (itemSharePct / 100) * parsedTax;
+                          const itemShipVal = (itemSharePct / 100) * parsedShipping;
+                          const itemUnitTax = qty > 0 ? itemTaxVal / qty : 0;
+                          const itemUnitShip = qty > 0 ? itemShipVal / qty : 0;
+                          const itemUnitLandedUsd = fobCost + itemUnitTax + itemUnitShip;
+                          const itemUnitLandedGtq = itemUnitLandedUsd * parsedGtqRate;
+                          const itemRecargoPct = fobCost > 0 ? ((itemUnitLandedUsd - fobCost) / fobCost) * 100 : 0;
+                          const itemSellingUsd = itemUnitLandedUsd * (1 + parsedMargin / 100);
+                          const itemSellingGtq = itemSellingUsd * parsedGtqRate;
+
+                          return (
+                            <div key={index} className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3 shadow-sm flex flex-col justify-between">
+                              {/* Header: Photo, SKU, Name & Qty */}
+                              <div className="flex items-center space-x-3 pb-2 border-b border-slate-800/80">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-sm shrink-0">📦</div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-mono text-xs font-bold text-blue-400">{item.sku}</span>
+                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">
+                                      {item.quantity} uds
+                                    </span>
+                                  </div>
+                                  <h4 className="text-xs font-semibold text-white truncate mt-0.5">{item.productName}</h4>
+                                </div>
+                              </div>
+
+                              {/* Financial Comparison Row */}
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80">
+                                  <span className="text-[10px] text-slate-400 block font-medium">Costo FOB Unit.</span>
+                                  <span className="text-xs font-mono font-bold text-slate-200">${fobCost.toFixed(2)} USD</span>
+                                  <span className="text-[10px] font-mono text-slate-400 block">Q {(fobCost * parsedGtqRate).toFixed(2)} GTQ</span>
+                                </div>
+
+                                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] text-slate-400 font-medium">Costo Landed</span>
+                                    <span className="text-[10px] font-bold text-amber-400 font-mono">+{itemRecargoPct.toFixed(1)}%</span>
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-indigo-300">${itemUnitLandedUsd.toFixed(2)} USD</span>
+                                  <span className="text-[10px] font-mono text-indigo-400 font-semibold block">Q {itemUnitLandedGtq.toFixed(2)} GTQ</span>
+                                </div>
+                              </div>
+
+                              {/* Selling Price & Quick Action Buttons */}
+                              <div className="flex items-center justify-between pt-1">
+                                <div>
+                                  <span className="text-[10px] text-emerald-400 font-bold block uppercase">Precio Venta Sugerido</span>
+                                  <span className="text-xs font-mono font-extrabold text-emerald-400">
+                                    Q {itemSellingGtq.toFixed(2)} GTQ <span className="text-slate-400 font-normal text-[10px]">(${itemSellingUsd.toFixed(2)} USD)</span>
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center space-x-1.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenSingleProductForm(index)}
+                                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 active:scale-95 cursor-pointer"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveConfirmedItem(index)}
+                                    className="text-[11px] font-bold text-rose-400 hover:text-rose-300 transition px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 active:scale-95 cursor-pointer"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Step 2 Sticky Actions Footer */}
-                  <div className="sticky bottom-0 bg-slate-900/95 backdrop-blur pt-3 pb-1 border-t border-slate-700/80 flex justify-between items-center z-30 shrink-0">
+                  <div className="sticky bottom-0 bg-slate-900/95 backdrop-blur-md p-4 border border-slate-800 rounded-2xl flex justify-between items-center z-30 shadow-2xl">
                     <button
                       type="button"
                       onClick={() => setAddBatchStep(1)}
-                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
                     >
                       ← Volver al Paso 1
                     </button>
                     <button
                       type="submit"
                       disabled={inputItems.length === 0 || isSavingBatch}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center space-x-1.5 active:scale-95"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center space-x-2 active:scale-95"
                     >
                       <CheckCircle className="w-4 h-4" />
-                      <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length})`}</span>
+                      <span>{isSavingBatch ? 'Guardando...' : `Guardar Lote (${inputItems.length} producto${inputItems.length > 1 ? 's' : ''})`}</span>
                     </button>
                   </div>
                 </div>
               )}
 
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       )}
 
       {/* Modal de Confirmación de Seguridad antes de Guardar Lote */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-4xl lg:max-w-5xl max-h-[90vh] mx-4 my-6 p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-slate-800 border-2 border-amber-500/60 rounded-2xl w-full max-w-3xl max-h-[90vh] mx-4 my-6 p-5 sm:p-7 shadow-[0_25px_60px_rgba(0,0,0,0.9)] space-y-4 text-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
             {/* Header */}
             <div className="flex items-center space-x-3 border-b border-slate-700 pb-3 shrink-0">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
