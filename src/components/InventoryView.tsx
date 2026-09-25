@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Boxes,
-  Package,
   Plus,
   Trash2,
   Search,
@@ -570,22 +569,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               stockText = `${item.stock} uds`;
             }
 
-            const defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&q=80';
-
             return (
               <div
                 key={item.id}
                 onClick={() => setSelectedDetailProduct(item)}
                 className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl p-2.5 flex items-center justify-between gap-3 h-[65px] active:bg-slate-100 dark:active:bg-slate-700/60 cursor-pointer shadow-sm transition"
               >
-                {/* Left: 40x40 Thumbnail */}
-                <img
-                  src={item.image || defaultImg}
-                  alt={item.name}
-                  className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                />
-
-                {/* Center: Name in Bold + SKU & Brand */}
+                {/* Product Info: Name in Bold + SKU & Brand */}
                 {(() => {
                   const brandModelStr = [item.brand, item.model].filter(Boolean).join(' ');
                   const fullTitle = brandModelStr ? `${brandModelStr} - ${item.name}` : item.name;
@@ -626,7 +616,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-900/80 text-xs uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-5 py-3">Foto</th>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3">Producto</th>
                 <th className="px-5 py-3">Categoría</th>
@@ -639,7 +628,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
@@ -660,11 +649,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
-                      <td className="px-5 py-3">
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center border border-slate-200 dark:border-slate-600 shadow-sm text-slate-400">
-                          <Package className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                        </div>
-                      </td>
                       <td className="px-5 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{item.sku}</td>
                       <td className="px-5 py-3 font-semibold text-slate-900 dark:text-white">
                         <span className="block truncate">
@@ -744,10 +728,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             {/* Sheet Header */}
             <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center border border-slate-200 dark:border-slate-600 shadow-sm shrink-0 text-slate-400">
-                  <Package className="w-6 h-6 text-blue-500" />
-                </div>
+              <div className="min-w-0 flex-1 pr-3">
                 {(() => {
                   const cleanBrand = selectedDetailProduct.brand ? selectedDetailProduct.brand.trim() : '';
                   const cleanModel = selectedDetailProduct.model ? selectedDetailProduct.model.trim() : '';
