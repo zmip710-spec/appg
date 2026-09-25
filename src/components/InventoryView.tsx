@@ -62,7 +62,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     }
   });
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
 
@@ -494,7 +494,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     try { localStorage.removeItem(DRAFT_INVENTORY_KEY); } catch {}
   };
 
-  // Real-time Search & Filter Chips (Includes match by Brand & Model)
+  // Real-time Search & Category Filtering (Includes match by Brand & Model)
   const searchLower = String(search || '').toLowerCase();
   const filteredInventory = inventory.filter((item) => {
     const sku = String(item.sku ?? '').toLowerCase();
@@ -510,12 +510,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       model.includes(searchLower) ||
       category.includes(searchLower);
 
-    let matchesFilter = true;
-    if (filterStatus === 'in_stock') matchesFilter = item.stock > 10;
-    else if (filterStatus === 'low_stock') matchesFilter = item.stock > 0 && item.stock <= 10;
-    else if (filterStatus === 'out_of_stock') matchesFilter = item.stock === 0;
+    const matchesCategory =
+      selectedCategory === 'ALL' ||
+      String(item.category || 'General').trim().toLowerCase() === selectedCategory.trim().toLowerCase();
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesCategory;
   });
 
   // Performance Pagination (25 items per page)
@@ -623,63 +622,31 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           />
         </div>
 
-        {/* Quick Filter Chips */}
-        <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none pb-0.5 text-xs">
-          <button
-            onClick={() => {
-              setFilterStatus('all');
+        {/* Selector Desplegable de Categorías */}
+        <div className="flex items-center gap-3 mt-3">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider shrink-0">
+            Categoría:
+          </label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
               setCurrentPage(1);
             }}
-            className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
-              filterStatus === 'all'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
-            }`}
+            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs sm:text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors cursor-pointer w-full sm:w-auto min-w-[220px]"
           >
-            Todos ({inventory.length})
-          </button>
-
-          <button
-            onClick={() => {
-              setFilterStatus('in_stock');
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
-              filterStatus === 'in_stock'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
-            }`}
-          >
-            En Stock ({inventory.filter((i) => i.stock > 10).length})
-          </button>
-
-          <button
-            onClick={() => {
-              setFilterStatus('low_stock');
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
-              filterStatus === 'low_stock'
-                ? 'bg-amber-600 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
-            }`}
-          >
-            Stock Bajo ({inventory.filter((i) => i.stock > 0 && i.stock <= 10).length})
-          </button>
-
-          <button
-            onClick={() => {
-              setFilterStatus('out_of_stock');
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg transition shrink-0 font-bold ${
-              filterStatus === 'out_of_stock'
-                ? 'bg-rose-600 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-slate-800 text-rose-700 dark:text-rose-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
-            }`}
-          >
-            Agotados ({inventory.filter((i) => i.stock === 0).length})
-          </button>
+            <option value="ALL">Todas las categorías ({inventory.length})</option>
+            {categories.map((cat) => {
+              const count = inventory.filter(
+                (item) => String(item.category || 'General').trim().toLowerCase() === String(cat.name ?? '').trim().toLowerCase()
+              ).length;
+              return (
+                <option key={cat.id || cat.name} value={cat.name}>
+                  {cat.name} ({count})
+                </option>
+              );
+            })}
+          </select>
         </div>
       </div>
 
