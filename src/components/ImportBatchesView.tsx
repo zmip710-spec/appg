@@ -16,10 +16,56 @@ import {
   CheckCircle,
   ArrowRight,
   FileText,
-  Download
+  Download,
+  Search
 } from 'lucide-react';
 import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct } from '../services/api';
 import { exportSingleBatchPdf } from '../utils/pdfExport';
+
+export type BatchSortOption = 'date-desc' | 'date-asc' | 'cost-desc' | 'cost-asc';
+
+export const parseBatchDateToMillis = (dateStr?: string): number => {
+  if (!dateStr || typeof dateStr !== 'string') return 0;
+  const clean = dateStr.trim();
+
+  const direct = Date.parse(clean);
+  if (!isNaN(direct) && direct > 0) return direct;
+
+  const months: Record<string, number> = {
+    ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5,
+    jul: 6, ago: 7, sep: 8, set: 8, oct: 9, nov: 10, dic: 11
+  };
+
+  const tokens = clean.toLowerCase().replace(/,/g, ' ').replace(/\./g, ' ').replace(/\bde\b/g, ' ').split(/\s+/).filter(Boolean);
+  if (tokens.length >= 3) {
+    const day = parseInt(tokens[0], 10);
+    const monthKey = tokens[1]?.slice(0, 3);
+    const month = months[monthKey];
+    const year = parseInt(tokens[2], 10);
+    if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+      return new Date(year, month, day).getTime();
+    }
+  }
+
+  const slashParts = clean.split(/[/\\-]/);
+  if (slashParts.length === 3) {
+    const p0 = parseInt(slashParts[0], 10);
+    const p1 = parseInt(slashParts[1], 10) - 1;
+    const p2 = parseInt(slashParts[2], 10);
+    if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+      if (p2 > 1000) return new Date(p2, p1, p0).getTime();
+      if (p0 > 1000) return new Date(p0, p1, p2).getTime();
+    }
+  }
+
+  return 0;
+};
+
+export const getBatchTotalAmount = (batch: ImportBatch): number => {
+  const fob = (batch.items || []).reduce((sum, i) => sum + (i.totalFobValue || (i.quantity * (i.unitCostFob || 0))), 0);
+  const expenses = (batch.totalCustomsTax || 0) + (batch.totalShippingCost || 0);
+  return fob + expenses;
+};
 
 const fallbackBatches: ImportBatch[] = [
   {
@@ -211,6 +257,64 @@ export const ImportBatchesView: React.FC = () => {
   const [isSavingBatch, setIsSavingBatch] = useState<boolean>(false);
   const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
   const [toastSuccessMessage, setToastSuccessMessage] = useState<string>('');
+
+  // Search & Sorting in Batches History
+  const [batchSearchTerm, setBatchSearchTerm] = useState<string>('');
+  const [batchSortOrder, setBatchSortOrder] = useState<BatchSortOption>('date-desc');
+
+  const latestBatchId = useMemo(() => {
+    if (!batches || batches.length === 0) return null;
+    let newest = batches[0];
+    let newestTime = parseBatchDateToMillis(newest.importDate);
+
+    for (let i = 1; i < batches.length; i++) {
+      const current = batches[i];
+      const currentTime = parseBatchDateToMillis(current.importDate);
+      if (currentTime > newestTime) {
+        newest = current;
+        newestTime = currentTime;
+      }
+    }
+    return newest.id;
+  }, [batches]);
+
+  const filteredAndSortedBatches = useMemo(() => {
+    const query = batchSearchTerm.trim().toLowerCase();
+    const result = batches.filter(batch => {
+      if (!query) return true;
+      const matchesName = (batch.name || '').toLowerCase().includes(query);
+      const matchesId = (batch.id || '').toLowerCase().includes(query);
+      return matchesName || matchesId;
+    });
+
+    return [...result].sort((a, b) => {
+      if (batchSortOrder === 'date-desc') {
+        const timeA = parseBatchDateToMillis(a.importDate);
+        const timeB = parseBatchDateToMillis(b.importDate);
+        if (timeA !== timeB) return timeB - timeA;
+        return batches.indexOf(a) - batches.indexOf(b);
+      }
+      if (batchSortOrder === 'date-asc') {
+        const timeA = parseBatchDateToMillis(a.importDate);
+        const timeB = parseBatchDateToMillis(b.importDate);
+        if (timeA !== timeB) return timeA - timeB;
+        return batches.indexOf(b) - batches.indexOf(a);
+      }
+      if (batchSortOrder === 'cost-desc') {
+        const costA = getBatchTotalAmount(a);
+        const costB = getBatchTotalAmount(b);
+        if (costA !== costB) return costB - costA;
+        return batches.indexOf(a) - batches.indexOf(b);
+      }
+      if (batchSortOrder === 'cost-asc') {
+        const costA = getBatchTotalAmount(a);
+        const costB = getBatchTotalAmount(b);
+        if (costA !== costB) return costA - costB;
+        return batches.indexOf(b) - batches.indexOf(a);
+      }
+      return 0;
+    });
+  }, [batches, batchSearchTerm, batchSortOrder]);
 
   // Autosave Debounced Effect (400ms)
   useEffect(() => {
@@ -656,8 +760,8 @@ export const ImportBatchesView: React.FC = () => {
           onClick={handleOpenAddModal}
           className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
-          <span>+ Nuevo Lote</span>
+          <Plus size={16} />
+          <span>Nuevo Lote</span>
         </button>
       </div>
 
@@ -688,26 +792,85 @@ export const ImportBatchesView: React.FC = () => {
         </div>
       </div>
 
-      {/* Batches List */}
-      <div className="space-y-4">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">Historial de Lotes de Importación</h3>
+      {/* Batches List Section */}
+      <div className="space-y-3">
+        {/* Header & Controls Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-1">
+          <div className="flex items-center space-x-2">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Historial de Lotes de Importación</h3>
+            {batches.length > 0 && (
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                {filteredAndSortedBatches.length} {filteredAndSortedBatches.length === 1 ? 'lote' : 'lotes'}
+              </span>
+            )}
+          </div>
+
+          {/* Controls: Search + Sort Dropdown */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Buscador Rápido */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre o #LOT..."
+                value={batchSearchTerm}
+                onChange={(e) => setBatchSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-7 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition shadow-sm"
+              />
+              {batchSearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setBatchSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-0.5"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Selector de Ordenamiento */}
+            <div className="relative sm:w-56 shrink-0">
+              <select
+                value={batchSortOrder}
+                onChange={(e) => setBatchSortOrder(e.target.value as BatchSortOption)}
+                className="w-full py-2 pl-3 pr-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition shadow-sm cursor-pointer"
+              >
+                <option value="date-desc">Más recientes primero</option>
+                <option value="date-asc">Más antiguos primero</option>
+                <option value="cost-desc">Mayor costo de importación</option>
+                <option value="cost-asc">Menor costo de importación</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         {batches.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400">
-            No hay lotes registrados. Haz clic en "+ Nuevo Lote de Importación" para agregar uno.
+            No hay lotes registrados. Haz clic en "Nuevo Lote" para agregar uno.
+          </div>
+        ) : filteredAndSortedBatches.length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400 space-y-2">
+            <p>No se encontraron lotes que coincidan con "<strong className="text-slate-700 dark:text-slate-200">{batchSearchTerm}</strong>".</p>
+            <button
+              onClick={() => setBatchSearchTerm('')}
+              className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-lg transition"
+            >
+              Limpiar búsqueda
+            </button>
           </div>
         ) : (
-          batches.map((batch, index) => {
+          filteredAndSortedBatches.map((batch) => {
             const isExpanded = expandedBatchId === batch.id;
             const batchFobTotal = batch.items.reduce((sum, i) => sum + (i.totalFobValue || (i.quantity * i.unitCostFob)), 0);
             const totalBatchLandedExpenses = (batch.totalCustomsTax || 0) + (batch.totalShippingCost || 0);
             const rate = batch.exchangeRateGtq || 7.80;
             const marginPct = batch.profitMarginPct || 15.0;
             const totalGtqExpenses = totalBatchLandedExpenses * rate;
+            const isLatest = batch.id === latestBatchId;
 
             return (
               <div key={batch.id} className={`bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm transition ${
-                index === 0 ? 'border-amber-400 dark:border-amber-500/50 ring-1 ring-amber-400/30 dark:ring-amber-500/20' : 'border-slate-200 dark:border-slate-700/80'
+                isLatest ? 'border-amber-400 dark:border-amber-500/50 ring-1 ring-amber-400/30 dark:ring-amber-500/20' : 'border-slate-200 dark:border-slate-700/80'
               }`}>
                 {/* Batch Header Bar (Responsive Stacked Layout) */}
                 <div
@@ -718,7 +881,7 @@ export const ImportBatchesView: React.FC = () => {
                     {/* Line 1: Badges + Full Batch Name + Mobile Expand Chevron */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center flex-wrap gap-1.5 min-w-0">
-                        {index === 0 && (
+                        {isLatest && (
                           <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/40 text-[9px] font-extrabold shrink-0">
                             ÚLTIMO LOTE
                           </span>
@@ -1460,8 +1623,8 @@ export const ImportBatchesView: React.FC = () => {
                           onClick={() => handleOpenSingleProductForm(null)}
                           className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 transition shadow-md shrink-0 cursor-pointer"
                         >
-                          <Plus className="w-4 h-4" />
-                          <span>+ Agregar Producto</span>
+                          <Plus size={16} />
+                          <span>Agregar Producto</span>
                         </button>
                       )}
                     </div>
