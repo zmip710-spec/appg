@@ -844,258 +844,246 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
       {/* Vista Pantalla Completa Detalle de SKU y Estructura de Costos */}
       {selectedDetailProduct && (
         <div className="fixed inset-0 z-50 w-full h-full bg-[#0b1329] p-4 md:p-8 overflow-y-auto flex flex-col text-slate-100 animate-in fade-in duration-150">
-          <div className="w-full flex-1 flex flex-col space-y-5">
-            {/* Header */}
-            <div className="flex justify-between items-start border-b border-slate-700/80 pb-4 shrink-0 gap-4">
-              <div className="flex items-start space-x-3 min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDetailProduct(null)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition font-medium text-xs border border-slate-700 cursor-pointer shrink-0 mt-0.5"
-                >
-                  <span>← Volver</span>
-                </button>
-                <div className="min-w-0 flex-1">
-                  {(() => {
-                    const cleanBrand = String(selectedDetailProduct.brand ?? '').trim();
-                    const cleanModel = String(selectedDetailProduct.model ?? '').trim();
+          <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col space-y-5">
+            {(() => {
+              const cleanBrand = String(selectedDetailProduct.brand ?? '').trim();
+              const cleanModel = String(selectedDetailProduct.model ?? '').trim();
 
-                    let brandModelCombined = '';
-                    if (cleanBrand && cleanModel) {
-                      if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
-                        brandModelCombined = cleanModel;
-                      } else {
-                        brandModelCombined = `${cleanBrand} ${cleanModel}`;
-                      }
-                    } else if (cleanModel) {
-                      brandModelCombined = cleanModel;
-                    } else if (cleanBrand) {
-                      brandModelCombined = cleanBrand;
-                    }
+              let brandModelCombined = '';
+              if (cleanBrand && cleanModel) {
+                if (cleanModel.toLowerCase().startsWith(cleanBrand.toLowerCase())) {
+                  brandModelCombined = cleanModel;
+                } else {
+                  brandModelCombined = `${cleanBrand} ${cleanModel}`;
+                }
+              } else if (cleanModel) {
+                brandModelCombined = cleanModel;
+              } else if (cleanBrand) {
+                brandModelCombined = cleanBrand;
+              }
 
-                    const displayTitle = brandModelCombined
-                      ? `${brandModelCombined} - ${String(selectedDetailProduct.name ?? '').trim()}`
-                      : String(selectedDetailProduct.name ?? '').trim();
+              const displayTitle = brandModelCombined
+                ? `${brandModelCombined} - ${String(selectedDetailProduct.name ?? '').trim()}`
+                : String(selectedDetailProduct.name ?? '').trim();
 
-                    return (
-                      <div className="min-w-0">
-                        <div className="flex items-center flex-wrap gap-1.5 mb-1.5">
-                          <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
-                            {selectedDetailProduct.sku}
-                          </span>
-                          {cleanBrand && (
-                            <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
-                              {cleanBrand}
-                            </span>
-                          )}
-                          {selectedProductImportDetails?.sharePercentage ? (
-                            <span className="text-xs font-bold text-slate-400 bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
-                              {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
-                              {selectedDetailProduct.stock} uds disponibles
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-bold text-white text-base sm:text-lg leading-snug break-words">{displayTitle}</h3>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedDetailProduct(null)}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition font-bold text-base cursor-pointer border border-slate-700 shrink-0"
-                title="Cerrar vista"
-              >
-                ✕
-              </button>
-            </div>
+              const stockQty = selectedDetailProduct.stock || 0;
+              const landedUsd = selectedProductImportDetails?.landedUsd || selectedDetailProduct.unitCost || 0;
+              const landedGtq = landedUsd * 7.80;
+              const totalValUsd = stockQty * landedUsd;
+              const totalValGtq = stockQty * landedGtq;
 
-            <div className="space-y-4 pt-1 pb-4 flex-1">
-              {/* Price Delta Alert */}
-              {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
-                <div className={`p-3 rounded-xl border text-xs font-semibold ${
-                  selectedDetailProduct.priceChangeDelta > 0
-                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-                }`}>
-                  {selectedDetailProduct.priceChangeDelta > 0
-                    ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
-                    : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
-                </div>
-              )}
+              const fobUsd = selectedProductImportDetails?.fobUsd ?? landedUsd;
+              const fobGtq = fobUsd * 7.80;
 
-              {/* Step-by-Step 2-Column Financial Receipt */}
-              {(() => {
-                const stockQty = selectedDetailProduct.stock;
-                const landedUsd = selectedProductImportDetails?.landedUsd || selectedDetailProduct.unitCost;
-                const landedGtq = landedUsd * 7.80;
-                const totalValUsd = stockQty * landedUsd;
-                const totalValGtq = stockQty * landedGtq;
+              const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd ?? 0;
+              const unitCustomsGtq = unitCustomsUsd * 7.80;
+              const customsPct = selectedProductImportDetails?.customsPct ?? (fobUsd > 0 ? (unitCustomsUsd / fobUsd) * 100 : 0);
 
-                const fobUsd = selectedProductImportDetails?.fobUsd ?? landedUsd;
-                const fobGtq = fobUsd * 7.80;
+              const unitShippingUsd = selectedProductImportDetails?.unitShippingUsd ?? 0;
+              const unitShippingGtq = unitShippingUsd * 7.80;
+              const shippingPct = selectedProductImportDetails?.shippingPct ?? (fobUsd > 0 ? (unitShippingUsd / fobUsd) * 100 : 0);
 
-                const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd ?? 0;
-                const unitCustomsGtq = unitCustomsUsd * 7.80;
-                const customsPct = selectedProductImportDetails?.customsPct ?? 0;
+              const sellingUsd = selectedProductImportDetails?.finalSellingPriceUsd || (landedUsd * 1.15);
+              const sellingGtq = sellingUsd * 7.80;
+              const profitUsd = sellingUsd - landedUsd;
+              const profitGtq = profitUsd * 7.80;
 
-                const unitShippingUsd = selectedProductImportDetails?.unitShippingUsd ?? 0;
-                const unitShippingGtq = unitShippingUsd * 7.80;
-                const shippingPct = selectedProductImportDetails?.shippingPct ?? 0;
-
-                const sellingUsd = selectedProductImportDetails?.finalSellingPriceUsd || (landedUsd * 1.15);
-                const sellingGtq = sellingUsd * 7.80;
-                const profitUsd = sellingUsd - landedUsd;
-                const profitGtq = profitUsd * 7.80;
-
-                return (
-                  <div className="space-y-3 text-xs">
-                    <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200 dark:border-slate-700/80">
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Estructura de Costos del Producto</span>
-                      {selectedProductImportDetails?.batchName && (
-                        <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
-                          📦 Lote: {selectedProductImportDetails.batchName}
+              return (
+                <>
+                  {/* Header Limpio */}
+                  <div className="flex justify-between items-start border-b border-slate-700/80 pb-4 shrink-0 gap-4">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <h3 className="text-lg font-bold text-white leading-snug break-words">
+                        {displayTitle}
+                      </h3>
+                      <div className="flex items-center flex-wrap gap-2 text-xs">
+                        <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                          {selectedDetailProduct.sku}
                         </span>
-                      )}
+                        {brandModelCombined && (
+                          <span className="font-medium text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
+                            {brandModelCombined}
+                          </span>
+                        )}
+                        <span className="font-medium text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded border border-slate-700">
+                          {selectedDetailProduct.category || 'General'}
+                        </span>
+                        {selectedProductImportDetails?.sharePercentage !== undefined && (
+                          <span className="font-medium text-slate-400 bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                            {selectedProductImportDetails.sharePercentage.toFixed(1)}% del lote
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailProduct(null)}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition font-bold text-base cursor-pointer border border-slate-700 shrink-0"
+                      title="Cerrar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Alerta de Variación de Costo (si aplica) */}
+                  {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
+                    <div className={`p-3 rounded-xl border text-xs font-semibold ${
+                      selectedDetailProduct.priceChangeDelta > 0
+                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                    }`}>
+                      {selectedDetailProduct.priceChangeDelta > 0
+                        ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
+                        : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
+                    </div>
+                  )}
+
+                  {/* Cuerpo Ejecutivo en 2 Columnas */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 items-stretch">
+                    {/* Columna Izquierda: Cadena de Costos (Estilo Recibo Contable) */}
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="border-b border-slate-800 pb-2">
+                          <h4 className="text-sm font-bold text-slate-200 tracking-wide">
+                            Desglose de Importación y Costos
+                          </h4>
+                        </div>
+
+                        {/* Fila 1: Costo Fábrica (FOB) */}
+                        <div className="flex justify-between items-center text-xs py-1">
+                          <span className="text-slate-400 font-medium">Costo Fábrica (FOB)</span>
+                          <span className="font-mono text-slate-200 font-semibold">
+                            ${fobUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-slate-400 font-normal">(Q {fobGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
+                          </span>
+                        </div>
+
+                        {/* Fila 2: + Flete Prorrateado */}
+                        <div className="flex justify-between items-center text-xs py-1">
+                          <span className="text-slate-400 font-medium">+ Flete Prorrateado ({shippingPct.toFixed(1)}%)</span>
+                          <span className="font-mono text-indigo-300 font-semibold">
+                            +${unitShippingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-indigo-400/80 font-normal">(+Q {unitShippingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
+                          </span>
+                        </div>
+
+                        {/* Fila 3: + Impuesto Aduana SAT */}
+                        <div className="flex justify-between items-center text-xs py-1">
+                          <span className="text-slate-400 font-medium">+ Impuesto Aduana SAT ({customsPct.toFixed(1)}%)</span>
+                          <span className="font-mono text-amber-300 font-semibold">
+                            +${unitCustomsUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-amber-400/80 font-normal">(+Q {unitCustomsGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
+                          </span>
+                        </div>
+
+                        {/* Línea divisoria */}
+                        <div className="border-t border-slate-700/60 my-3"></div>
+
+                        {/* Fila Destacada (Total Landed) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1">
+                          <span className="text-sm font-bold text-white">Costo Total Puesto (Landed)</span>
+                          <span className="text-base font-mono font-bold text-blue-300">
+                            ${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-slate-500">|</span> Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Subtexto discreto al pie */}
+                      <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                        <span>Valoración en almacén ({stockQty} uds):</span>
+                        <span className="font-mono font-bold text-slate-300">
+                          Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ <span className="text-slate-500 font-normal">(${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)</span>
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                      {/* Columna Izquierda: 1. Costo Base FOB, 2. Recargo Aduana, 3. Recargo Flete */}
-                      <div className="space-y-3">
-                        {/* Step 1: Costo Base (Compra China / FOB) */}
-                        <div className="bg-slate-50 dark:bg-slate-900/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs">1. Costo Base (Compra China / FOB)</span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Por Unidad</span>
-                          </div>
-                          <div className="flex justify-between items-baseline pt-0.5">
-                            <span className="text-base font-mono font-bold text-slate-900 dark:text-white">${fobUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                            <span className="text-xs font-mono font-extrabold text-slate-700 dark:text-slate-300">Q {fobGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-800 flex justify-between">
-                            <span>Total Lote ({stockQty} uds):</span>
-                            <span className="font-mono">${(fobUsd * stockQty).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {(fobGtq * stockQty).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
-                          </div>
+                    {/* Columna Derecha: Comercialización y Rentabilidad */}
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-sm">
+                      {/* Tarjeta de Precio de Venta (Destacada en Verde Esmeralda) */}
+                      <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-4 space-y-2.5">
+                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide block">
+                          Precio de Venta Sugerido (15% Margen)
+                        </span>
+                        <div className="flex items-baseline justify-between flex-wrap gap-2">
+                          <span className="text-2xl font-mono font-black text-emerald-400">
+                            Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                          </span>
+                          <span className="text-sm font-mono font-bold text-slate-300">
+                            (${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)
+                          </span>
                         </div>
-
-                        {/* Step 2: Recargo Aduana */}
-                        <div className="bg-amber-50/70 dark:bg-slate-900/90 p-3.5 rounded-xl border border-amber-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-amber-800 dark:text-amber-300 text-xs">2. Recargo Aduana</span>
-                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 font-mono bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
-                              +{customsPct.toFixed(1)}% s/FOB
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-baseline pt-0.5">
-                            <span className="text-xs font-mono font-semibold text-amber-800 dark:text-amber-200">+$ {unitCustomsUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
-                            <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300">+Q {unitCustomsGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
-                          </div>
-                        </div>
-
-                        {/* Step 3: Recargo Flete */}
-                        <div className="bg-indigo-50/70 dark:bg-slate-900/90 p-3.5 rounded-xl border border-indigo-200 dark:border-slate-700/80 space-y-1.5 shadow-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-indigo-800 dark:text-indigo-300 text-xs">3. Recargo Flete</span>
-                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 font-mono bg-indigo-100 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
-                              +{shippingPct.toFixed(1)}% s/FOB
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-baseline pt-0.5">
-                            <span className="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-200">+$ {unitShippingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/u</span>
-                            <span className="text-xs font-mono font-bold text-indigo-800 dark:text-indigo-300">+Q {unitShippingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ/u</span>
-                          </div>
+                        <div className="text-xs text-emerald-300/90 pt-2 border-t border-emerald-500/20 flex justify-between items-center flex-wrap gap-1">
+                          <span>Ganancia estimada limpia:</span>
+                          <span className="font-mono font-bold text-emerald-400">
+                            +Q {profitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ / unidad <span className="text-emerald-300/70 font-normal">(+${profitUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)</span>
+                          </span>
                         </div>
                       </div>
 
-                      {/* Columna Derecha: 4. Costo Landed Final, 5. Precio Venta Sugerido con margen */}
-                      <div className="space-y-3">
-                        {/* Step 4: Costo Aquí (Landed Final) */}
-                        <div className="bg-blue-50 dark:bg-blue-950/40 p-3.5 rounded-xl border border-blue-200 dark:border-blue-500/40 space-y-2 shadow-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="font-extrabold text-blue-800 dark:text-blue-300 text-xs">4. Costo Aquí (Landed Final)</span>
-                            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 px-2 py-0.5 rounded">FOB + Ad + Fl</span>
-                          </div>
-                          <div className="flex justify-between items-baseline">
-                            <span className="text-base font-mono font-bold text-slate-900 dark:text-white">${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                            <span className="text-sm font-mono font-extrabold text-indigo-700 dark:text-indigo-300">Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                          </div>
-                          <div className="text-[10px] text-blue-700 dark:text-blue-300/80 pt-1.5 border-t border-blue-200 dark:border-blue-900/50 flex justify-between">
-                            <span>Valoración Almacén ({stockQty} uds):</span>
-                            <span className="font-mono font-bold text-indigo-700 dark:text-indigo-200">${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ)</span>
-                          </div>
+                      {/* Resumen de Inventario */}
+                      <div className="bg-slate-950/60 border border-slate-800/90 rounded-xl p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-400 font-medium">Stock Disponible:</span>
+                          <span className="font-bold text-white bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
+                            {stockQty} unidades
+                          </span>
                         </div>
-
-                        {/* Step 5: Precio Venta Final */}
-                        <div className="bg-emerald-50 dark:bg-emerald-950/70 p-4 rounded-xl border border-emerald-200 dark:border-emerald-500/50 space-y-2.5 shadow-md">
-                          <div className="flex justify-between items-center">
-                            <span className="font-extrabold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wide">5. Precio Venta Sugerido (+15% Margen)</span>
-                          </div>
-                          <div className="flex justify-between items-baseline">
-                            <span className="text-lg font-mono font-black text-slate-900 dark:text-white">${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                            <span className="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400">Q {sellingGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
-                          </div>
-                          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 pt-2 border-t border-emerald-200 dark:border-emerald-800/60 flex justify-between items-center">
-                            <span>Ganancia Estimada por Unidad:</span>
-                            <span className="font-mono font-extrabold text-emerald-700 dark:text-emerald-300">+Q {profitGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ (+${profitUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
-                          </div>
+                        <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-800/80">
+                          <span className="text-slate-400 font-medium">Lote de Origen:</span>
+                          <span className="font-mono text-blue-400 truncate max-w-[240px]" title={selectedProductImportDetails?.batchName || 'Inventario Inicial'}>
+                            📦 {selectedProductImportDetails?.batchName || 'Inventario Inicial'}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                );
-              })()}
-            </div>
 
-            {/* Barra Horizontal Fija de Acciones Rápidas (Ajustar Stock, Histórico Precios, Eliminar SKU, Cerrar) */}
-            <div className="pt-4 border-t border-slate-700/80 shrink-0 flex flex-wrap items-center justify-between gap-3 bg-transparent">
-              <div className="flex items-center flex-wrap gap-2.5">
-                {!isVendedor && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStockManageProduct(selectedDetailProduct);
-                      setStockChangeAmount('1');
-                    }}
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
-                  >
-                    <Sliders className="w-3.5 h-3.5 shrink-0" />
-                    <span>Ajustar Stock</span>
-                  </button>
-                )}
+                  {/* Barra de Acciones Inferior */}
+                  <div className="pt-4 border-t border-slate-700/80 shrink-0 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {!isVendedor && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStockManageProduct(selectedDetailProduct);
+                            setStockChangeAmount('1');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition active:scale-95 cursor-pointer shadow-sm"
+                        >
+                          <Sliders className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span>Ajustar Stock</span>
+                        </button>
+                      )}
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
-                >
-                  <Eye className="w-3.5 h-3.5 shrink-0" />
-                  <span>Histórico Precios</span>
-                </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPriceHistory(selectedDetailProduct)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition active:scale-95 cursor-pointer shadow-sm"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span>Histórico Precios</span>
+                      </button>
 
-                {!isVendedor && (
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs transition active:scale-95 cursor-pointer shadow-sm"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>Eliminar SKU</span>
-                  </button>
-                )}
-              </div>
+                      {!isVendedor && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmProduct(selectedDetailProduct)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-medium transition active:scale-95 cursor-pointer shadow-sm"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                          <span>Eliminar SKU</span>
+                        </button>
+                      )}
+                    </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedDetailProduct(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm border border-slate-700 ml-auto"
-              >
-                Cerrar
-              </button>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailProduct(null)}
+                      className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-lg transition border border-slate-700 cursor-pointer shadow-sm"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
