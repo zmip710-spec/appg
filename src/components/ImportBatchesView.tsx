@@ -18,9 +18,10 @@ import {
   ArrowLeft,
   FileText,
   Download,
-  Search
+  Search,
+  RefreshCw
 } from 'lucide-react';
-import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct, fetchCategoriesApi, Category } from '../services/api';
+import { ImportBatch, fetchBatches, createBatchApi, deleteBatchApi, fetchInventory, InventoryProduct, fetchCategoriesApi, Category, fetchNextSkuApi } from '../services/api';
 import { exportSingleBatchPdf } from '../utils/pdfExport';
 
 export type BatchSortOption = 'date-desc' | 'date-asc' | 'cost-desc' | 'cost-asc';
@@ -618,7 +619,37 @@ export const ImportBatchesView: React.FC = () => {
     image: ''
   });
 
-  const handleOpenSingleProductForm = (indexToEdit: number | null = null) => {
+  const [isGeneratingBatchSku, setIsGeneratingBatchSku] = useState(false);
+
+  const getNextBatchSku = async (): Promise<string> => {
+    try {
+      const serverNext = await fetchNextSkuApi();
+      const baseNum = parseInt(serverNext, 10) || 1;
+      let maxNum = baseNum - 1;
+      inputItems.forEach(item => {
+        const digits = String(item.sku ?? '').replace(/\D/g, '');
+        if (digits) {
+          const n = parseInt(digits, 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      });
+      return String(maxNum + 1).padStart(4, '0');
+    } catch {
+      return '0001';
+    }
+  };
+
+  const handleRegenerateBatchSku = async () => {
+    setIsGeneratingBatchSku(true);
+    try {
+      const next = await getNextBatchSku();
+      setSingleProductForm(prev => ({ ...prev, sku: next }));
+    } finally {
+      setIsGeneratingBatchSku(false);
+    }
+  };
+
+  const handleOpenSingleProductForm = async (indexToEdit: number | null = null) => {
     const defaultCat = categories[0]?.name || 'General';
     if (indexToEdit !== null && inputItems[indexToEdit]) {
       setEditingItemIndex(indexToEdit);
@@ -634,8 +665,9 @@ export const ImportBatchesView: React.FC = () => {
       });
     } else {
       setEditingItemIndex(null);
+      const suggestedSku = await getNextBatchSku();
       setSingleProductForm({
-        sku: '',
+        sku: suggestedSku,
         productName: '',
         brand: '',
         model: '',
@@ -649,15 +681,18 @@ export const ImportBatchesView: React.FC = () => {
     setOpenSkuDropdownIndex(null);
   };
 
-  const handleConfirmSingleProduct = () => {
+  const handleConfirmSingleProduct = async () => {
     if (!singleProductForm.productName || !singleProductForm.quantity || !singleProductForm.unitCostFob) {
       alert('Por favor completa el Nombre del Producto, la Cantidad y el Costo FOB.');
       return;
     }
 
-    const rawFormSku = String(singleProductForm.sku ?? '').trim();
+    let rawFormSku = String(singleProductForm.sku ?? '').trim();
+    if (!rawFormSku) {
+      rawFormSku = await getNextBatchSku();
+    }
     const cleanItem = {
-      sku: rawFormSku ? rawFormSku.toUpperCase() : `PROD-00${inputItems.length + 1}`,
+      sku: rawFormSku.toUpperCase(),
       productName: String(singleProductForm.productName ?? '').trim(),
       brand: String(singleProductForm.brand ?? '').trim(),
       model: String(singleProductForm.model ?? '').trim(),
@@ -1847,35 +1882,53 @@ export const ImportBatchesView: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-start">
                         {/* SKU */}
                         <div className="sm:col-span-1 lg:col-span-3 relative">
-                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Código SKU *</label>
-                          <input
-                            type="text"
-                            placeholder="Ej. PROD-001"
-                            value={singleProductForm.sku}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setSingleProductForm({ ...singleProductForm, sku: val });
-                              const cleanTyped = String(val ?? '').trim().toUpperCase();
-                              if (cleanTyped.length >= 1) {
-                                setOpenSkuDropdownIndex(-1);
-                              } else {
-                                setOpenSkuDropdownIndex(null);
-                              }
-                              const match = inventoryList.find(inv => String(inv.sku ?? '').toUpperCase() === cleanTyped);
-                              if (match) {
-                                setSingleProductForm(prev => ({
-                                  ...prev,
-                                  productName: String(match.name ?? ''),
-                                  brand: match.brand || prev.brand,
-                                  model: match.model || prev.model,
-                                  category: match.category || prev.category || 'General',
-                                  image: match.image || prev.image,
-                                  unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
-                                }));
-                              }
-                            }}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-blue-500 uppercase shadow-inner"
-                          />
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-300">Código SKU *</label>
+                            {singleProductForm.sku.trim() !== '' && inventoryList.some(inv => String(inv.sku ?? '').toUpperCase() === singleProductForm.sku.trim().toUpperCase()) && (
+                              <span className="text-[10px] font-bold text-amber-400">Existente</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                placeholder="Ej. 0001, PROD-001"
+                                value={singleProductForm.sku}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSingleProductForm({ ...singleProductForm, sku: val });
+                                  const cleanTyped = String(val ?? '').trim().toUpperCase();
+                                  if (cleanTyped.length >= 1) {
+                                    setOpenSkuDropdownIndex(-1);
+                                  } else {
+                                    setOpenSkuDropdownIndex(null);
+                                  }
+                                  const match = inventoryList.find(inv => String(inv.sku ?? '').toUpperCase() === cleanTyped);
+                                  if (match) {
+                                    setSingleProductForm(prev => ({
+                                      ...prev,
+                                      productName: String(match.name ?? ''),
+                                      brand: match.brand || prev.brand,
+                                      model: match.model || prev.model,
+                                      category: match.category || prev.category || 'General',
+                                      image: match.image || prev.image,
+                                      unitCostFob: match.unitCost && !prev.unitCostFob ? match.unitCost.toString() : prev.unitCostFob
+                                    }));
+                                  }
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-blue-500 uppercase shadow-inner"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRegenerateBatchSku}
+                              disabled={isGeneratingBatchSku}
+                              title="Generar siguiente SKU correlativo"
+                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 text-blue-400 hover:text-white rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 shadow-sm"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingBatchSku ? 'animate-spin text-blue-400' : ''}`} />
+                            </button>
+                          </div>
 
                           {/* Sku Dropdown Suggestions */}
                           {openSkuDropdownIndex === -1 && singleProductForm.sku.trim().length >= 1 && (

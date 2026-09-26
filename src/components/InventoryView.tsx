@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Boxes,
   Plus,
@@ -21,7 +21,8 @@ import {
   CheckCircle,
   AlertCircle,
   Edit2,
-  FileDown
+  FileDown,
+  RefreshCw
 } from 'lucide-react';
 import {
   InventoryProduct,
@@ -36,7 +37,8 @@ import {
   fetchCategories,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  fetchNextSkuApi
 } from '../services/api';
 import { exportInventoryPdf } from '../utils/pdfGenerator';
 
@@ -266,6 +268,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
   const [errorMessage, setErrorMessage] = useState('');
   const [invNetworkError, setInvNetworkError] = useState<string | null>(null);
   const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
+  const [isGeneratingSku, setIsGeneratingSku] = useState<boolean>(false);
+
+  const handleAutoGenerateSku = async (force = false) => {
+    if (!force && sku && sku.trim() !== '') return;
+    setIsGeneratingSku(true);
+    try {
+      const next = await fetchNextSkuApi();
+      if (next) {
+        setSku(next);
+      }
+    } catch (err) {
+      console.error('Error al generar correlativo SKU:', err);
+    } finally {
+      setIsGeneratingSku(false);
+    }
+  };
+
+  const isSkuDuplicate = useMemo(() => {
+    const clean = sku.trim().toUpperCase();
+    if (!clean) return false;
+    return inventory.some((item) => String(item.sku ?? '').trim().toUpperCase() === clean);
+  }, [sku, inventory]);
 
   // Autosave Debounced Effect (400ms)
   useEffect(() => {
@@ -417,6 +441,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
     if (!sku.trim() || !name.trim()) {
       setErrorMessage('Código SKU y Nombre de producto son requeridos.');
+      return;
+    }
+
+    if (isSkuDuplicate) {
+      setErrorMessage(`El Código SKU "${sku.trim().toUpperCase()}" ya existe en el inventario. Por favor utiliza un SKU único o usa el botón 🔄 para generar el siguiente correlativo.`);
       return;
     }
 
@@ -588,7 +617,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               type="button"
               onClick={() => {
                 setErrorMessage('');
+                setInvNetworkError(null);
                 setShowAddModal(true);
+                if (!sku || sku.trim() === '') {
+                  handleAutoGenerateSku(true);
+                }
               }}
               className="flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-md shadow-blue-600/20 active:scale-95 cursor-pointer"
             >
@@ -1129,15 +1162,45 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
 
             <form onSubmit={handleCreateProduct} className="space-y-3 text-xs overflow-y-auto max-h-[calc(92vh-120px)] pr-1">
               <div>
-                <label className="block text-slate-400 font-semibold uppercase mb-1">Código SKU Único</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. PROD-005"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono focus:border-blue-500"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-400 font-semibold uppercase text-xs">
+                    Código SKU Único *
+                  </label>
+                  {isSkuDuplicate && (
+                    <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1 animate-in fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>SKU ya registrado</span>
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. 0001, PROD-005"
+                      value={sku}
+                      onChange={(e) => setSku(e.target.value)}
+                      className={`w-full px-3 py-2 bg-slate-900 border rounded-lg text-white font-mono focus:outline-none uppercase transition-colors ${
+                        isSkuDuplicate
+                          ? 'border-rose-500 focus:border-rose-400 ring-1 ring-rose-500/30'
+                          : 'border-slate-700 focus:border-blue-500'
+                      }`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAutoGenerateSku(true)}
+                    disabled={isGeneratingSku}
+                    title="Recalcular siguiente SKU correlativo"
+                    className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-white rounded-lg transition-colors flex items-center justify-center shrink-0 cursor-pointer active:scale-95 disabled:opacity-50 shadow-sm"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isGeneratingSku ? 'animate-spin text-blue-400' : ''}`} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Sugerido secuencial con 4 dígitos. Puedes editarlo libremente, escanear un código de barras o recalcularlo con el botón 🔄.
+                </p>
               </div>
 
               <div>

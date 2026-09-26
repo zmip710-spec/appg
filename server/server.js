@@ -610,6 +610,67 @@ app.get('/api/inventory', (req, res) => {
   });
 });
 
+// ==========================================
+// SUGERENCIA AUTOMÁTICA Y SECUENCIAL DE SKU
+// ==========================================
+
+const getNextSkuHandler = async (req, res) => {
+  try {
+    if (db.isPg && db.pool) {
+      // Extrae el valor numérico más alto y genera el siguiente correlativo con 4 dígitos (ej: 0001, 0002)
+      const query = `
+        SELECT LPAD(
+          (COALESCE(MAX(NULLIF(regexp_replace(sku, '\\D', '', 'g'), '')::BIGINT), 0) + 1)::TEXT,
+          4,
+          '0'
+        ) AS next_sku
+        FROM products;
+      `;
+      try {
+        const result = await db.pool.query(query);
+        const nextSku = result.rows[0]?.next_sku || '0001';
+        return res.json({ next_sku: nextSku });
+      } catch (pgQueryErr) {
+        const fallbackQuery = `
+          SELECT LPAD(
+            (COALESCE(MAX(NULLIF(regexp_replace(sku, '\\D', '', 'g'), '')::BIGINT), 0) + 1)::TEXT,
+            4,
+            '0'
+          ) AS next_sku
+          FROM inventory;
+        `;
+        const resultFallback = await db.pool.query(fallbackQuery);
+        return res.json({ next_sku: resultFallback.rows[0]?.next_sku || '0001' });
+      }
+    }
+
+    // Modo SQLite / Entorno local con fallback seguro
+    db.all('SELECT sku FROM inventory UNION SELECT sku FROM batch_items', [], (err, rows) => {
+      if (err) {
+        console.error('Error calculando next_sku en AppG:', err);
+        return res.status(500).json({ error: 'Error al obtener siguiente SKU' });
+      }
+      let maxNum = 0;
+      (rows || []).forEach(r => {
+        if (!r || !r.sku) return;
+        const digits = String(r.sku).replace(/\D/g, '');
+        if (digits) {
+          const n = parseInt(digits, 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      });
+      const nextSku = String(maxNum + 1).padStart(4, '0');
+      res.json({ next_sku: nextSku });
+    });
+  } catch (error) {
+    console.error('Error calculando next_sku en AppG:', error);
+    res.status(500).json({ error: 'Error al obtener siguiente SKU' });
+  }
+};
+
+app.get('/api/products/next-sku', getNextSkuHandler);
+app.get('/api/inventory/next-sku', getNextSkuHandler);
+
 app.post('/api/inventory', (req, res) => {
   const { sku, name, brand, model, category, stock, unitCost } = req.body;
   if (!sku || !name) {

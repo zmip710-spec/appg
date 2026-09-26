@@ -240,6 +240,9 @@ async function initPgTables() {
         END IF;
       END $$;
     `).catch(() => {});
+    // Vista 'products' para compatibilidad transparente con queries estándar
+    await pgPool.query(`CREATE OR REPLACE VIEW products AS SELECT * FROM inventory;`).catch(() => {});
+
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS sku VARCHAR(255) DEFAULT 'PROD-001'");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedCustoms NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedShipping NUMERIC DEFAULT 0.0");
@@ -391,6 +394,7 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangeDelta REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangePct REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE users ADD COLUMN password TEXT DEFAULT '123456'", () => {});
+    sqliteDb.run("CREATE VIEW IF NOT EXISTS products AS SELECT * FROM inventory", () => {});
   });
 }
 

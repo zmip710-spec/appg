@@ -505,3 +505,18 @@ export const deleteCategory = async (id: number | string): Promise<{ message: st
 };
 
 export const deleteCategoryApi = deleteCategory;
+
+export const fetchNextSkuApi = async (): Promise<string> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/next-sku`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.next_sku) {
+        return String(data.next_sku);
+      }
+    }
+  } catch (err) {
+    console.warn('Error al consultar /api/products/next-sku:', err);
+  }
+  return '0001';
+};
