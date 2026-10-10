@@ -776,8 +776,12 @@ export const ImportBatchesView: React.FC = () => {
 
       const payload = {
         name: (batchName || 'Lote Sin Nombre').trim(),
-        totalCustomsTax: Number(customsTax) || 0,
-        totalShippingCost: Number(shippingCost) || 0,
+        totalCustomsTax: customsCurrency === 'GTQ' 
+          ? (Number(customsTax) || 0) / (Number(exchangeRateGtq) || 7.80) 
+          : (Number(customsTax) || 0),
+        totalShippingCost: shippingCurrency === 'GTQ' 
+          ? (Number(shippingCost) || 0) / (Number(exchangeRateGtq) || 7.80) 
+          : (Number(shippingCost) || 0),
         exchangeRateGtq: Number(exchangeRateGtq) || 7.80,
         profitMarginPct: Number(profitMarginPct) || 15.0,
         costUpdateStrategy: costUpdateStrategy || 'weighted',
@@ -1810,20 +1814,20 @@ export const ImportBatchesView: React.FC = () => {
                       <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
                         <span className="text-[10px] text-slate-400 block font-medium">Aduana</span>
                         <span className="text-xs sm:text-sm font-mono font-bold text-amber-400">
-                          ${parseFloat(customsTax || '0').toFixed(2)} USD
+                          ${parsedTax.toFixed(2)} USD
                         </span>
                         <span className="text-[10px] font-mono text-slate-500 block">
-                          Q {(parseFloat(customsTax || '0') * parsedGtqRate).toFixed(2)}
+                          Q {(parsedTax * parsedGtqRate).toFixed(2)}
                         </span>
                       </div>
 
                       <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5">
                         <span className="text-[10px] text-slate-400 block font-medium">Flete</span>
                         <span className="text-xs sm:text-sm font-mono font-bold text-indigo-400">
-                          ${parseFloat(shippingCost || '0').toFixed(2)} USD
+                          ${parsedShipping.toFixed(2)} USD
                         </span>
                         <span className="text-[10px] font-mono text-slate-500 block">
-                          Q {(parseFloat(shippingCost || '0') * parsedGtqRate).toFixed(2)}
+                          Q {(parsedShipping * parsedGtqRate).toFixed(2)}
                         </span>
                       </div>
 
