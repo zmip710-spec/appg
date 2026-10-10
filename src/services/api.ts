@@ -417,9 +417,9 @@ export const deleteInventoryProductApi = async (id: number | string): Promise<{ 
 
 export const deleteInventoryApi = deleteInventoryProductApi;
 
-export const fetchPriceHistoryApi = async (sku: string, productName?: string): Promise<PriceHistoryEntry[]> => {
+export const fetchPriceHistoryApi = async (sku: string, _productName?: string): Promise<PriceHistoryEntry[]> => {
   try {
-    const url = `${API_BASE_URL}/inventory/history/${encodeURIComponent(sku)}${productName ? `?name=${encodeURIComponent(productName)}` : ''}`;
+    const url = `${API_BASE_URL}/inventory/history/${encodeURIComponent(sku)}`;
     const response = await fetch(url);
     if (!response.ok) return [];
     return await response.json();

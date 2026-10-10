@@ -32,6 +32,7 @@ import {
   updateStockApi,
   PriceHistoryEntry,
   fetchPriceHistoryApi,
+  fetchBatches,
   User,
   Category,
   fetchCategories,
@@ -136,12 +137,35 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     let isMounted = true;
     const loadDetailImportMetrics = async () => {
       try {
-        const history = await fetchPriceHistoryApi(selectedDetailProduct.sku, selectedDetailProduct.name);
+        const currentSku = String(selectedDetailProduct.sku || '').trim().toUpperCase();
+        const history = await fetchPriceHistoryApi(selectedDetailProduct.sku);
         if (!isMounted) return;
 
-        if (history && history.length > 0) {
-          // history[0] is the most recent batch item entry
-          const latest = history[0];
+        // Cruce de datos ESTRICTAMENTE comparando el sku del producto, no su nombre
+        let latest: any = history && history.length > 0
+          ? history.find((batchItem: any) => String(batchItem.sku || '').trim().toUpperCase() === currentSku)
+          : null;
+
+        // Si no se encuentra en el historial directo, buscar en lotes activos por SKU estricto
+        if (!latest) {
+          try {
+            const batches = await fetchBatches();
+            for (const b of (batches || [])) {
+              const found = (b.items || []).find((batchItem: any) => 
+                String(batchItem.sku || '').trim().toUpperCase() === currentSku
+              );
+              if (found) {
+                latest = {
+                  ...found,
+                  batchName: b.name
+                };
+                break;
+              }
+            }
+          } catch {}
+        }
+
+        if (latest) {
           const landed = latest.finalUnitCost !== undefined && latest.finalUnitCost > 0 ? latest.finalUnitCost : selectedDetailProduct.unitCost;
           const fob = latest.unitCostFob !== undefined && latest.unitCostFob >= 0 ? latest.unitCostFob : landed;
           const qty = latest.quantity && latest.quantity > 0 ? latest.quantity : (selectedDetailProduct.stock || 1);
@@ -427,8 +451,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
     setHistoryProduct(product);
     setShowHistoryModal(true);
     try {
-      const history = await fetchPriceHistoryApi(product.sku, product.name);
-      setPriceHistory(history);
+      const history = await fetchPriceHistoryApi(product.sku);
+      const filtered = (history || []).filter(item => 
+        String(item.sku || '').trim().toUpperCase() === String(product.sku || '').trim().toUpperCase()
+      );
+      setPriceHistory(filtered.length > 0 ? filtered : history);
     } catch {
       setPriceHistory([]);
     }

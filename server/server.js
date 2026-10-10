@@ -749,11 +749,10 @@ app.delete('/api/inventory/:id', (req, res) => {
 
 app.get('/api/inventory/history/:sku', (req, res) => {
   const cleanParam = req.params.sku ? String(req.params.sku).trim().toUpperCase() : '';
-  const queryName = req.query.name ? String(req.query.name).trim().toUpperCase() : '';
 
   db.get(
-    'SELECT * FROM inventory WHERE UPPER(sku) = ? OR UPPER(name) = ? OR (LENGTH(?) > 0 AND UPPER(name) = ?)',
-    [cleanParam, cleanParam, queryName, queryName],
+    'SELECT * FROM inventory WHERE UPPER(sku) = ?',
+    [cleanParam],
     (invErr, invItem) => {
       const targetSku = invItem ? String(invItem.sku).toUpperCase() : cleanParam;
 
