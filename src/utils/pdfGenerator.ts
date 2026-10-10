@@ -42,13 +42,23 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
       const itemTotalExpense = itemCustoms + itemShipping;
 
       const unitTax = qty > 0 ? itemTotalExpense / qty : 0;
-      const landedCostUsd = Number(item.finalUnitCost ?? item.landed_unit_usd ?? (fobCost + unitTax));
-      const landedCostGtq = Number(item.landed_unit_gtq ?? (landedCostUsd * rate));
+      const landedCostUsd = Number(
+        item.finalUnitCost !== undefined && item.finalUnitCost !== null && Number(item.finalUnitCost) > 0
+          ? item.finalUnitCost
+          : (item.landed_unit_usd !== undefined && item.landed_unit_usd !== null && Number(item.landed_unit_usd) > 0
+              ? item.landed_unit_usd
+              : (fobCost + unitTax))
+      );
       const totalLanded = landedCostUsd * qty;
       grandTotalLanded += totalLanded;
 
-      const sellingPriceUsd = Number(item.finalSellingPrice ?? (landedCostUsd * (1 + margin / 100)));
-      const sellingPriceGtq = Number(item.sale_price_gtq ?? (sellingPriceUsd * rate));
+      const sellingPriceUsd = Number(
+        item.finalSellingPrice !== undefined && item.finalSellingPrice !== null && Number(item.finalSellingPrice) > 0
+          ? item.finalSellingPrice
+          : (item.sale_price_usd !== undefined && item.sale_price_usd !== null && Number(item.sale_price_usd) > 0
+              ? item.sale_price_usd
+              : (landedCostUsd * (1 + margin / 100)))
+      );
       const totalSelling = sellingPriceUsd * qty;
       grandTotalSelling += totalSelling;
 
@@ -81,9 +91,9 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
         qty,
         fob_unit_usd: fobCost,
         fob: fobCost,
+        finalUnitCost: landedCostUsd,
+        finalSellingPrice: sellingPriceUsd,
         landed_unit_usd: landedCostUsd,
-        landed_unit_gtq: landedCostGtq,
-        sale_price_gtq: sellingPriceGtq,
         sale_price_usd: sellingPriceUsd
       };
     });
@@ -217,15 +227,23 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
       tableLineColor: [203, 213, 225], // slate-300
       tableLineWidth: 0.5,
       head: [['SKU', 'Producto', 'Cant.', 'Costo Fábrica (USD)', 'Costo Puesto (USD)', 'Costo Puesto (Q)', 'Precio Venta Sugerido (Q)']],
-      body: itemsDetailed.map(it => [
-        String(it.sku || ''),
-        String(it.name || ''),
-        String(it.quantity || it.qty || 0),
-        `$${Number(it.fob_unit_usd || it.fob || 0).toFixed(2)}`,
-        `$${Number(it.landed_unit_usd || 0).toFixed(2)}`,
-        `Q${Number(it.landed_unit_gtq || 0).toFixed(2)}`,
-        `Q${Number(it.sale_price_gtq || 0).toFixed(2)}`
-      ]),
+      body: itemsDetailed.map(it => {
+        const finalUnitCost = Number(it.finalUnitCost ?? it.landed_unit_usd ?? 0);
+        const finalSellingPrice = Number(it.finalSellingPrice ?? it.sale_price_usd ?? 0);
+        const exchangeRate = Number(batch.exchangeRateGtq) > 0 ? Number(batch.exchangeRateGtq) : rate;
+        const costoPuestoQ = finalUnitCost * exchangeRate;
+        const precioSugeridoQ = finalSellingPrice * exchangeRate;
+
+        return [
+          String(it.sku || ''),
+          String(it.name || ''),
+          String(it.quantity || it.qty || 0),
+          `$${Number(it.fob_unit_usd || it.fob || 0).toFixed(2)}`,
+          `$${finalUnitCost.toFixed(2)}`,
+          `Q${costoPuestoQ.toFixed(2)}`,
+          `Q${precioSugeridoQ.toFixed(2)}`
+        ];
+      }),
       margin: { top: 18, bottom: 18, left: 14, right: 14 },
       styles: {
         font: 'helvetica',
