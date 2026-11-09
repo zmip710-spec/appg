@@ -103,8 +103,8 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
     const totalLandedExpenses = totalCustomsTax + totalShippingCost;
     const grandTotalProfitGtq = (grandTotalSelling - grandTotalLanded) * rate;
 
-    const batchIdStr = String(batch.batch_code || batch.id || 'LOTE');
-    const batchNameStr = String(batch.batch_name || batch.name || 'Lote de Importación');
+    const batchIdStr = String((batch as any).batch_code || batch.id || 'LOTE');
+    const batchNameStr = String((batch as any).batch_name || batch.name || 'Lote de Importación');
 
     // Barra decorativa superior
     doc.setFillColor(15, 23, 42); // slate-900
@@ -273,7 +273,7 @@ export const exportSingleBatchPdf = (batch: ImportBatch, user?: User | null) => 
     });
 
     // Numeración de páginas en el pie de cada hoja
-    const totalPages = doc.internal.getNumberOfPages();
+    const totalPages = (doc as any).getNumberOfPages ? (doc as any).getNumberOfPages() : (doc.internal as any).getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       doc.setFontSize(7.5);
@@ -389,7 +389,7 @@ export const exportInventoryPdf = (inventory: InventoryProduct[], user?: User | 
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
 
-    const totalPages = doc.internal.getNumberOfPages();
+    const totalPages = (doc as any).getNumberOfPages ? (doc as any).getNumberOfPages() : (doc.internal as any).getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       doc.setFontSize(7.5);

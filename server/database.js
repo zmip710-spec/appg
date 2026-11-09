@@ -55,6 +55,7 @@ function normalizeRow(row) {
     // Inventory
     if (lowerKey === 'unitcost') targetKey = 'unitCost';
     if (lowerKey === 'previousunitcost') targetKey = 'previousUnitCost';
+    if (lowerKey === 'lastpurchasecost' || lowerKey === 'last_purchase_cost') targetKey = 'lastPurchaseCost';
     if (lowerKey === 'pricechangedelta') targetKey = 'priceChangeDelta';
     if (lowerKey === 'pricechangepct') targetKey = 'priceChangePct';
     if (lowerKey === 'lastupdated') targetKey = 'lastUpdated';
@@ -251,6 +252,8 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS image TEXT");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS image TEXT");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS previousUnitCost NUMERIC DEFAULT 0.0");
+    await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS lastPurchaseCost NUMERIC DEFAULT 0.0");
+    await pgPool.query("UPDATE inventory SET lastPurchaseCost = unitCost WHERE lastPurchaseCost IS NULL OR lastPurchaseCost = 0").catch(() => {});
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangeDelta NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
@@ -391,6 +394,9 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN model TEXT DEFAULT ''", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN image TEXT", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN previousUnitCost REAL DEFAULT 0.0", () => {});
+    sqliteDb.run("ALTER TABLE inventory ADD COLUMN lastPurchaseCost REAL DEFAULT 0.0", () => {
+      sqliteDb.run("UPDATE inventory SET lastPurchaseCost = unitCost WHERE lastPurchaseCost IS NULL OR lastPurchaseCost = 0", () => {});
+    });
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangeDelta REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangePct REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE users ADD COLUMN password TEXT DEFAULT '123456'", () => {});

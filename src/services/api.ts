@@ -67,8 +67,10 @@ export interface InventoryProduct {
   model?: string;
   category: string;
   stock: number;
-  unitCost: number;
+  unitCost: number; // Costo Promedio Ponderado en bodega (Landed promedio)
   previousUnitCost?: number;
+  lastPurchaseCost?: number; // Costo exacto de la última compra (último lote)
+  last_purchase_cost?: number; // Compatibilidad snake_case
   priceChangeDelta?: number;
   priceChangePct?: number;
   image?: string;
@@ -371,6 +373,7 @@ export const createInventoryProductApi = async (data: {
   category?: string;
   stock: number;
   unitCost: number;
+  lastPurchaseCost?: number;
   image?: string;
 }): Promise<InventoryProduct> => {
   const response = await fetch(`${API_BASE_URL}/inventory`, {

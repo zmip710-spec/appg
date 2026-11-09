@@ -847,7 +847,7 @@ export const ImportBatchesView: React.FC = () => {
       setExchangeRateGtq('7.80');
       setProfitMarginPct('15.0');
       setInputItems([]);
-      setSingleProductForm({ sku: '', productName: '', brand: '', model: '', quantity: '1', unitCostFob: '', image: '' });
+      setSingleProductForm({ sku: '', productName: '', brand: '', model: '', category: categories[0]?.name || 'General', quantity: '1', unitCostFob: '', image: '' });
 
       // Notificación Toast de confirmación
       setToastSuccessMessage('Lote guardado con éxito');

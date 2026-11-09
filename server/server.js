@@ -444,41 +444,53 @@ app.post('/api/batches', (req, res) => {
               const targetSku = existing.sku.toUpperCase();
               const oldStock = existing.stock || 0;
               const oldCost = existing.unitCost || 0;
+              const prevLastPurchase = (existing.lastPurchaseCost !== undefined && existing.lastPurchaseCost !== null && !isNaN(parseFloat(existing.lastPurchaseCost)) && parseFloat(existing.lastPurchaseCost) > 0)
+                ? parseFloat(existing.lastPurchaseCost)
+                : (existing.previousUnitCost || oldCost);
               const newStock = oldStock + item.quantity;
               
-              const calculatedCost = costStrategy === 'latest'
-                ? item.finalUnitCost
-                : (newStock > 0 ? ((oldStock * oldCost) + (item.quantity * item.finalUnitCost)) / newStock : item.finalUnitCost);
+              // 1. Costo exacto de la última compra (obtenido del lote más reciente)
+              const lastPurchaseCost = parseFloat(item.finalUnitCost.toFixed(2));
 
-              const newCost = parseFloat(calculatedCost.toFixed(2));
-              const delta = parseFloat((item.finalUnitCost - oldCost).toFixed(2));
-              const pct = oldCost > 0 ? parseFloat(((delta / oldCost) * 100).toFixed(2)) : 0;
+              // 2. Costo promedio ponderado en bodega
+              const weightedAvgCost = newStock > 0
+                ? ((oldStock * oldCost) + (item.quantity * item.finalUnitCost)) / newStock
+                : item.finalUnitCost;
+              const calculatedWeightedCost = parseFloat(weightedAvgCost.toFixed(2));
+
+              // Si la estrategia es 'latest', el unitCost adopta el último costo; si no, adopta el promedio ponderado
+              const finalUnitCost = costStrategy === 'latest' ? lastPurchaseCost : calculatedWeightedCost;
+
+              // Variación del Costo de la Última Compra respecto al lote/compra anterior
+              const delta = parseFloat((lastPurchaseCost - prevLastPurchase).toFixed(2));
+              const pct = prevLastPurchase > 0 ? parseFloat(((delta / prevLastPurchase) * 100).toFixed(2)) : 0;
               const updatedBrand = item.brand || existing.brand || '';
               const updatedModel = item.model || existing.model || '';
               const updatedCategory = (item.category && item.category !== 'General') ? item.category : (existing.category || item.category || 'General');
 
               db.run(
-                'UPDATE inventory SET name = ?, brand = ?, model = ?, category = ?, stock = ?, unitCost = ?, previousUnitCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
-                [item.productName, updatedBrand, updatedModel, updatedCategory, newStock, newCost, oldCost, delta, pct, '', importDate, targetSku],
+                'UPDATE inventory SET name = ?, brand = ?, model = ?, category = ?, stock = ?, unitCost = ?, previousUnitCost = ?, lastPurchaseCost = ?, priceChangeDelta = ?, priceChangePct = ?, image = ?, lastUpdated = ? WHERE UPPER(sku) = ?',
+                [item.productName, updatedBrand, updatedModel, updatedCategory, newStock, finalUnitCost, prevLastPurchase, lastPurchaseCost, delta, pct, '', importDate, targetSku],
                 () => {
                   db.run(
                     'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [targetSku, batchId, oldCost, item.finalUnitCost, delta, pct, importDate],
+                    [targetSku, batchId, prevLastPurchase, lastPurchaseCost, delta, pct, importDate],
                     () => processInventoryUpsert(index + 1)
                   );
                 }
               );
             } else {
+              const initialLandedCost = parseFloat(item.finalUnitCost.toFixed(2));
               db.run(
-                'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, item.productName, item.brand || '', item.model || '', item.category || 'General', item.quantity, item.finalUnitCost, item.finalUnitCost, 0, 0, '', importDate],
+                'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [cleanSku, item.productName, item.brand || '', item.model || '', item.category || 'General', item.quantity, initialLandedCost, initialLandedCost, initialLandedCost, 0, 0, '', importDate],
                 (err) => {
                   if (err) {
                     console.error('Error al insertar en inventario BD:', err.message);
                   }
                   db.run(
                     'INSERT INTO price_history (sku, batchId, oldCost, newCost, delta, pct, changeDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [cleanSku, batchId, item.finalUnitCost, item.finalUnitCost, 0, 0, importDate],
+                    [cleanSku, batchId, initialLandedCost, initialLandedCost, 0, 0, importDate],
                     () => processInventoryUpsert(index + 1)
                   );
                 }
@@ -598,14 +610,23 @@ app.delete('/api/categories/:id', (req, res) => {
 app.get('/api/inventory', (req, res) => {
   db.all('SELECT * FROM inventory ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    const normalized = (rows || []).map(r => ({
-      ...r,
-      sku: String(r.sku ?? ''),
-      name: String(r.name ?? ''),
-      brand: String(r.brand ?? ''),
-      model: String(r.model ?? ''),
-      category: String(r.category ?? 'General')
-    }));
+    const normalized = (rows || []).map(r => {
+      const unitCost = typeof r.unitCost === 'number' ? r.unitCost : (parseFloat(r.unitCost) || 0);
+      const lastPurchaseCost = (r.lastPurchaseCost !== undefined && r.lastPurchaseCost !== null && !isNaN(parseFloat(r.lastPurchaseCost)))
+        ? parseFloat(r.lastPurchaseCost)
+        : unitCost;
+      return {
+        ...r,
+        sku: String(r.sku ?? ''),
+        name: String(r.name ?? ''),
+        brand: String(r.brand ?? ''),
+        model: String(r.model ?? ''),
+        category: String(r.category ?? 'General'),
+        unitCost,
+        lastPurchaseCost,
+        last_purchase_cost: lastPurchaseCost,
+      };
+    });
     res.json(normalized);
   });
 });
@@ -672,7 +693,7 @@ app.get('/api/products/next-sku', getNextSkuHandler);
 app.get('/api/inventory/next-sku', getNextSkuHandler);
 
 app.post('/api/inventory', (req, res) => {
-  const { sku, name, brand, model, category, stock, unitCost } = req.body;
+  const { sku, name, brand, model, category, stock, unitCost, lastPurchaseCost } = req.body;
   if (!sku || !name) {
     return res.status(400).json({ error: 'Código SKU y Nombre de producto son requeridos.' });
   }
@@ -684,6 +705,9 @@ app.post('/api/inventory', (req, res) => {
   const cat = category && category.trim() !== '' ? category.trim() : 'General';
   const stockInt = Math.max(0, parseInt(stock) || 0);
   const costFloat = Math.max(0, parseFloat(unitCost) || 0.0);
+  const lastCostFloat = (lastPurchaseCost !== undefined && !isNaN(parseFloat(lastPurchaseCost)))
+    ? Math.max(0, parseFloat(lastPurchaseCost))
+    : costFloat;
   const lastUpdated = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 
   db.get('SELECT id FROM inventory WHERE UPPER(sku) = ?', [cleanSku], (err, existing) => {
@@ -691,8 +715,8 @@ app.post('/api/inventory', (req, res) => {
       return res.status(400).json({ error: `El Código SKU "${cleanSku}" ya existe en el inventario.` });
     }
 
-    const sql = `INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?)`;
-    db.run(sql, [cleanSku, cleanName, cleanBrand, cleanModel, cat, stockInt, costFloat, costFloat, 0, 0, lastUpdated], function(err) {
+    const sql = `INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?)`;
+    db.run(sql, [cleanSku, cleanName, cleanBrand, cleanModel, cat, stockInt, costFloat, costFloat, lastCostFloat, 0, 0, lastUpdated], function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({
         id: this.lastID,
@@ -704,6 +728,8 @@ app.post('/api/inventory', (req, res) => {
         stock: stockInt,
         unitCost: costFloat,
         previousUnitCost: costFloat,
+        lastPurchaseCost: lastCostFloat,
+        last_purchase_cost: lastCostFloat,
         priceChangeDelta: 0,
         priceChangePct: 0,
         image: '',
@@ -718,7 +744,16 @@ app.get('/api/inventory/sku/:sku', (req, res) => {
   db.get('SELECT * FROM inventory WHERE UPPER(sku) = UPPER(?)', [sku], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'SKU no encontrado' });
-    res.json(row);
+    const unitCost = typeof row.unitCost === 'number' ? row.unitCost : (parseFloat(row.unitCost) || 0);
+    const lastPurchaseCost = (row.lastPurchaseCost !== undefined && row.lastPurchaseCost !== null && !isNaN(parseFloat(row.lastPurchaseCost)))
+      ? parseFloat(row.lastPurchaseCost)
+      : unitCost;
+    res.json({
+      ...row,
+      unitCost,
+      lastPurchaseCost,
+      last_purchase_cost: lastPurchaseCost,
+    });
   });
 });
 
@@ -956,6 +991,7 @@ app.post('/api/backup/restore', authenticateAdmin, async (req, res) => {
         const stock = Math.max(0, parseInt(item.stock) || 0);
         const unitCost = Math.max(0, parseFloat(item.unitCost ?? item.unit_cost ?? 0));
         const previousUnitCost = Math.max(0, parseFloat(item.previousUnitCost ?? item.previous_unit_cost ?? unitCost));
+        const lastPurchaseCost = Math.max(0, parseFloat(item.lastPurchaseCost ?? item.last_purchase_cost ?? unitCost));
         const priceChangeDelta = parseFloat(item.priceChangeDelta ?? item.price_change_delta ?? 0);
         const priceChangePct = parseFloat(item.priceChangePct ?? item.price_change_pct ?? 0);
         const image = item.image || '';
@@ -963,13 +999,13 @@ app.post('/api/backup/restore', authenticateAdmin, async (req, res) => {
 
         if (id) {
           await execPg(
-            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated]
           );
         } else {
           await execPg(
-            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated]
           );
         }
       }
@@ -1118,6 +1154,7 @@ app.post('/api/backup/restore', authenticateAdmin, async (req, res) => {
         const stock = Math.max(0, parseInt(item.stock) || 0);
         const unitCost = Math.max(0, parseFloat(item.unitCost ?? item.unit_cost ?? 0));
         const previousUnitCost = Math.max(0, parseFloat(item.previousUnitCost ?? item.previous_unit_cost ?? unitCost));
+        const lastPurchaseCost = Math.max(0, parseFloat(item.lastPurchaseCost ?? item.last_purchase_cost ?? unitCost));
         const priceChangeDelta = parseFloat(item.priceChangeDelta ?? item.price_change_delta ?? 0);
         const priceChangePct = parseFloat(item.priceChangePct ?? item.price_change_pct ?? 0);
         const image = item.image || '';
@@ -1125,13 +1162,13 @@ app.post('/api/backup/restore', authenticateAdmin, async (req, res) => {
 
         if (id) {
           await runSqlite(
-            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+            'INSERT INTO inventory (id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated]
           );
         } else {
           await runSqlite(
-            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, priceChangeDelta, priceChangePct, image, lastUpdated]
+            'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated]
           );
         }
       }

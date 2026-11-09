@@ -775,9 +775,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                   <span className={`text-[11px] font-medium ${isOutOfStock ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}`}>
                     {stockText}
                   </span>
-                  <span className="block text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    Q {(item.unitCost * 1.15 * 7.80).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
+                  <div className="mt-0.5 space-y-0.5">
+                    <span className="block text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold" title="Costo Promedio Landed">
+                      Prom: ${Number(item.unitCost || 0).toFixed(2)}
+                    </span>
+                    <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400" title="Costo Última Compra">
+                      Últ: ${Number(item.lastPurchaseCost || item.unitCost || 0).toFixed(2)}
+                    </span>
+                    <span className="block text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                      Q {(Number(item.unitCost || 0) * 1.15 * 7.80).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -795,27 +803,54 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
           <table className="w-full table-fixed border-collapse border border-slate-700/80 text-xs md:text-sm">
             <thead className="bg-slate-50 dark:bg-slate-900/80 text-[11px] uppercase text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-700/80">
               <tr>
-                <th className="w-[11%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">SKU</th>
-                <th className="w-[37%] border border-slate-700/70 px-2 py-2.5 text-left align-middle">Producto</th>
-                <th className="w-[11%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Categoría</th>
-                <th className="w-[7%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Stock</th>
-                <th className="w-[12%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Costo Landed</th>
-                <th className="w-[12%] border border-slate-700/70 px-2 py-2.5 text-center align-middle bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Precio Venta (+15%)</th>
-                <th className="w-[10%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Acciones</th>
+                <th className="w-[10%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">SKU</th>
+                <th className="w-[26%] border border-slate-700/70 px-2 py-2.5 text-left align-middle">Producto</th>
+                <th className="w-[10%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Categoría</th>
+                <th className="w-[6%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Stock</th>
+                <th className="w-[13%] border border-slate-700/70 px-2 py-2.5 text-center align-middle bg-blue-500/5 text-blue-700 dark:text-blue-300">
+                  <div className="flex flex-col items-center">
+                    <span>Costo Prom. Landed</span>
+                    <span className="text-[9px] font-normal normal-case opacity-80">(Promedio Bodega)</span>
+                  </div>
+                </th>
+                <th className="w-[14%] border border-slate-700/70 px-2 py-2.5 text-center align-middle bg-indigo-500/5 text-indigo-700 dark:text-indigo-300">
+                  <div className="flex flex-col items-center">
+                    <span>Última Compra</span>
+                    <span className="text-[9px] font-normal normal-case opacity-80">(Último Lote)</span>
+                  </div>
+                </th>
+                <th className="w-[12%] border border-slate-700/70 px-2 py-2.5 text-center align-middle bg-emerald-50 dark:bg-emerald-950/30 border-l border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                  <div className="flex flex-col items-center">
+                    <span>Precio Venta</span>
+                    <span className="text-[9px] font-normal normal-case opacity-80">(+15% Margen)</span>
+                  </div>
+                </th>
+                <th className="w-[9%] border border-slate-700/70 px-2 py-2.5 text-center align-middle">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700 text-xs">
               {paginatedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="border border-slate-700/70 px-2 py-8 text-center text-slate-500 dark:text-slate-400 align-middle">
+                  <td colSpan={8} className="border border-slate-700/70 px-2 py-8 text-center text-slate-500 dark:text-slate-400 align-middle">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
               ) : (
                 paginatedInventory.map((item) => {
-                  const unitCostGtq = item.unitCost * 7.80;
-                  const sellingPriceUsd = item.unitCost * 1.15;
+                  const avgCost = typeof item.unitCost === 'number' ? item.unitCost : (parseFloat(item.unitCost) || 0);
+                  const avgCostGtq = avgCost * 7.80;
+
+                  const lastCost = (item.lastPurchaseCost !== undefined && item.lastPurchaseCost !== null && !isNaN(Number(item.lastPurchaseCost)) && Number(item.lastPurchaseCost) > 0)
+                    ? Number(item.lastPurchaseCost)
+                    : avgCost;
+                  const lastCostGtq = lastCost * 7.80;
+
+                  const sellingPriceUsd = avgCost * 1.15;
                   const sellingPriceGtq = sellingPriceUsd * 7.80;
+
+                  const delta = item.priceChangeDelta !== undefined ? Number(item.priceChangeDelta) : 0;
+                  const pct = item.priceChangePct !== undefined ? Number(item.priceChangePct) : 0;
+
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition cursor-pointer" onClick={() => setSelectedDetailProduct(item)}>
                       <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle font-mono font-bold text-blue-600 dark:text-blue-400 text-xs truncate" title={String(item.sku ?? '')}>
@@ -849,9 +884,24 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                       <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle text-slate-700 dark:text-slate-200 font-semibold whitespace-nowrap">
                         {item.stock} uds
                       </td>
-                      <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                        <span className="block text-xs font-mono font-bold">${item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-                        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {unitCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                      <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle font-medium text-slate-900 dark:text-white whitespace-nowrap bg-blue-500/5">
+                        <span className="block text-xs font-mono font-bold text-blue-600 dark:text-blue-400">${avgCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {avgCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                      </td>
+                      <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle font-medium text-slate-900 dark:text-white whitespace-nowrap bg-indigo-500/5">
+                        <span className="block text-xs font-mono font-bold text-slate-900 dark:text-slate-100">${lastCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 block">Q {lastCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
+                        {delta !== 0 ? (
+                          <span className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.2 rounded mt-0.5 ${
+                            delta > 0
+                              ? 'text-amber-500 dark:text-amber-400 bg-amber-500/10'
+                              : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                          }`}>
+                            {delta > 0 ? `+${pct.toFixed(1)}%` : `${pct.toFixed(1)}%`}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 block">Sin variación</span>
+                        )}
                       </td>
                       <td className="border border-slate-700/70 px-2 py-2.5 text-center align-middle bg-emerald-50/50 dark:bg-emerald-950/20 whitespace-nowrap">
                         <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block">Q {sellingPriceGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ</span>
@@ -927,12 +977,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                 : String(selectedDetailProduct.name ?? '').trim();
 
               const stockQty = selectedDetailProduct.stock || 0;
-              const landedUsd = selectedProductImportDetails?.landedUsd || selectedDetailProduct.unitCost || 0;
-              const landedGtq = landedUsd * 7.80;
-              const totalValUsd = stockQty * landedUsd;
-              const totalValGtq = stockQty * landedGtq;
+              const avgCostUsd = typeof selectedDetailProduct.unitCost === 'number' ? selectedDetailProduct.unitCost : (parseFloat(selectedDetailProduct.unitCost) || 0);
+              const avgCostGtq = avgCostUsd * 7.80;
+              const totalValUsd = stockQty * avgCostUsd;
+              const totalValGtq = stockQty * avgCostGtq;
 
-              const fobUsd = selectedProductImportDetails?.fobUsd ?? landedUsd;
+              const lastPurchaseUsd = (selectedDetailProduct.lastPurchaseCost !== undefined && selectedDetailProduct.lastPurchaseCost !== null && Number(selectedDetailProduct.lastPurchaseCost) > 0)
+                ? Number(selectedDetailProduct.lastPurchaseCost)
+                : (selectedProductImportDetails?.landedUsd || avgCostUsd);
+              const lastPurchaseGtq = lastPurchaseUsd * 7.80;
+
+              const fobUsd = selectedProductImportDetails?.fobUsd ?? lastPurchaseUsd;
               const fobGtq = fobUsd * 7.80;
 
               const unitCustomsUsd = selectedProductImportDetails?.unitCustomsUsd ?? 0;
@@ -943,9 +998,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
               const unitShippingGtq = unitShippingUsd * 7.80;
               const shippingPct = selectedProductImportDetails?.shippingPct ?? (fobUsd > 0 ? (unitShippingUsd / fobUsd) * 100 : 0);
 
-              const sellingUsd = selectedProductImportDetails?.finalSellingPriceUsd || (landedUsd * 1.15);
+              const delta = selectedDetailProduct.priceChangeDelta !== undefined ? Number(selectedDetailProduct.priceChangeDelta) : 0;
+              const pct = selectedDetailProduct.priceChangePct !== undefined ? Number(selectedDetailProduct.priceChangePct) : 0;
+
+              const sellingUsd = selectedProductImportDetails?.finalSellingPriceUsd || (avgCostUsd * 1.15);
               const sellingGtq = sellingUsd * 7.80;
-              const profitUsd = sellingUsd - landedUsd;
+              const profitUsd = sellingUsd - avgCostUsd;
               const profitGtq = profitUsd * 7.80;
 
               return (
@@ -985,18 +1043,66 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                     </button>
                   </div>
 
-                  {/* Alerta de Variación de Costo (si aplica) */}
-                  {selectedDetailProduct.priceChangeDelta !== undefined && selectedDetailProduct.priceChangeDelta !== 0 && (
-                    <div className={`p-3 rounded-xl border text-xs font-semibold ${
-                      selectedDetailProduct.priceChangeDelta > 0
-                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                    }`}>
-                      {selectedDetailProduct.priceChangeDelta > 0
-                        ? `📈 Variación de Costo: +$${selectedDetailProduct.priceChangeDelta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (+${selectedDetailProduct.priceChangePct}%)`
-                        : `📉 Variación de Costo: -$${Math.abs(selectedDetailProduct.priceChangeDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (${selectedDetailProduct.priceChangePct}%)`}
+                  {/* Comparativa Explícita: Costo Promedio Landed vs Costo de la Última Compra */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Tarjeta 1: Costo Promedio Landed en Bodega */}
+                    <div className="bg-blue-950/40 border border-blue-500/30 rounded-xl p-4 flex flex-col justify-between space-y-2 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <span>📊 Costo Promedio Landed</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded border border-blue-500/30">
+                          Indicador Contable General
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-mono font-black text-white">
+                          ${avgCostUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                        </div>
+                        <div className="text-xs font-mono font-bold text-blue-300">
+                          Q {avgCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed border-t border-blue-500/20 pt-2">
+                        Promedio ponderado en bodega según compras históricas y stock actual. Base recomendada para valoración total de inventario y margen de precios.
+                      </p>
                     </div>
-                  )}
+
+                    {/* Tarjeta 2: Costo de la Última Compra */}
+                    <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex flex-col justify-between space-y-2 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <span>📦 Costo de la Última Compra</span>
+                        </span>
+                        {delta !== 0 ? (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                            delta > 0
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          }`}>
+                            {delta > 0
+                              ? `📈 +$${delta.toFixed(2)} USD (+${pct}%) vs. lote anterior`
+                              : `📉 -$${Math.abs(delta).toFixed(2)} USD (${pct}%) vs. lote anterior`}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            Sin variación vs. lote anterior
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-2xl font-mono font-black text-white">
+                          ${lastPurchaseUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                        </div>
+                        <div className="text-xs font-mono font-bold text-indigo-300">
+                          Q {lastPurchaseGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed border-t border-indigo-500/20 pt-2">
+                        Costo exacto puesto en bodega (FOB + Aduana + Flete) de la última importación ({selectedProductImportDetails?.batchName || 'Lote reciente'}).
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Cuerpo Ejecutivo en 2 Columnas */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 items-stretch">
@@ -1005,7 +1111,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                       <div className="space-y-3">
                         <div className="border-b border-slate-800 pb-2">
                           <h4 className="text-sm font-bold text-slate-200 tracking-wide">
-                            Desglose de Importación y Costos
+                            Desglose de la Última Importación
                           </h4>
                         </div>
 
@@ -1034,20 +1140,34 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                         </div>
 
                         {/* Línea divisoria */}
-                        <div className="border-t border-slate-700/60 my-3"></div>
+                        <div className="border-t border-slate-700/60 my-2"></div>
 
-                        {/* Fila Destacada (Total Landed) */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1">
-                          <span className="text-sm font-bold text-white">Costo Total Puesto (Landed)</span>
-                          <span className="text-base font-mono font-bold text-blue-300">
-                            ${landedUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-slate-500">|</span> Q {landedGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                        {/* Fila Destacada (Costo Última Compra) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                          <div>
+                            <span className="text-xs font-bold text-indigo-200 block">Costo Landed (Última Compra)</span>
+                            <span className="text-[10px] text-indigo-300/80">Lote más reciente</span>
+                          </div>
+                          <span className="text-sm font-mono font-bold text-indigo-300">
+                            ${lastPurchaseUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-slate-500">|</span> Q {lastPurchaseGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
+                          </span>
+                        </div>
+
+                        {/* Fila Destacada (Costo Promedio Ponderado) */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                          <div>
+                            <span className="text-xs font-bold text-blue-200 block">Costo Promedio Landed</span>
+                            <span className="text-[10px] text-blue-300/80">Ponderado en almacén</span>
+                          </div>
+                          <span className="text-sm font-mono font-bold text-blue-300">
+                            ${avgCostUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD <span className="text-slate-500">|</span> Q {avgCostGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ
                           </span>
                         </div>
                       </div>
 
                       {/* Subtexto discreto al pie */}
                       <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                        <span>Valoración en almacén ({stockQty} uds):</span>
+                        <span>Valoración total en almacén ({stockQty} uds):</span>
                         <span className="font-mono font-bold text-slate-300">
                           Q {totalValGtq.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GTQ <span className="text-slate-500 font-normal">(${totalValUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)</span>
                         </span>
@@ -1068,6 +1188,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ currentUser, readO
                           <span className="text-sm font-mono font-bold text-slate-300">
                             (${sellingUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)
                           </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          Calculado sobre el Costo Promedio Landed (${avgCostUsd.toFixed(2)} USD) + 15% margen contable.
                         </div>
                         <div className="text-xs text-emerald-300/90 pt-2 border-t border-emerald-500/20 flex justify-between items-center flex-wrap gap-1">
                           <span>Ganancia estimada limpia:</span>
