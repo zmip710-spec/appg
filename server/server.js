@@ -619,24 +619,55 @@ app.delete('/api/categories/:id', (req, res) => {
 app.get('/api/inventory', (req, res) => {
   db.all('SELECT * FROM inventory ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    const normalized = (rows || []).map(r => {
-      const unitCost = typeof r.unitCost === 'number' ? r.unitCost : (parseFloat(r.unitCost) || 0);
-      const lastPurchaseCost = (r.lastPurchaseCost !== undefined && r.lastPurchaseCost !== null && !isNaN(parseFloat(r.lastPurchaseCost)))
-        ? parseFloat(r.lastPurchaseCost)
-        : unitCost;
-      return {
-        ...r,
-        sku: String(r.sku ?? ''),
-        name: String(r.name ?? ''),
-        brand: String(r.brand ?? ''),
-        model: String(r.model ?? ''),
-        category: String(r.category ?? 'General'),
-        unitCost,
-        lastPurchaseCost,
-        last_purchase_cost: lastPurchaseCost,
-      };
-    });
-    res.json(normalized);
+
+    // Obtener estrictamente el finalUnitCost del último ítem del lote más reciente por SKU en batch_items
+    db.all(
+      `SELECT bi.sku, bi.finalUnitCost, bi.id
+       FROM batch_items bi
+       ORDER BY bi.id DESC`,
+      [],
+      (bErr, batchRows) => {
+        const latestBatchCostBySku = {};
+        if (!bErr && Array.isArray(batchRows)) {
+          batchRows.forEach(item => {
+            if (item && item.sku) {
+              const skuKey = String(item.sku).trim().toUpperCase();
+              if (latestBatchCostBySku[skuKey] === undefined && item.finalUnitCost !== undefined && item.finalUnitCost !== null && !isNaN(parseFloat(item.finalUnitCost))) {
+                latestBatchCostBySku[skuKey] = parseFloat(parseFloat(item.finalUnitCost).toFixed(2));
+              }
+            }
+          });
+        }
+
+        const normalized = (rows || []).map(r => {
+          const skuKey = String(r.sku ?? '').trim().toUpperCase();
+          const unitCost = typeof r.unitCost === 'number' ? r.unitCost : (parseFloat(r.unitCost) || 0);
+
+          // Si el SKU tiene lotes registrados en batch_items, toma estrictamente el finalUnitCost del lote más reciente.
+          // Nunca se sobrescribe el costo de la última compra con el costo promedio ponderado en bodega.
+          let lastPurchaseCost = 0;
+          if (latestBatchCostBySku[skuKey] !== undefined) {
+            lastPurchaseCost = latestBatchCostBySku[skuKey];
+          } else if (r.lastPurchaseCost !== undefined && r.lastPurchaseCost !== null && !isNaN(parseFloat(r.lastPurchaseCost)) && parseFloat(r.lastPurchaseCost) > 0) {
+            lastPurchaseCost = parseFloat(parseFloat(r.lastPurchaseCost).toFixed(2));
+          }
+
+          return {
+            ...r,
+            sku: String(r.sku ?? ''),
+            name: String(r.name ?? ''),
+            brand: String(r.brand ?? ''),
+            model: String(r.model ?? ''),
+            category: String(r.category ?? 'General'),
+            unitCost: parseFloat(unitCost.toFixed(2)),
+            lastPurchaseCost,
+            last_purchase_cost: lastPurchaseCost,
+          };
+        });
+
+        res.json(normalized);
+      }
+    );
   });
 });
 
@@ -749,20 +780,40 @@ app.post('/api/inventory', (req, res) => {
 });
 
 app.get('/api/inventory/sku/:sku', (req, res) => {
-  const { sku } = req.params;
-  db.get('SELECT * FROM inventory WHERE UPPER(sku) = UPPER(?)', [sku], (err, row) => {
+  const cleanSku = req.params.sku ? String(req.params.sku).trim().toUpperCase() : '';
+  db.get('SELECT * FROM inventory WHERE UPPER(sku) = ?', [cleanSku], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'SKU no encontrado' });
     const unitCost = typeof row.unitCost === 'number' ? row.unitCost : (parseFloat(row.unitCost) || 0);
-    const lastPurchaseCost = (row.lastPurchaseCost !== undefined && row.lastPurchaseCost !== null && !isNaN(parseFloat(row.lastPurchaseCost)))
-      ? parseFloat(row.lastPurchaseCost)
-      : unitCost;
-    res.json({
-      ...row,
-      unitCost,
-      lastPurchaseCost,
-      last_purchase_cost: lastPurchaseCost,
-    });
+
+    // Obtener estrictamente el finalUnitCost del último ítem del lote más reciente registrado para este SKU en batch_items
+    db.get(
+      `SELECT bi.finalUnitCost 
+       FROM batch_items bi 
+       WHERE UPPER(bi.sku) = ? 
+       ORDER BY bi.id DESC LIMIT 1`,
+      [cleanSku],
+      (bErr, latestBatchItem) => {
+        let lastPurchaseCost = 0;
+        if (latestBatchItem && latestBatchItem.finalUnitCost !== undefined && latestBatchItem.finalUnitCost !== null && !isNaN(parseFloat(latestBatchItem.finalUnitCost))) {
+          lastPurchaseCost = parseFloat(parseFloat(latestBatchItem.finalUnitCost).toFixed(2));
+        } else if (row.lastPurchaseCost !== undefined && row.lastPurchaseCost !== null && !isNaN(parseFloat(row.lastPurchaseCost)) && parseFloat(row.lastPurchaseCost) > 0) {
+          lastPurchaseCost = parseFloat(parseFloat(row.lastPurchaseCost).toFixed(2));
+        }
+
+        res.json({
+          ...row,
+          sku: String(row.sku ?? ''),
+          name: String(row.name ?? ''),
+          brand: String(row.brand ?? ''),
+          model: String(row.model ?? ''),
+          category: String(row.category ?? 'General'),
+          unitCost: parseFloat(unitCost.toFixed(2)),
+          lastPurchaseCost,
+          last_purchase_cost: lastPurchaseCost,
+        });
+      }
+    );
   });
 });
 

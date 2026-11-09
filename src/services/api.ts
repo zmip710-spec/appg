@@ -353,7 +353,22 @@ export const fetchInventory = async (): Promise<InventoryProduct[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/inventory`);
     if (response.ok) {
-      const data = await response.json();
+      const rawData = await response.json();
+      const data: InventoryProduct[] = (rawData || []).map((item: any) => {
+        const unitCost = typeof item.unitCost === 'number' ? item.unitCost : (parseFloat(String(item.unitCost)) || 0);
+        const lastPurchaseCost = (item.lastPurchaseCost !== undefined && item.lastPurchaseCost !== null && !isNaN(Number(item.lastPurchaseCost)))
+          ? Number(item.lastPurchaseCost)
+          : (item.last_purchase_cost !== undefined && item.last_purchase_cost !== null && !isNaN(Number(item.last_purchase_cost))
+              ? Number(item.last_purchase_cost)
+              : 0);
+
+        return {
+          ...item,
+          unitCost: parseFloat(unitCost.toFixed(2)),
+          lastPurchaseCost: parseFloat(lastPurchaseCost.toFixed(2)),
+          last_purchase_cost: parseFloat(lastPurchaseCost.toFixed(2))
+        };
+      });
       try { localStorage.setItem('appg_cache_inventory', JSON.stringify(data)); } catch {}
       return data;
     }
@@ -393,7 +408,20 @@ export const createInventoryApi = createInventoryProductApi;
 export const fetchProductBySkuApi = async (sku: string): Promise<InventoryProduct | null> => {
   const response = await fetch(`${API_BASE_URL}/inventory/sku/${encodeURIComponent(sku)}`);
   if (!response.ok) return null;
-  return response.json();
+  const item = await response.json();
+  const unitCost = typeof item.unitCost === 'number' ? item.unitCost : (parseFloat(String(item.unitCost)) || 0);
+  const lastPurchaseCost = (item.lastPurchaseCost !== undefined && item.lastPurchaseCost !== null && !isNaN(Number(item.lastPurchaseCost)))
+    ? Number(item.lastPurchaseCost)
+    : (item.last_purchase_cost !== undefined && item.last_purchase_cost !== null && !isNaN(Number(item.last_purchase_cost))
+        ? Number(item.last_purchase_cost)
+        : 0);
+
+  return {
+    ...item,
+    unitCost: parseFloat(unitCost.toFixed(2)),
+    lastPurchaseCost: parseFloat(lastPurchaseCost.toFixed(2)),
+    last_purchase_cost: parseFloat(lastPurchaseCost.toFixed(2))
+  };
 };
 
 export const updateStockApi = async (id: number | string, delta: number): Promise<{ success: boolean; stock: number }> => {

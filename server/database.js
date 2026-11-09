@@ -249,11 +249,19 @@ async function initPgTables() {
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS allocatedShipping NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS profitMarginPct NUMERIC DEFAULT 15.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS finalSellingPrice NUMERIC DEFAULT 0.0");
-    await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS image TEXT");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS image TEXT");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS previousUnitCost NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS lastPurchaseCost NUMERIC DEFAULT 0.0");
-    await pgPool.query("UPDATE inventory SET lastPurchaseCost = unitCost WHERE lastPurchaseCost IS NULL OR lastPurchaseCost = 0").catch(() => {});
+    await pgPool.query(`
+      UPDATE inventory i
+      SET lastPurchaseCost = bi.finalUnitCost
+      FROM (
+        SELECT DISTINCT ON (UPPER(sku)) UPPER(sku) as sku_key, finalUnitCost
+        FROM batch_items
+        ORDER BY UPPER(sku), id DESC
+      ) bi
+      WHERE UPPER(i.sku) = bi.sku_key
+    `).catch(() => {});
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangeDelta NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS priceChangePct NUMERIC DEFAULT 0.0");
     await pgPool.query("ALTER TABLE batch_items ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT ''");
@@ -395,7 +403,18 @@ if (isPg) {
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN image TEXT", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN previousUnitCost REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN lastPurchaseCost REAL DEFAULT 0.0", () => {
-      sqliteDb.run("UPDATE inventory SET lastPurchaseCost = unitCost WHERE lastPurchaseCost IS NULL OR lastPurchaseCost = 0", () => {});
+      sqliteDb.run(`
+        UPDATE inventory
+        SET lastPurchaseCost = (
+          SELECT finalUnitCost FROM batch_items
+          WHERE UPPER(batch_items.sku) = UPPER(inventory.sku)
+          ORDER BY id DESC LIMIT 1
+        )
+        WHERE EXISTS (
+          SELECT 1 FROM batch_items
+          WHERE UPPER(batch_items.sku) = UPPER(inventory.sku)
+        )
+      `, () => {});
     });
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangeDelta REAL DEFAULT 0.0", () => {});
     sqliteDb.run("ALTER TABLE inventory ADD COLUMN priceChangePct REAL DEFAULT 0.0", () => {});
