@@ -439,29 +439,37 @@ app.post('/api/batches', (req, res) => {
 
           const item = finalItems[index];
           const cleanSku = item.sku.trim().toUpperCase();
+          const itemQty = Math.max(1, parseInt(item.quantity) || 1);
+          const itemFinalLandedCost = parseFloat(item.finalUnitCost.toFixed(2));
+
           db.get('SELECT * FROM inventory WHERE UPPER(sku) = ?', [cleanSku], (invErr, existing) => {
             if (existing) {
               const targetSku = existing.sku.toUpperCase();
-              const oldStock = existing.stock || 0;
-              const oldCost = existing.unitCost || 0;
-              const prevLastPurchase = (existing.lastPurchaseCost !== undefined && existing.lastPurchaseCost !== null && !isNaN(parseFloat(existing.lastPurchaseCost)) && parseFloat(existing.lastPurchaseCost) > 0)
-                ? parseFloat(existing.lastPurchaseCost)
-                : (existing.previousUnitCost || oldCost);
-              const newStock = oldStock + item.quantity;
+              const oldStock = Math.max(0, parseInt(existing.stock) || 0);
+              const oldCost = typeof existing.unitCost === 'number' ? existing.unitCost : (parseFloat(existing.unitCost) || 0);
+              const newStock = oldStock + itemQty;
               
-              // 1. Costo exacto de la última compra (obtenido del lote más reciente)
-              const lastPurchaseCost = parseFloat(item.finalUnitCost.toFixed(2));
+              // 1. Costo exacto de la última compra (estrictamente el finalUnitCost del ítem del lote)
+              const lastPurchaseCost = itemFinalLandedCost;
 
-              // 2. Costo promedio ponderado en bodega
-              const weightedAvgCost = newStock > 0
-                ? ((oldStock * oldCost) + (item.quantity * item.finalUnitCost)) / newStock
-                : item.finalUnitCost;
+              // Costo de compra anterior para medir la variación del lote
+              const prevLastPurchase = (existing.lastPurchaseCost !== undefined && existing.lastPurchaseCost !== null && !isNaN(parseFloat(existing.lastPurchaseCost)) && parseFloat(existing.lastPurchaseCost) > 0)
+                ? parseFloat(parseFloat(existing.lastPurchaseCost).toFixed(2))
+                : (existing.previousUnitCost !== undefined && existing.previousUnitCost !== null && !isNaN(parseFloat(existing.previousUnitCost)) && parseFloat(existing.previousUnitCost) > 0
+                    ? parseFloat(parseFloat(existing.previousUnitCost).toFixed(2))
+                    : oldCost);
+
+              // 2. Costo promedio ponderado en bodega (recalculado basándose en stock anterior y nuevas unidades)
+              let weightedAvgCost = lastPurchaseCost;
+              if (oldStock > 0 && newStock > 0) {
+                weightedAvgCost = ((oldStock * oldCost) + (itemQty * lastPurchaseCost)) / newStock;
+              }
               const calculatedWeightedCost = parseFloat(weightedAvgCost.toFixed(2));
 
-              // Si la estrategia es 'latest', el unitCost adopta el último costo; si no, adopta el promedio ponderado
-              const finalUnitCost = costStrategy === 'latest' ? lastPurchaseCost : calculatedWeightedCost;
+              // unitCost adopta estrictamente el costo promedio ponderado recalculado
+              const finalUnitCost = calculatedWeightedCost;
 
-              // Variación del Costo de la Última Compra respecto al lote/compra anterior
+              // Variación del Costo de la Última Compra respecto a la compra anterior
               const delta = parseFloat((lastPurchaseCost - prevLastPurchase).toFixed(2));
               const pct = prevLastPurchase > 0 ? parseFloat(((delta / prevLastPurchase) * 100).toFixed(2)) : 0;
               const updatedBrand = item.brand || existing.brand || '';
@@ -480,10 +488,11 @@ app.post('/api/batches', (req, res) => {
                 }
               );
             } else {
-              const initialLandedCost = parseFloat(item.finalUnitCost.toFixed(2));
+              // Inserción de nuevo producto en el inventario
+              const initialLandedCost = itemFinalLandedCost;
               db.run(
                 'INSERT INTO inventory (sku, name, brand, model, category, stock, unitCost, previousUnitCost, lastPurchaseCost, priceChangeDelta, priceChangePct, image, lastUpdated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [cleanSku, item.productName, item.brand || '', item.model || '', item.category || 'General', item.quantity, initialLandedCost, initialLandedCost, initialLandedCost, 0, 0, '', importDate],
+                [cleanSku, item.productName, item.brand || '', item.model || '', item.category || 'General', itemQty, initialLandedCost, initialLandedCost, initialLandedCost, 0, 0, '', importDate],
                 (err) => {
                   if (err) {
                     console.error('Error al insertar en inventario BD:', err.message);
